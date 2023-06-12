@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "./lib-levelcrush-macros-rs",
+    "./lib-levelcrush-rs",
+    "./service-accounts",
+    "./service-destiny",
+    "./service-feed"
+]
