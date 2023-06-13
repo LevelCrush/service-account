@@ -1,19 +1,18 @@
 import Head from 'next/head';
-import Hero from '@components/hero';
-import { SiteHeader } from '@components/site_header';
-import OffCanvas from '@components/offcanvas';
+import Hero from '@website/components/hero';
+import { SiteHeader } from '@website/components/site_header';
+import OffCanvas from '@website/components/offcanvas';
 import { GetServerSideProps } from 'next';
-import ENV from '@core/env';
-import { H3 } from '@components/elements/headings';
-import Container from '@components/elements/container';
+import ENV from '@website/core/env';
+import { H3 } from '@website/components/elements/headings';
+import Container from '@website/components/elements/container';
 import {
   AccountLinkedPlatformMultiSearchResponse,
   AccountLinkedPlatformResultMap,
   DestinyMemberInformation,
-  DestinyNetworkRosterResponse,
-} from '@core/api_responses';
-import DestinyMemberCard from '@components/destiny_member_card';
-import getNetworkRoster from '@core/network_roster';
+} from '@website/core/api_responses';
+import DestinyMemberCard from '@website/components/destiny_member_card';
+import { getNetworkRoster } from '@levelcrush/service-destiny';
 
 export interface NetworkRosterPageProps {
   roster: DestinyMemberInformation[];
@@ -25,7 +24,7 @@ export const getServerSideProps: GetServerSideProps<
 > = async () => {
   //
 
-  const network_roster = await getNetworkRoster();
+  const network_roster = await getNetworkRoster(ENV.hosts.destiny);
   const bungie_names = network_roster.map((member) => member.display_name);
 
   const account_api = ENV.hosts.accounts;
