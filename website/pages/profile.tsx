@@ -2,7 +2,7 @@ import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import { SiteHeader } from '@website/components/site_header';
 import Container from '@website/components/elements/container';
-import { H3, H4 } from '@website/components/elements/headings';
+import { H3, H4, H5 } from '@website/components/elements/headings';
 import OffCanvas from '@website/components/offcanvas';
 import LoginGuard from '@website/components/login_guard';
 import {
@@ -95,10 +95,60 @@ export const ProfilePage = () => {
       </Head>
       <SiteHeader forceStickyStyle={true} />
       <main>
-        <Container className="flex flex-wrap top-[4.5rem] relative">
+        <Container className="top-[4.5rem] relative">
           <LoginGuard>
             <div className="profile-section w-full">
               <H3 id="linkedAccounts">Linked Accounts</H3>
+              <p className="max-w-[45rem]">
+                Level Crush will only request your platform user names and
+                retain the minimal amount of information to link your accounts
+                together. No sensitive information is stored in our systems.
+                <br />
+                <br />
+                If you are worried about your privacy you are welcome to audit
+                our code yourself.
+                <HyperlinkButton
+                  className="md:max-w-[10rem] mt-2"
+                  href="https://github.com/LevelCrush/levelcrush"
+                  target="_blank"
+                  intention={'normal'}
+                >
+                  Visit Github
+                </HyperlinkButton>
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4 justify-start">
+                <H5 className="flex-auto w-full">Bungie Privacy Links</H5>
+                <HyperlinkButton
+                  className="flex-auto md:max-w-[20rem] mt-2"
+                  href="https://www.bungie.net/7/en/User/Account/Privacy"
+                  target="_blank"
+                  intention={'normal'}
+                >
+                  Bungie Profile Privacy Settings
+                </HyperlinkButton>
+                <HyperlinkButton
+                  className="flex-auto md:max-w-[20rem] mt-2"
+                  href="https://help.bungie.net/hc/en-us/articles/360048721292-Account-Security-Guide"
+                  target="_blank"
+                  intention={'normal'}
+                >
+                  Bungie Privacy Guide
+                </HyperlinkButton>
+              </div>
+
+              <div className="mt-8">
+                <H5>Twitch Privacy Links</H5>
+                <HyperlinkButton
+                  className="flex-auto w-full md:max-w-[20rem] mt-2"
+                  href="https://www.twitch.tv/p/en/legal/privacy-choices/"
+                  target="_blank"
+                  intention={'normal'}
+                >
+                  Twitch Privacy Guide
+                </HyperlinkButton>
+              </div>
+
               <div className="flex flex-wrap gap-4 justify-between my-8">
                 <div className="basis-full">
                   <H3>Discord</H3>

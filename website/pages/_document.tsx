@@ -12,9 +12,6 @@ export const Document = () => (
       />
       {/* adobe typekit support */}
       <link rel="stylesheet" href="https://use.typekit.net/pfr8gmr.css" />
-
-      {/* twitch sdk */}
-      <script defer src="https://embed.twitch.tv/embed/v1.js"></script>
     </Head>
     <body>
       <Main />
