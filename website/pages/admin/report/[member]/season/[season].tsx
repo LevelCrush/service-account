@@ -108,7 +108,7 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
               <Col numColSpanLg={2} numColSpanMd={6}>
                 <Title>Snapshot</Title>
                 <Select
-                  defaultValue="lifetime"
+                  defaultValue={props.target_season}
                   className="mt-2"
                   onValueChange={(v) =>
                     //setSeason(v === 'lifetime' ? 'lifetime' : parseInt(v))
