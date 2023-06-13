@@ -1,4 +1,4 @@
-import { Html, Head, Main, NextScript } from 'next/document'
+import { Html, Head, Main, NextScript } from 'next/document';
 
 export const Document = () => (
   <Html lang="en" className="dark">
@@ -15,29 +15,12 @@ export const Document = () => (
 
       {/* twitch sdk */}
       <script defer src="https://embed.twitch.tv/embed/v1.js"></script>
-
-      {/* Google Analytics */}
-      <script
-        defer
-        src="https://www.googletagmanager.com/gtag/js?id=G-6KWQM3Y11P"
-      ></script>
-
-      {/* must be a better way to do this inside nextjs? */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `window.dataLayer = window.dataLayer || [];
-                   function gtag(){dataLayer.push(arguments);}
-                   gtag('js', new Date());
-                   gtag('config', 'G-6KWQM3Y11P');
-                  `,
-        }}
-      ></script>
     </Head>
     <body>
       <Main />
       <NextScript />
     </body>
   </Html>
-)
+);
 
-export default Document
+export default Document;
