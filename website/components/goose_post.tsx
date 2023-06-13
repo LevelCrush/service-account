@@ -28,11 +28,26 @@ function renderGoosePost(props: React.PropsWithChildren, gooseRoll: number) {
         </p>
       );
     case 2:
-      return <img src="/goosepost_1.jpg" className="max-w-full block" />;
+      return (
+        <img
+          src="/goosepost_1.jpg"
+          className="w-full max-w-[20rem] block mx-auto"
+        />
+      );
     case 3:
-      return <img src="/goosepost_2.jpg" className="max-w-full block " />;
+      return (
+        <img
+          src="/goosepost_2.jpg"
+          className="w-full max-w-[20rem] block mx-auto "
+        />
+      );
     case 4:
-      return <img src="/goosepost_3.jpg" className="max-w-full block" />;
+      return (
+        <img
+          src="/goosepost_3.jpg"
+          className="w-full max-w-[20rem] block mx-auto"
+        />
+      );
     default:
       return props.children;
   }
@@ -45,7 +60,9 @@ export const GoosePost = (props: React.PropsWithChildren) => {
     setGooseRoll(Math.floor(Math.random() * gooseTypes) + 1);
   }, []);
 
-  return <div className="goose-post">{renderGoosePost(props, gooseRoll)}</div>;
+  return (
+    <div className="goose-post w-full">{renderGoosePost(props, gooseRoll)}</div>
+  );
 };
 
 export default GoosePost;

@@ -136,17 +136,7 @@ export const ProfilePage = () => {
               </div>
             </div>
           </LoginGuard>
-          <GoosePost>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
-            iaculis ullamcorper euismod. Suspendisse eu volutpat sem.
-            Pellentesque aliquam, ante in semper aliquam, sapien urna tempor
-            mauris, interdum lacinia risus urna a ex. Nullam bibendum erat quis
-            mauris consequat, quis gravida justo interdum. Mauris eros neque,
-            mattis vel consectetur nec, auctor sed urna. Aliquam urna dui,
-            accumsan vel facilisis nec, bibendum nec est. Nam eget nunc turpis.
-            Suspendisse potenti. Fusce in tellus commodo, hendrerit arcu eget,
-            auctor sem.
-          </GoosePost>
+          <GoosePost>What are the odds of even seeing this message?</GoosePost>
         </Container>
       </main>
     </OffCanvas>
