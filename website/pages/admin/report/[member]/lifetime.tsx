@@ -1,37 +1,24 @@
 import { GetServerSideProps } from 'next';
-import { DestinyNetworkRosterResponse } from '@core/api_responses';
-import ENV from '@core/env';
-import ReportPage, { ReportPageSeasonProps } from './season/[season]';
+import ENV from '@website/core/env';
+import {
+  ReportPage,
+  ReportPageSeasonProps,
+} from '@website/pages/admin/report/[member]/season/[season]';
+import {
+  getDestinyModeGroups,
+  getDestinySeasons,
+  getNetworkRoster,
+} from '@levelcrush/service-destiny';
 
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
 > = async (context) => {
-  const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/network/roster');
-
-  const network_roster = response.ok
-    ? ((await response.json()) as DestinyNetworkRosterResponse)
-    : null;
-
-  const roster =
-    network_roster && network_roster.response !== null
-      ? network_roster.response
-      : [];
-
-  let seasons = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-  seasons.sort((a, b) => b - a);
-  seasons = [0].concat(seasons);
-
-  const modes = [
-    {
-      name: 'All',
-      value: 'all',
-    },
-    {
-      name: 'Raid',
-      value: '4',
-    },
-  ] as ReportPageSeasonProps['modes'];
+  // fetch our network roster, seasons, destiny game mode groupings
+  const [roster, seasons, modes] = await Promise.all([
+    getNetworkRoster(ENV.hosts.destiny),
+    getDestinySeasons(ENV.hosts.destiny),
+    getDestinyModeGroups(ENV.hosts.destiny),
+  ]);
 
   return {
     props: {

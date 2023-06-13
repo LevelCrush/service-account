@@ -4,10 +4,10 @@ import {
   DestinyMemberReport,
   DestinyMemberReportResponse,
   DestinyMemberStats,
-} from '@core/api_responses';
+} from '@website/core/api_responses';
 
 import { H3, H4 } from './elements/headings';
-import ENV from '@core/env';
+import ENV from '@website/core/env';
 import {
   Divider,
   Grid,

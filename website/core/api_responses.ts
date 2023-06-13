@@ -1,4 +1,4 @@
-import { APIResponse, ServiceDestiny } from 'levelcrush';
+import { APIResponse, ServiceDestiny } from '@levelcrush';
 
 export interface APIError {
   field: string;
