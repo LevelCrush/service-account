@@ -264,13 +264,6 @@ function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
 
   const weekdaysTimePeriods = [
     {
-      name: 'Sunday',
-      Activities:
-        typeof activityTimeBuckets['0'] !== 'undefined'
-          ? activityTimeBuckets['0'].length
-          : 0,
-    },
-    {
       name: 'Monday',
       Activities:
         typeof activityTimeBuckets['1'] !== 'undefined'
@@ -310,6 +303,13 @@ function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
       Activities:
         typeof activityTimeBuckets['6'] !== 'undefined'
           ? activityTimeBuckets['6'].length
+          : 0,
+    },
+    {
+      name: 'Sunday',
+      Activities:
+        typeof activityTimeBuckets['0'] !== 'undefined'
+          ? activityTimeBuckets['0'].length
           : 0,
     },
   ];
