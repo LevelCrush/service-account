@@ -1,6 +1,6 @@
 import DestinyMemberReportJob from './destiny_report';
 import Job from './job';
-import { APIResponse, ServiceDestiny } from 'levelcrush';
+import { APIResponse, ServiceDestiny } from '@levelcrush';
 
 async function get_clan_members() {
     const destiny_api = process.env['HOST_DESTINY'] || '';

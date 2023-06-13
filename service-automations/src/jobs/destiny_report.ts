@@ -1,5 +1,5 @@
 import Job from './job';
-import { APIResponse, ServiceDestiny } from 'levelcrush';
+import { APIResponse, ServiceDestiny } from '@levelcrush';
 
 async function check_in(bungie_name: string, season: string) {
     console.log('Checking report for: ', bungie_name, ' during ', season);
