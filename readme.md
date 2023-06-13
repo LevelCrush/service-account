@@ -79,3 +79,12 @@ npx tsc --build
 ```
 
 There is a [tsconfig.lib.json](https://github.com/LevelCrush/levelcrush/blob/main/tsconfig.lib.json) at the root of the workspace that helps setup the required path for use in other typescript based projects.
+
+# Database Schema
+
+The schema for the database can be found here: [schema.sql](https://github.com/LevelCrush/levelcrush/blob/main/database/schema.sql).
+There is no additional data attached to this schema.sql of of course.
+
+# Docker
+
+During development, I found it easier to setup a Docker Compose setup to run a nginx reverse proxy/run the mysql database and pass in appropropriate server blocks. You will need to tweak them to run on your own machine but they should provide a good starting point. [Click here to view docker compose config](https://github.com/LevelCrush/levelcrush/tree/main/docke).
