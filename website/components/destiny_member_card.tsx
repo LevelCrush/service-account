@@ -125,6 +125,11 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
 
   // what badges to display
   const badges = {} as { [name: string]: string };
+  const badgeClanColors = {
+    'Level Crush': 'bg-[#50AFE0] text-black',
+    'Level Stomp': 'bg-[#44A8BD] text-black',
+  } as { [clan: string]: string };
+
   if (memberInfo.clan) {
     switch (memberInfo.clan.role) {
       case 5: {
@@ -132,7 +137,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
         break;
       }
       case 3: {
-        badges['Admin'] = 'bg-orange-400 text-black';
+        badges['Admin'] = 'bg-yellow-400 text-black';
       }
       default: {
         // do nothing
@@ -140,7 +145,10 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
       }
     }
 
-    badges[memberInfo.clan.name] = 'bg-yellow-400 text-black';
+    badges[memberInfo.clan.name] =
+      typeof badgeClanColors[memberInfo.clan.name] !== 'undefined'
+        ? badgeClanColors[memberInfo.clan.name]
+        : 'bg-yellow-400 text-black';
   }
 
   return (
