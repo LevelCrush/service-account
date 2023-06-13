@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { faAngleDoubleRight, faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Routes, RouteItem } from '../core/routes';
+import { Routes, RouteItem } from '@core/routes';
 import Hyperlink from './elements/hyperlink';
 import { H1 } from './elements/headings';
 import AccountButton from './account_button';

@@ -1,7 +1,12 @@
 {
     "compilerOptions" : {
+        "baseUrl": ".",
         "paths": {
-            "levelcrush" : ["./lib-levelcrush-ts/dist"]
+            "levelcrush" : ["./lib-levelcrush-ts/src/index"],
+            "levelcrush/server" : ["./lib-levelcrush-ts/src/index_server"],
+            "levelcrush/service-destiny": ["./lib-levelcrush-ts/src/index_service_destiny"],
+            "@components/*" : ["./website/components/*"],
+            "@core/*" : ["./website/core/*"],
         }
     }
 }

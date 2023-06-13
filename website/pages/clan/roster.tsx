@@ -1,22 +1,18 @@
 import Head from 'next/head';
-import React, { cache } from 'react';
-import Hero from '../../components/hero';
-import { SiteHeader } from '../../components/site_header';
-import OffCanvas from '../../components/offcanvas';
+import Hero from '@components/hero';
+import { SiteHeader } from '@components/site_header';
+import OffCanvas from '@components/offcanvas';
 import { GetServerSideProps } from 'next';
-import ENV from '../../core/env';
-import { H3 } from '../../components/elements/headings';
-import Button, { HyperlinkButton } from '../../components/elements/button';
-import Container from '../../components/elements/container';
+import ENV from '@core/env';
+import { H3 } from '@components/elements/headings';
+import Container from '@components/elements/container';
 import {
   AccountLinkedPlatformMultiSearchResponse,
-  AccountLinkedPlatformResult,
   AccountLinkedPlatformResultMap,
-  DestinyClanRoster,
   DestinyMemberInformation,
   DestinyNetworkRosterResponse,
-} from '../../core/api_responses';
-import DestinyMemberCard from '../../components/destiny_member_card';
+} from '@core/api_responses';
+import DestinyMemberCard from '@components/destiny_member_card';
 
 export interface NetworkRosterPageProps {
   roster: DestinyMemberInformation[];
