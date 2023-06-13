@@ -447,16 +447,19 @@ function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
   );
 }
 
-function renderView(type: string, data: DestinyMemberReport, modes: string[]) {
-  return renderOverall(data, modes);
-}
-
 export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   const [memberReport, setMemberReport] = useState(
     null as DestinyMemberReportResponse['response']
   );
 
-  const [viewType, setViewType] = useState('overall');
+  const [alreadyLoadedData, setAlreadyLoadedData] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  useEffect(() => {
+    if (memberReport !== null) {
+      setAlreadyLoadedData(true);
+    }
+  }, [memberReport]);
 
   // fetch the member report on load
   useEffect(() => {
@@ -481,7 +484,10 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
         const data = (await apiResponse.json()) as DestinyMemberReportResponse;
 
-        if (typeof data.response === 'number') {
+        if (
+          typeof data.response === 'number' ||
+          typeof data.response === 'bigint'
+        ) {
           fetchTimerInterval = window.setTimeout(() => {
             fetchReport(bungie_name, report_type).finally(() =>
               console.log('Checking in')
@@ -491,11 +497,25 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
           // stop timer
           if (fetchTimerInterval) {
             window.clearTimeout(fetchTimerInterval);
+            fetchTimerInterval = 0;
           }
         }
 
         // set membger report response
-        setMemberReport(data.response);
+        if (!alreadyLoadedData) {
+          // if we have never loaded any data into our report, update our response
+          setMemberReport(data.response);
+        } else if (typeof data.response === 'object') {
+          // only update our member report when we have the report in our response
+          setIsLoadingData(false);
+          setMemberReport(data.response);
+        } else {
+          setIsLoadingData(true);
+        }
+
+        if (!alreadyLoadedData && typeof data.response === 'object') {
+          setAlreadyLoadedData(true);
+        }
       };
 
       // fetch the member report
@@ -508,6 +528,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
       // cleanup
       if (fetchTimerInterval) {
         window.clearTimeout(fetchTimerInterval);
+        fetchTimerInterval = 0;
       }
     };
   }, [props.bungie_name, props.modes, props.season]);
@@ -518,7 +539,12 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         // this conversion is fine to do because we know we are already working with an object type
         const data = memberReport as unknown as DestinyMemberReport;
         return (
-          <div className="member-report">
+          <div
+            className={
+              (isLoadingData ? 'animate-pulse' : '') +
+              ' member-report relative top-0'
+            }
+          >
             <H3 className="text-yellow-400 text-ellipsis max-w-full whitespace-nowrap overflow-hidden">
               {data.display_name_global}
             </H3>
@@ -530,7 +556,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
               </span>
             </p>
             <Divider />
-            {renderView(viewType, data, props.modes || [])}
+            {renderOverall(memberReport, props.modes || [])}
           </div>
         );
       default:

@@ -45,4 +45,4 @@ export type DestinyMemberFireteamMember =
 export type DestinyMemberTitle = ServiceDestiny.MemberTitle;
 export type DestinyMemberReport = ServiceDestiny.MemberReport;
 export type DestinyMemberReportResponse =
-  APIResponse<ServiceDestiny.MemberReport>;
+  APIResponse<ServiceDestiny.ReportOutput>;
