@@ -1,23 +1,18 @@
 import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
-import Hero from '../components/hero';
-import { SiteHeader } from '../components/site_header';
-import DiscordLink from '../components/discord_link';
-import Container from '../components/elements/container';
-import { H2, H3, H4 } from '../components/elements/headings';
-import OffCanvas from '../components/offcanvas';
-import Image from 'next/image';
-import LoginGuard from '../components/login_guard';
-import Hyperlink from '../components/elements/hyperlink';
+import { SiteHeader } from '@website/components/site_header';
+import Container from '@website/components/elements/container';
+import { H3, H4 } from '@website/components/elements/headings';
+import OffCanvas from '@website/components/offcanvas';
+import LoginGuard from '@website/components/login_guard';
 import {
   AccountPlatformBungie,
   subscribeAccountEvent,
   unsubscribeAccountEvent,
-} from '../components/account_observer';
-import { AccountLinkedPlatformResultMap } from '../core/api_responses';
-import Button, { HyperlinkButton } from '../components/elements/button';
-import ENV from '../core/env';
-import GoosePost from '../components/goose_post';
+} from '@website/components/account_observer';
+import { HyperlinkButton } from '@website/components/elements/button';
+import ENV from '@website/core/env';
+import GoosePost from '@website/components/goose_post';
 
 type LinkedPlatformMap = {
   discord: string | null;
