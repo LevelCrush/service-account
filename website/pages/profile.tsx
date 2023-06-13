@@ -99,19 +99,6 @@ export const ProfilePage = () => {
           <LoginGuard>
             <div className="profile-section w-full">
               <H3 id="linkedAccounts">Linked Accounts</H3>
-
-              <GoosePost>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
-                iaculis ullamcorper euismod. Suspendisse eu volutpat sem.
-                Pellentesque aliquam, ante in semper aliquam, sapien urna tempor
-                mauris, interdum lacinia risus urna a ex. Nullam bibendum erat
-                quis mauris consequat, quis gravida justo interdum. Mauris eros
-                neque, mattis vel consectetur nec, auctor sed urna. Aliquam urna
-                dui, accumsan vel facilisis nec, bibendum nec est. Nam eget nunc
-                turpis. Suspendisse potenti. Fusce in tellus commodo, hendrerit
-                arcu eget, auctor sem.
-              </GoosePost>
-
               <div className="flex flex-wrap gap-4 justify-between my-8">
                 <div className="basis-full">
                   <H3>Discord</H3>
@@ -149,6 +136,17 @@ export const ProfilePage = () => {
               </div>
             </div>
           </LoginGuard>
+          <GoosePost>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
+            iaculis ullamcorper euismod. Suspendisse eu volutpat sem.
+            Pellentesque aliquam, ante in semper aliquam, sapien urna tempor
+            mauris, interdum lacinia risus urna a ex. Nullam bibendum erat quis
+            mauris consequat, quis gravida justo interdum. Mauris eros neque,
+            mattis vel consectetur nec, auctor sed urna. Aliquam urna dui,
+            accumsan vel facilisis nec, bibendum nec est. Nam eget nunc turpis.
+            Suspendisse potenti. Fusce in tellus commodo, hendrerit arcu eget,
+            auctor sem.
+          </GoosePost>
         </Container>
       </main>
     </OffCanvas>
