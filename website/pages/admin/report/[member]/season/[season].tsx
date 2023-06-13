@@ -22,6 +22,7 @@ import {
   DestinyNetworkRosterResponse,
 } from '@core/api_responses';
 import ENV from '@core/env';
+import NetworkRoster, { getNetworkRoster } from '@core/network_roster';
 
 export interface ReportPageSeasonProps {
   member: string;
@@ -34,17 +35,7 @@ export interface ReportPageSeasonProps {
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
 > = async (context) => {
-  const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/network/roster');
-
-  const network_roster = response.ok
-    ? ((await response.json()) as DestinyNetworkRosterResponse)
-    : null;
-
-  const roster =
-    network_roster && network_roster.response !== null
-      ? network_roster.response
-      : [];
+  const roster = await getNetworkRoster();
 
   let seasons = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
   seasons.sort((a, b) => b - a);
@@ -67,7 +58,7 @@ export const getServerSideProps: GetServerSideProps<
       member: context.query.member as string,
       target_season: context.query.season as string,
       modes: modes,
-      roster: roster,
+      roster,
     },
   };
 };

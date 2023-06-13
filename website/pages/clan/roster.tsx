@@ -13,6 +13,7 @@ import {
   DestinyNetworkRosterResponse,
 } from '@core/api_responses';
 import DestinyMemberCard from '@components/destiny_member_card';
+import getNetworkRoster from '@core/network_roster';
 
 export interface NetworkRosterPageProps {
   roster: DestinyMemberInformation[];
@@ -24,17 +25,8 @@ export const getServerSideProps: GetServerSideProps<
 > = async () => {
   //
 
-  const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/network/roster');
-
-  const network_roster = response.ok
-    ? ((await response.json()) as DestinyNetworkRosterResponse)
-    : null;
-
-  const bungie_names =
-    network_roster !== null && network_roster.response !== null
-      ? network_roster.response.map((member) => member.display_name)
-      : [];
+  const network_roster = await getNetworkRoster();
+  const bungie_names = network_roster.map((member) => member.display_name);
 
   const account_api = ENV.hosts.accounts;
   const search_response = await fetch(account_api + '/search/by/bungie', {
@@ -51,10 +43,7 @@ export const getServerSideProps: GetServerSideProps<
 
   return {
     props: {
-      roster:
-        network_roster && network_roster.response !== null
-          ? network_roster.response
-          : [],
+      roster: network_roster,
       linkedPlaforms:
         parsed_search && parsed_search.response !== null
           ? parsed_search.response
