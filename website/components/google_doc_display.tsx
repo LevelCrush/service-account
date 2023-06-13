@@ -1,9 +1,9 @@
 import { docs_v1 } from 'googleapis';
 import React from 'react';
-import { GoogleDocAssetMap } from '../core/google_doc';
-import { H1, H2, H3, H4, H5, H6 } from './elements/headings';
-import { Hyperlink } from './elements/hyperlink';
-import ENV from '../core/env';
+import { GoogleDocAssetMap } from '@website/core/google_doc';
+import { H1, H2, H3, H4, H5, H6 } from '@website/components/elements/headings';
+import { Hyperlink } from '@website/components/elements/hyperlink';
+import ENV from '@website/core/env';
 
 export interface GoogleDocDisplayProps {
   doc: docs_v1.Schema$Document;

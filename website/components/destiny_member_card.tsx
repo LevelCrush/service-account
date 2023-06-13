@@ -1,18 +1,17 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AccountLinkedPlatformResult,
   AccountLinkedPlatformsResponse,
   DestinyMemberInformation,
   DestinyMemberResponse,
-} from '../core/api_responses';
-import ENV from '../core/env';
-import { H4 } from './elements/headings';
-import Button, { HyperlinkButton } from './elements/button';
-import Hyperlink from './elements/hyperlink';
+} from '@website/core/api_responses';
+import ENV from '@website/core/env';
+import { H4 } from '@website/components/elements/headings';
+import Button, { HyperlinkButton } from '@website/components/elements/button';
+import Hyperlink from '@website/components/elements/hyperlink';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord, faTwitch } from '@fortawesome/free-brands-svg-icons';
-import { render } from 'react-dom';
-import LoginGuard from './login_guard';
+import LoginGuard from '@website/components/login_guard';
 
 export interface DestinyMemberCardProps {
   data?: DestinyMemberInformation;

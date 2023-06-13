@@ -1,11 +1,11 @@
-import React from "react";
-import Container from "./elements/container";
-import { H3 } from "./elements/headings";
+import React from 'react';
+import Container from '@website/components/elements/container';
+import { H3 } from '@website/components/elements/headings';
 
 /**
  * Default style for label elements
  */
-const STYLE_LABEL = "inline-block text-lg hover:cursor-pointer ";
+const STYLE_LABEL = 'inline-block text-lg hover:cursor-pointer ';
 
 export interface FormFieldPropsOption {
   value: string;
@@ -23,10 +23,10 @@ export interface FormFieldProps extends React.HTMLAttributes<HTMLElement> {
   required?: boolean;
   type:
     | React.HTMLInputTypeAttribute
-    | "custom"
-    | "select"
-    | "textarea"
-    | "toggle";
+    | 'custom'
+    | 'select'
+    | 'textarea'
+    | 'toggle';
   placeholder?: string;
   value?: string;
   options?: FormFieldPropsOption[];
@@ -123,7 +123,7 @@ function render_select(props: FormFieldProps) {
       >
         <option value="">--- Please Select ---</option>
         {(props.options || []).map((opt, index) => (
-          <option key={props.id + "_select_option_" + index} value={opt.value}>
+          <option key={props.id + '_select_option_' + index} value={opt.value}>
             {opt.text || opt.value}
           </option>
         ))}
@@ -140,9 +140,9 @@ function render_select(props: FormFieldProps) {
 function render_checkbox(props: FormFieldProps) {
   return (
     <>
-      {props.type === "toggle" ? (
+      {props.type === 'toggle' ? (
         <>
-          <label className={STYLE_LABEL + "toggle-label"} htmlFor={props.id}>
+          <label className={STYLE_LABEL + 'toggle-label'} htmlFor={props.id}>
             {props.label}
           </label>
           <br />
@@ -161,7 +161,7 @@ function render_checkbox(props: FormFieldProps) {
           onChange={props.onChange}
           required={props.required}
         />
-        {props.type === "checkbox" ? (
+        {props.type === 'checkbox' ? (
           props.label
         ) : (
           <span className="slider"></span>
@@ -178,12 +178,12 @@ function render_checkbox(props: FormFieldProps) {
  */
 function render_field(props: FormFieldProps) {
   switch (props.type) {
-    case "checkbox":
-    case "toggle":
+    case 'checkbox':
+    case 'toggle':
       return render_checkbox(props);
-    case "select":
+    case 'select':
       return render_select(props);
-    case "textarea":
+    case 'textarea':
       return render_textarea(props);
     default:
       return render_default(props);
@@ -196,7 +196,7 @@ function render_field(props: FormFieldProps) {
  * @returns
  */
 export const FormField = (props: FormFieldProps) => (
-  <div className={"field mb-8 " + (props.className || "")}>
+  <div className={'field mb-8 ' + (props.className || '')}>
     {render_field(props)}
   </div>
 );
@@ -215,7 +215,7 @@ export interface FormFieldGroupProps extends React.PropsWithChildren {
  * @returns
  */
 export const FormFieldGroup = (props: FormFieldGroupProps) => (
-  <div className={"field-group " + (props.className || "")}>
+  <div className={'field-group ' + (props.className || '')}>
     <H3 className="flex-auto w-full my-8">{props.label}</H3>
     {props.children}
   </div>

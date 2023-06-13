@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { faAngleDoubleRight, faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Routes, RouteItem } from '@core/routes';
-import Hyperlink from './elements/hyperlink';
-import { H1 } from './elements/headings';
-import AccountButton from './account_button';
+import { Routes, RouteItem } from '@website/core/routes';
+import Hyperlink from '@website/components/elements/hyperlink';
+import { H1 } from '@website/components/elements/headings';
+import AccountButton from '@website/components/account_button';
 import AccountObserver, {
   subscribeAccountEvent,
   unsubscribeAccountEvent,
-} from './account_observer';
+} from '@website/components/account_observer';
 
 export interface OffCanvasToggleProps {
   className?: string;

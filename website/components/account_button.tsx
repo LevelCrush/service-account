@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Button from './elements/button';
+import Button from '@website/components/elements/button';
 import {
   AccountEvent,
   subscribeAccountEvent,
   unsubscribeAccountEvent,
-} from './account_observer';
-import ENV from '../core/env';
+} from '@website/components/account_observer';
+import ENV from '@website/core/env';
 
 export const AccountButton = () => {
   const [displayName, setDisplayName] = useState('');

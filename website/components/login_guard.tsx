@@ -1,13 +1,13 @@
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import Container from './elements/container';
-import { H2 } from './elements/headings';
-import AccountButton from './account_button';
+import Container from '@website/components/elements/container';
+import { H2 } from '@website/components/elements/headings';
+import AccountButton from '@website/components/account_button';
 import {
   subscribeAccountEvent,
   unsubscribeAccountEvent,
-} from './account_observer';
+} from '@website/components/account_observer';
 
 export interface LoginGuardProps extends React.PropsWithChildren {
   admin?: boolean;

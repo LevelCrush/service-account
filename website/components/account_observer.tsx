@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ENV from '../core/env';
+import ENV from '@website/core/env';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 
 /**

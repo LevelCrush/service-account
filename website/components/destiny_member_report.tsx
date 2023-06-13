@@ -1,4 +1,3 @@
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   DestinyMemberReport,
@@ -6,7 +5,7 @@ import {
   DestinyMemberStats,
 } from '@website/core/api_responses';
 
-import { H3, H4, H5 } from './elements/headings';
+import { H3, H5 } from '@website/components/elements/headings';
 import ENV from '@website/core/env';
 import {
   Divider,
@@ -29,7 +28,7 @@ import {
   TabPanels,
   BarChart,
 } from '@tremor/react';
-import Hyperlink from './elements/hyperlink';
+import Hyperlink from '@website/components/elements/hyperlink';
 
 export interface MemberReportProps {
   bungie_name: string;

@@ -1,7 +1,7 @@
 import { faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
-import { Hyperlink } from './elements/hyperlink';
+import { Hyperlink } from '@website/components/elements/hyperlink';
 
 // import the polyfill
 

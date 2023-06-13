@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import Container from './elements/container';
-import { H1 } from './elements/headings';
-import Hyperlink from './elements/hyperlink';
-import { OffCanvasToggle } from './offcanvas';
-import AccountButton from './account_button';
+import Container from '@website/components/elements/container';
+import { H1 } from '@website/components/elements/headings';
+import Hyperlink from '@website/components/elements/hyperlink';
+import { OffCanvasToggle } from '@website/components/offcanvas';
+import AccountButton from '@website/components/account_button';
 
 export interface SiteHeaderProps {
   forceStickyStyle?: boolean;
