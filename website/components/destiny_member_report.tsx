@@ -6,7 +6,7 @@ import {
   DestinyMemberStats,
 } from '@website/core/api_responses';
 
-import { H3, H4 } from './elements/headings';
+import { H3, H4, H5 } from './elements/headings';
 import ENV from '@website/core/env';
 import {
   Divider,
@@ -548,9 +548,15 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
             <H3 className="text-yellow-400 text-ellipsis max-w-full whitespace-nowrap overflow-hidden">
               {data.display_name_global}
             </H3>
-            <H4>{data.member.clan ? '[' + data.member.clan.name + ']' : ''}</H4>
+            <H5>
+              <span className="mr-2">{'[' + data.snapshot_range + ']'}</span>
+              <span>
+                {data.member.clan ? '[' + data.member.clan.name + ']' : ''}
+              </span>
+            </H5>
+            <H5></H5>
             <p className="mt-4">
-              <span className="mr-4">Last seen:</span>
+              <span className="mr-2">Last seen:</span>
               <span>
                 {new Date(data.last_played_at * 1000).toLocaleString('default')}
               </span>

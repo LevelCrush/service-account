@@ -113,6 +113,8 @@ pub struct MemberReport {
     #[ts(type = "number")]
     pub membership_id: i64,
 
+    pub snapshot_range: String,
+
     pub display_name_global: String,
 
     #[ts(type = "number")]
@@ -182,6 +184,7 @@ fn merge_stats(a: &mut MemberReportStats, b: &MemberReportStats) {
 async fn merge_reports(
     bungie_name: String,
     reports: Vec<MemberConstructionReport>,
+    snapshot_range: String,
     state: &mut AppState,
 ) -> MemberReport {
     // now merge
@@ -345,6 +348,7 @@ async fn merge_reports(
 
     MemberReport {
         version: VERSION_MEMBER_REPORT_CURRENT,
+        snapshot_range,
         activity_timestamps: HashMap::from_iter(instance_timestamps.into_iter()),
         membership_id,
         display_name_global: bungie_name,
@@ -411,9 +415,9 @@ pub async fn season<T: Into<String>>(
                 .queue(Box::new(move || {
                     Box::pin(async move {
                         let season = database::seasons::get(season, &thread_app_state.database).await;
-                        let (season_start, season_end) = match season {
-                            Some(record) => (record.starts_at, record.ends_at),
-                            _ => (0, 0),
+                        let (season_start, season_end, season_number) = match season {
+                            Some(record) => (record.starts_at, record.ends_at, record.number),
+                            _ => (0, 0, -1),
                         };
 
                         let end_timestamp: u64 = season_end;
@@ -450,7 +454,9 @@ pub async fn season<T: Into<String>>(
                         }
 
                         // stop getting reports.
-                        let report = merge_reports(display_name_global, reports, &mut thread_app_state).await;
+                        let snapshot_range = format!("Season {}", season_number);
+                        let report =
+                            merge_reports(display_name_global, reports, snapshot_range, &mut thread_app_state).await;
 
                         thread_app_state
                             .cache
@@ -571,7 +577,13 @@ pub async fn lifetime<T: Into<String>>(
                             }
                         }
 
-                        let report = merge_reports(display_name_global, reports, &mut thread_app_state).await;
+                        let report = merge_reports(
+                            display_name_global,
+                            reports,
+                            "Lifetime".to_string(),
+                            &mut thread_app_state,
+                        )
+                        .await;
 
                         thread_app_state
                             .cache
