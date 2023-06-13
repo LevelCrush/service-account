@@ -1,12 +1,11 @@
 import Head from 'next/head';
 import React from 'react';
-import Hero from '../components/hero';
-import { SiteHeader } from '../components/site_header';
-import DiscordLink from '../components/discord_link';
-import Container from '../components/elements/container';
-import { H3 } from '../components/elements/headings';
-import OffCanvas from '../components/offcanvas';
-import Image from 'next/image';
+import Hero from '@website/components/hero';
+import { SiteHeader } from '@website/components/site_header';
+import DiscordLink from '@website/components/discord_link';
+import Container from '@website/components/elements/container';
+import { H3 } from '@website/components/elements/headings';
+import OffCanvas from '@website/components/offcanvas';
 
 export const HomePage = () => (
   <OffCanvas>
