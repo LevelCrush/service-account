@@ -1,14 +1,12 @@
 import Head from 'next/head';
-import React, { cache } from 'react';
-import Hero from '../../../components/hero';
-import { SiteHeader } from '../../../components/site_header';
-import OffCanvas from '../../../components/offcanvas';
+import React from 'react';
+import Hero from '@website/components/hero';
+import { SiteHeader } from '@website/components/site_header';
+import OffCanvas from '@website/components/offcanvas';
 import { GetServerSideProps } from 'next';
-import ENV from '../../../core/env';
-import { H3 } from '../../../components/elements/headings';
-import Button, { HyperlinkButton } from '../../../components/elements/button';
-import Container from '../../../components/elements/container';
-import { useRouter } from 'next/router';
+import ENV from '@website/core/env';
+import { H3 } from '@website/components/elements/headings';
+import Container from '@website/components/elements/container';
 import {
   AccountLinkedPlatformMultiSearchResponse,
   AccountLinkedPlatformResultMap,
@@ -16,8 +14,8 @@ import {
   DestinyClanResponse,
   DestinyClanRosterResponse,
   DestinyMemberInformation,
-} from '../../../core/api_responses';
-import DestinyMemberCard from '../../../components/destiny_member_card';
+} from '@website/core/api_responses';
+import DestinyMemberCard from '@website/components/destiny_member_card';
 
 export interface ClanRosterProps {
   clan: DestinyClanInformation;
