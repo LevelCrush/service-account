@@ -1,12 +1,12 @@
-import Head from "next/head";
-import Image from "next/image";
-import Container from "../components/elements/container";
-import { H2 } from "../components/elements/headings";
-import Hero from "../components/hero";
-import OffCanvas from "../components/offcanvas";
-import SiteHeader from "../components/site_header";
+import Head from 'next/head';
+import Image from 'next/image';
+import Container from '@website/components/elements/container';
+import { H2 } from '@website/components/elements/headings';
+import Hero from '@website/components/hero';
+import OffCanvas from '@website/components/offcanvas';
+import SiteHeader from '@website/components/site_header';
 
-export const Error404 = (props: any) => (
+export const Error404 = () => (
   <OffCanvas>
     <Head>
       <title>404 | Level Crush</title>
@@ -24,7 +24,6 @@ export const Error404 = (props: any) => (
             src="https://http.cat/404"
             width="640"
             height="480"
-            layout="responsive"
             alt="404 Not Found"
           ></Image>
         </div>
