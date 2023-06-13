@@ -1,19 +1,18 @@
 import React from 'react';
-import Hero from '../../../components/hero';
-import SiteHeader from '../../../components/site_header';
+import Hero from '@website/components/hero';
+import SiteHeader from '@website/components/site_header';
 import {
   TableOfContents,
   TableOfContentsNavigationItem,
-} from '../../../components/table_of_contents';
+} from '@website/components/table_of_contents';
 import Head from 'next/head';
-import Container from '../../../components/elements/container';
-import { H2 } from '../../../components/elements/headings';
-import { GoogleDoc, GoogleDocAssetMap } from '../../../core/google_doc';
-
+import Container from '@website/components/elements/container';
+import { H2 } from '@website/components/elements/headings';
+import { GoogleDoc, GoogleDocAssetMap } from '@website/core/google_doc';
 import { docs_v1 } from 'googleapis';
-import GoogleDocDisplay from '../../../components/google_doc_display';
-import OffCanvas from '../../../components/offcanvas';
-import ENV from '../../../core/env';
+import GoogleDocDisplay from '@website/components/google_doc_display';
+import OffCanvas from '@website/components/offcanvas';
+import ENV from '@website/core/env';
 
 export async function getStaticProps() {
   console.log('Grabbing Google Doc', Date.now() / 1000);
