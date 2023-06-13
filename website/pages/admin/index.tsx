@@ -1,9 +1,9 @@
 import Head from 'next/head';
-import { SiteHeader } from '@components/site_header';
-import Container from '@components/elements/container';
-import OffCanvas from '@components/offcanvas';
-import LoginGuard from '@components/login_guard';
-import { H3 } from '@components/elements/headings';
+import { SiteHeader } from '@website/components/site_header';
+import Container from '@website/components/elements/container';
+import OffCanvas from '@website/components/offcanvas';
+import LoginGuard from '@website/components/login_guard';
+import { H3 } from '@website/components/elements/headings';
 
 export const AdminIndexPage = () => {
   return (
