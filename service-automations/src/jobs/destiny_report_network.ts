@@ -29,7 +29,7 @@ export const DestinyReportNetwork = async () => {
             report_task[i].run();
             console.log('Waiting buffer time to move on');
             await new Promise((resolve) => {
-                setTimeout(() => resolve(1), 1000);
+                setTimeout(() => resolve(1), 100);
             });
             console.log('Moving on...');
         }
