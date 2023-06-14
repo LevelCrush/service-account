@@ -1,10 +1,10 @@
-import Link from 'next/link'
-import React from 'react'
+import Link from 'next/link';
+import React from 'react';
 
 export interface HyperLinkProps
   extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  href: string
-  target?: '_self' | '_blank'
+  href: string;
+  target?: '_self' | '_blank';
 }
 
 export const Hyperlink = (props: HyperLinkProps) => (
@@ -16,6 +16,6 @@ export const Hyperlink = (props: HyperLinkProps) => (
   >
     {props.children}
   </Link>
-)
+);
 
-export default Hyperlink
+export default Hyperlink;

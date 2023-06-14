@@ -122,15 +122,28 @@ export const AccountObserver = () => {
   const [accountTimerInterval, setAccountTimerInterval] = useState(0);
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [storageIsAdmin, setStorageIsAdmin] = useState(
+    window.localStorage.getItem('sess_admin') === 'yes'
+  );
+
+  const [storageDisplayName, setStorageDisplayName] = useState(
+    window.localStorage.getItem('sess_display_name') === 'yes'
+  );
+
+  console.log('StorageLogge');
 
   // setup an account session check
   const accountLoginCheck = async () => {
+    console.log('Set in Host', ENV.hosts.accounts);
     const endpoint = ENV.hosts.accounts + '/profile/json';
     const response = await fetch(endpoint, {
       method: 'GET',
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
+      next: {
+        revalidate: 0,
+      },
     });
 
     const data = response.ok

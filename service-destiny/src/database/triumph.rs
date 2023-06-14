@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-use levelcrush::{
-    database,
-    types::{destiny::MembershipId},
-};
+use levelcrush::{database, types::destiny::MembershipId};
 use levelcrush_macros::{DatabaseRecord, DatabaseResult};
 use sqlx::MySqlPool;
+use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct TriumphRecord {
@@ -31,7 +28,7 @@ pub struct TriumphTitleResult {
     pub has_gilded: i64,
     pub total_gilds: i64,
     pub can_equip: i64,
-    pub can_equip_gilded: i64
+    pub can_equip_gilded: i64,
 }
 
 pub async fn member_read(
@@ -190,8 +187,8 @@ pub async fn member_write(records: &[MemberTriumphRecord], pool: &MySqlPool) {
 }
 
 pub async fn member_titles(membership_id: MembershipId, pool: &MySqlPool) -> Vec<TriumphTitleResult> {
-    let query = sqlx::query_as!(TriumphTitleResult, 
-    r"
+    let query = sqlx::query_as!(TriumphTitleResult,
+        r"
     WITH
     target_member AS (
         SELECT members.*
@@ -255,5 +252,4 @@ pub async fn member_titles(membership_id: MembershipId, pool: &MySqlPool) -> Vec
         database::log_error(query);
         Vec::new()
     }
-
 }

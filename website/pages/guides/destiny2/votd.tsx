@@ -13,8 +13,15 @@ import { docs_v1 } from 'googleapis';
 import GoogleDocDisplay from '@website/components/google_doc_display';
 import OffCanvas from '@website/components/offcanvas';
 import ENV from '@website/core/env';
+import { GetStaticProps } from 'next';
 
-export async function getStaticProps() {
+export interface GuideVOTDPageProps {
+  navTree: TableOfContentsNavigationItem[];
+  doc: docs_v1.Schema$Document;
+  assetMap: GoogleDocAssetMap;
+}
+
+export const getStaticProps: GetStaticProps<GuideVOTDPageProps> = async () => {
   console.log('Grabbing Google Doc', Date.now() / 1000);
   const google_doc = await GoogleDoc('raidguide_votd');
 
@@ -74,19 +81,14 @@ export async function getStaticProps() {
   delete docSchema.suggestedDocumentStyleChanges;
 
   return {
+    revalidate: 3600, // 1 hour
     props: {
       navTree: navTree,
       doc: docSchema as docs_v1.Schema$Document,
-      assetMap: assetMap,
+      assetMap: assetMap || {},
     },
   };
-}
-
-export interface GuideVOTDPageProps {
-  navTree: TableOfContentsNavigationItem[];
-  doc: docs_v1.Schema$Document;
-  assetMap: GoogleDocAssetMap;
-}
+};
 
 export const GuideVOTDPage = (props: GuideVOTDPageProps) => (
   <OffCanvas>

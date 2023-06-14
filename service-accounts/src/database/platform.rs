@@ -196,10 +196,7 @@ pub async fn read(
 }
 
 /// Update the provied account platform record and returns a new updated account platform record
-pub async fn update(
-    account_platform: &mut AccountPlatform,
-    pool: &MySqlPool,
-) -> Option<AccountPlatform> {
+pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) -> Option<AccountPlatform> {
     // force the platform record to have an updated timestamp of modification
     account_platform.updated_at = unix_timestamp();
 

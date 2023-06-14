@@ -26,11 +26,7 @@ pub struct NewAccountPlatformData {
     pub value: String,
 }
 
-pub async fn read(
-    account_platform: &AccountPlatform,
-    keys: &[&str],
-    pool: &MySqlPool,
-) -> HashMap<String, RecordId> {
+pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &MySqlPool) -> HashMap<String, RecordId> {
     let mut results = HashMap::new();
 
     //sqlx/mysql does not allow us to pass an vector into a prepared statement, so we must manually construct a prepared statement and bind manually
@@ -82,11 +78,7 @@ pub async fn read(
     results
 }
 
-pub async fn write(
-    account_platform: &AccountPlatform,
-    values: &[NewAccountPlatformData],
-    pool: &MySqlPool,
-) {
+pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatformData], pool: &MySqlPool) {
     // get all keys we need to work with and at the same time construct a hash map that represents the key/value pairs we want to link
     let mut keys = Vec::new();
     let mut value_map = HashMap::new();
@@ -126,12 +118,7 @@ pub async fn write(
         // make sure to produce a 255 length version of the string if neccessary
         let mut value_trimmed = String::new();
         if record.value.len() > 255 {
-            value_trimmed = record
-                .value
-                .clone()
-                .get(0..255)
-                .unwrap_or_default()
-                .to_string();
+            value_trimmed = record.value.clone().get(0..255).unwrap_or_default().to_string();
         } else {
             value_trimmed = record.value.clone();
         }

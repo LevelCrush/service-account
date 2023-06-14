@@ -130,10 +130,7 @@ impl MySqlSessionStore {
                 .chars()
                 .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
         {
-            panic!(
-                "table name must be [a-zA-Z0-9_-], but {} was not",
-                table_name
-            );
+            panic!("table name must be [a-zA-Z0-9_-], but {} was not", table_name);
         }
 
         self.table_name = table_name.to_owned();
@@ -267,10 +264,9 @@ impl MySqlSessionStore {
     /// ```
 
     pub async fn count(&self) -> sqlx::Result<i64> {
-        let (count,) =
-            sqlx::query_as(&self.substitute_table_name("SELECT COUNT(*) FROM %%TABLE_NAME%%"))
-                .fetch_one(&mut self.connection().await?)
-                .await?;
+        let (count,) = sqlx::query_as(&self.substitute_table_name("SELECT COUNT(*) FROM %%TABLE_NAME%%"))
+            .fetch_one(&mut self.connection().await?)
+            .await?;
 
         Ok(count)
     }
@@ -290,9 +286,7 @@ impl SessionStore for MySqlSessionStore {
         .fetch_optional(&mut connection)
         .await?;
 
-        Ok(result
-            .map(|(session,)| serde_json::from_str(&session))
-            .transpose()?)
+        Ok(result.map(|(session,)| serde_json::from_str(&session)).transpose()?)
     }
 
     async fn store_session(&self, session: Session) -> Result<Option<String>> {

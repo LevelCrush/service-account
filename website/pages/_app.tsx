@@ -1,16 +1,16 @@
-import "../styles/globals.css";
-import { config } from "@fortawesome/fontawesome-svg-core";
+import '../styles/globals.css';
+import { config } from '@fortawesome/fontawesome-svg-core';
 
-import "@fortawesome/fontawesome-svg-core/styles.css";
+import '@fortawesome/fontawesome-svg-core/styles.css';
 config.autoAddCss = false;
-import type { AppProps } from "next/app";
+import type { AppProps } from 'next/app';
 
-import smoothScroll from "smoothscroll-polyfill";
-import { useEffect } from "react";
-import Head from "next/head";
+import smoothScroll from 'smoothscroll-polyfill';
+import { useEffect } from 'react';
+import Head from 'next/head';
 
-import SEO from "../next-seo.config";
-import { DefaultSeo } from "next-seo";
+import SEO from '../next-seo.config';
+import { DefaultSeo } from 'next-seo';
 
 function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {

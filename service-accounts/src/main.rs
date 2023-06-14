@@ -42,7 +42,6 @@ async fn main() {
         .parse::<u64>()
         .unwrap_or(1024);
 
-    let layer_state = app_state.clone();
     let server_port = server_port;
     Server::new(server_port)
         .enable_cors()

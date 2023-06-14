@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export interface ContainerProps {
   minimalCSS?: boolean;
@@ -8,9 +8,9 @@ export interface ContainerProps {
 export const Container = (props: React.PropsWithChildren<ContainerProps>) => (
   <div
     className={
-      "container " +
-      (props.minimalCSS ? "" : " px-4 mx-auto mt-8 mb-16 ") +
-      (props.className || "")
+      'container ' +
+      (props.minimalCSS ? '' : ' px-4 mx-auto mt-8 mb-16 ') +
+      (props.className || '')
     }
   >
     {props.children}

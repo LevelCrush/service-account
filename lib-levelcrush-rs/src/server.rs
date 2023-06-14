@@ -10,8 +10,7 @@ use {
 use crate::mysql_session::MySqlSessionStore;
 
 use axum::{
-    error_handling::HandleErrorLayer, extract::State, http::StatusCode, response::IntoResponse,
-    BoxError, Json, Router,
+    error_handling::HandleErrorLayer, extract::State, http::StatusCode, response::IntoResponse, BoxError, Json, Router,
 };
 use sqlx::MySqlPool;
 use std::{net::SocketAddr, time::Duration};
@@ -76,11 +75,7 @@ impl<T: serde::ser::Serialize> APIResponse<T> {
     }
 
     /// pushes an error onto the response.
-    pub fn error<FieldName: Into<String>, Message: Into<String>>(
-        &mut self,
-        field: FieldName,
-        message: Message,
-    ) {
+    pub fn error<FieldName: Into<String>, Message: Into<String>>(&mut self, field: FieldName, message: Message) {
         self.errors.push(APIResponseError {
             field: field.into(),
             message: message.into(),
@@ -174,22 +169,14 @@ impl Server {
         self
     }
 
-    pub async fn build<AppState, F>(
-        self,
-        routes: Router<AppState>,
-        pre_session_layer: F,
-        state: AppState,
-    ) -> Router
+    pub async fn build<AppState, F>(self, routes: Router<AppState>, pre_session_layer: F, state: AppState) -> Router
     where
         AppState: Send + Sync + Clone + 'static,
         F: FnOnce(Router) -> Router,
     {
         // configure our router
         #[allow(unused_mut)]
-        let mut router = Router::new()
-            .nest("/", routes)
-            .fallback(unknown_path)
-            .with_state(state);
+        let mut router = Router::new().nest("/", routes).fallback(unknown_path).with_state(state);
 
         // turn on cors
         if self.allow_cors {
@@ -226,10 +213,7 @@ impl Server {
                         )
                     }))
                     .layer(BufferLayer::new(self.rate_limit_buffer as usize))
-                    .layer(RateLimitLayer::new(
-                        self.rate_limit_num,
-                        self.rate_limit_per,
-                    )),
+                    .layer(RateLimitLayer::new(self.rate_limit_num, self.rate_limit_per)),
             );
         }
 
@@ -288,9 +272,7 @@ impl Server {
         // construct and output what interface/port we are intending on using
         let server_addr = SocketAddr::from(([0, 0, 0, 0], port));
         tracing::info!("listening on {}", server_addr);
-        let _ = axum::Server::bind(&server_addr)
-            .serve(router.into_make_service())
-            .await;
+        let _ = axum::Server::bind(&server_addr).serve(router.into_make_service()).await;
     }
 }
 

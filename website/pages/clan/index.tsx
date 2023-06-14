@@ -3,7 +3,7 @@ import React from 'react';
 import Hero from '@website/components/hero';
 import { SiteHeader } from '@website/components/site_header';
 import OffCanvas from '@website/components/offcanvas';
-import { GetServerSideProps } from 'next';
+import { GetServerSideProps, GetStaticProps } from 'next';
 import ENV from '@website/core/env';
 import { H3 } from '@website/components/elements/headings';
 import { HyperlinkButton } from '@website/components/elements/button';
@@ -20,17 +20,13 @@ export interface NetworkClanDirectoryPageProps {
   clans: DestinyClanInformation[];
 }
 
-export const getServerSideProps: GetServerSideProps<
+export const getStaticProps: GetStaticProps<
   NetworkClanDirectoryPageProps
 > = async () => {
   //
 
   const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/network', {
-    next: {
-      revalidate: 3600,
-    },
-  });
+  const response = await fetch(destiny_api + '/network');
 
   const network_clan = response.ok
     ? ((await response.json()) as NetworkClanResponse)

@@ -31,15 +31,20 @@ export const getServerSideProps: GetServerSideProps<ClanRosterProps> = async (
   const slug = context.query.slug;
 
   const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/clan/' + slug);
+  const [response, api_roster_response] = await Promise.all([
+    fetch(destiny_api + '/clan/' + slug, {
+      next: {
+        revalidate: 3600, // 1 hour
+      },
+    }),
+    fetch(destiny_api + '/clan/' + slug + '/roster', {
+      next: { revalidate: 3600 },
+    }),
+  ]);
 
   const clan_response = response.ok
     ? ((await response.json()) as DestinyClanResponse)
     : null;
-
-  const api_roster_response = await fetch(
-    destiny_api + '/clan/' + slug + '/roster'
-  );
 
   const roster_response = api_roster_response.ok
     ? ((await api_roster_response.json()) as DestinyClanRosterResponse)
@@ -57,6 +62,9 @@ export const getServerSideProps: GetServerSideProps<ClanRosterProps> = async (
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(bungie_names),
+    next: {
+      revalidate: 300, // 5 minutes
+    },
   });
 
   const parsed_search = search_response.ok

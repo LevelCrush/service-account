@@ -1,9 +1,9 @@
-import React from 'react'
-import Link from 'next/link'
+import React from 'react';
+import Link from 'next/link';
 
 export interface DiscordLinkProps {
-  linkText?: string
-  className?: string
+  linkText?: string;
+  className?: string;
 }
 
 export const DiscordLink = (
@@ -20,6 +20,6 @@ export const DiscordLink = (
     {props.linkText || 'Join us on Discord'}
     {props.children}
   </Link>
-)
+);
 
-export default DiscordLink
+export default DiscordLink;

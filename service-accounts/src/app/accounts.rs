@@ -4,13 +4,7 @@ use levelcrush_macros::DatabaseRecord;
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
-
-
-pub async fn exist<T: Into<String>, TS: Into<String>>(
-    token: T,
-    token_secret: TS,
-    pool: &MySqlPool,
-) -> bool {
+pub async fn exist<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &MySqlPool) -> bool {
     let query_result = sqlx::query!(
         r"
         SELECT COUNT(DISTINCT accounts.id) AS total

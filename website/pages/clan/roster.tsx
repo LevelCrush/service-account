@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Hero from '@website/components/hero';
 import { SiteHeader } from '@website/components/site_header';
 import OffCanvas from '@website/components/offcanvas';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import ENV from '@website/core/env';
 import { H3 } from '@website/components/elements/headings';
 import Container from '@website/components/elements/container';
@@ -19,11 +19,11 @@ export interface NetworkRosterPageProps {
   linkedPlaforms: AccountLinkedPlatformResultMap;
 }
 
-export const getServerSideProps: GetServerSideProps<
+export const getStaticProps: GetStaticProps<
   NetworkRosterPageProps
 > = async () => {
   //
-
+  console.log('Generating Network Roster Page');
   const network_roster = await getNetworkRoster(ENV.hosts.destiny);
   const bungie_names = network_roster.map((member) => member.display_name);
 
@@ -41,6 +41,7 @@ export const getServerSideProps: GetServerSideProps<
     : null;
 
   return {
+    revalidate: 300, // 5 minutes
     props: {
       roster: network_roster,
       linkedPlaforms:

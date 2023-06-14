@@ -25,7 +25,11 @@ export const getServerSideProps: GetServerSideProps<ClanPageProps> = async (
   const slug = context.query.slug;
 
   const destiny_api = ENV.hosts.destiny;
-  const response = await fetch(destiny_api + '/clan/' + slug);
+  const response = await fetch(destiny_api + '/clan/' + slug, {
+    next: {
+      revalidate: 3600, // one hour cache time
+    },
+  });
 
   const clan_response = response.ok
     ? ((await response.json()) as DestinyClanResponse)

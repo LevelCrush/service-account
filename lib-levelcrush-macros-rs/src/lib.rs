@@ -10,33 +10,24 @@ pub fn DatabaseRecord(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     if let syn::Fields::Named(ref mut fields) = item_struct.fields {
         // created_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub created_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub created_at: u64 }).unwrap());
 
         // updated_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub updated_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub updated_at: u64 }).unwrap());
 
         // deleted_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub deleted_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub deleted_at: u64 }).unwrap());
 
         // deleted_at field
-        fields.named.insert(
-            0,
-            syn::Field::parse_named
-                .parse2(quote! { pub id: i64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .insert(0, syn::Field::parse_named.parse2(quote! { pub id: i64 }).unwrap());
     }
 
     quote! {
@@ -53,32 +44,24 @@ pub fn TimestampFields(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     if let syn::Fields::Named(ref mut fields) = item_struct.fields {
         // created_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub created_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub created_at: u64 }).unwrap());
 
         // updated_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub updated_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub updated_at: u64 }).unwrap());
 
         // deleted_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub deleted_at: u64 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub deleted_at: u64 }).unwrap());
 
         // deleted_at field
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { pub id: i32 })
-                .unwrap(),
-        );
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub id: i32 }).unwrap());
     }
 
     quote! {

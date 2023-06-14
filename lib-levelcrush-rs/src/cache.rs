@@ -69,11 +69,7 @@ where
         CacheValue::with_duration(input, CacheDuration::Persistant, CacheDuration::Persistant)
     }
 
-    pub fn with_duration(
-        input: T,
-        duration: CacheDuration,
-        duration_max: CacheDuration,
-    ) -> CacheValue<T> {
+    pub fn with_duration(input: T, duration: CacheDuration, duration_max: CacheDuration) -> CacheValue<T> {
         let timestamp = unix_timestamp();
         CacheValue {
             data: Arc::from(RwLock::from(input)),
@@ -239,10 +235,7 @@ where
     }
 
     /// apply a custom filter map operation over the current hash map
-    pub async fn filter_map<F: FnMut((&String, &CacheValue<T>)) -> Option<T>>(
-        &self,
-        f: F,
-    ) -> Vec<T> {
+    pub async fn filter_map<F: FnMut((&String, &CacheValue<T>)) -> Option<T>>(&self, f: F) -> Vec<T> {
         let possible = {
             let reader = self.data.read().await;
             reader.iter().filter_map(f).collect::<Vec<T>>()

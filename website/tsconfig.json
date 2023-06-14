@@ -13,10 +13,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+    "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/_app.js", "core/googleSheet.mjs", "pages/leaderboards/destiny/vogtsx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "pages/_app.js",
+    "core/googleSheet.mjs",
+    "pages/leaderboards/destiny/vogtsx"
+  ],
   "exclude": ["node_modules"],
-  "extends": "../tsconfig.lib.json",
-  
+  "extends": "../tsconfig.lib.json"
 }

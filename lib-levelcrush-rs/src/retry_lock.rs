@@ -43,15 +43,9 @@ impl RetryLock {
         //before we can lock, we must make sure that we are able to
         let retries = self.wait_until_release(key).await;
         if retries > 0 {
-            tracing::info!(
-                "Had to wait for release for {} attempts, at {}",
-                retries,
-                key
-            );
+            tracing::info!("Had to wait for release for {} attempts, at {}", retries, key);
         }
-        self.cache
-            .write(key, CacheValue::persistant(unix_timestamp()))
-            .await;
+        self.cache.write(key, CacheValue::persistant(unix_timestamp())).await;
 
         retries
     }
