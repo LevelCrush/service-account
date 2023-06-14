@@ -8,7 +8,7 @@ use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
 use sqlx::MySqlPool;
 
-const CHUNK_SIZE_TRIUMPH: usize = 1000;
+const CHUNK_SIZE_TRIUMPH: usize = 500;
 
 /// sync a profile
 pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) -> RecordId {
