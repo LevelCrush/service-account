@@ -273,7 +273,11 @@ pub async fn validate(
             account_platform.expect("No account platform was found. even though it should of been there");
 
         // everytime we log in, we are going to write out this information here
-        let display_name = format!("{}#{}", discord_user.username, discord_user.discriminator);
+        let display_name = if discord_user.discriminator == "0" {
+            discord_user.username.clone()
+        } else {
+            format!("{}#{}", discord_user.username, discord_user.discriminator)
+        };
         let data = vec![
             NewAccountPlatformData {
                 key: "discord_id".to_string(),

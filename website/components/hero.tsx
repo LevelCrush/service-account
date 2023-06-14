@@ -19,9 +19,10 @@ export const Hero = (props: React.PropsWithChildren<HeroProps>) => (
     <div className="absolute top-0 left-0 bg-black opacity-[.65] w-full h-full"></div>
     {props.youtubeID ? (
       <iframe
+        id="heroEmbedFrame"
         width="1920"
         height="1080"
-        className="w-[400%]  h-[50rem] 720p:w-[80rem] 720p:h-[45rem] 1080p:w-[120rem] 1080p:h-[67.5rem] 2k:w-[144rem] 2k:h-[80rem] 1440p:w-[160rem]  1440p:h-[90rem] 4k:w-[240rem] 4k:h-[135rem]"
+        className=" w-[400%]  h-[50rem] 720p:w-[80rem] 720p:h-[45rem] 1080p:w-[120rem] 1080p:h-[67.5rem] 2k:w-[144rem] 2k:h-[80rem] 1440p:w-[160rem]  1440p:h-[90rem] 4k:w-[240rem] 4k:h-[135rem]"
         src={
           'https://www.youtube-nocookie.com/embed/' +
           encodeURIComponent(props.youtubeID) +
