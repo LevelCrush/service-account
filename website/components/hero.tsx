@@ -26,7 +26,7 @@ export const Hero = (props: React.PropsWithChildren<HeroProps>) => (
         src={
           'https://www.youtube-nocookie.com/embed/' +
           encodeURIComponent(props.youtubeID) +
-          '?vq=hd1080&controls=0&autoplay=1&disablekb=1&fs=0&showinfo=0&rel=0&loop=1&playlist=' +
+          '?iv_load_policy=3controls=0&autoplay=1&disablekb=1&fs=0&showinfo=0&rel=0&loop=1&playlist=' +
           encodeURIComponent(props.youtubeID) +
           '&modestbranding=1&playsinline=1&mute=1'
         }
