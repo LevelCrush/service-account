@@ -21,11 +21,13 @@ export const Hero = (props: React.PropsWithChildren<HeroProps>) => (
       <iframe
         width="1920"
         height="1080"
-        className="w-[400%] h-[50rem] lg:h-[67.5rem] 2k:h-[80rem] 1440p:h-[90rem] 4k:h-[135rem]"
+        className="w-[400%]  h-[50rem] 720p:w-[80rem] 720p:h-[45rem] 1080p:w-[120rem] 1080p:h-[67.5rem] 2k:w-[144rem] 2k:h-[80rem] 1440p:w-[160rem]  1440p:h-[90rem] 4k:w-[240rem] 4k:h-[135rem]"
         src={
           'https://www.youtube-nocookie.com/embed/' +
-          props.youtubeID +
-          '?vq=hd1080&controls=0&autoplay=1&disablekb=1&fs=0&showinfo=0&rel=0&loop=1&modestbranding=1&playsinline=1&mute=1'
+          encodeURIComponent(props.youtubeID) +
+          '?vq=hd1080&controls=0&autoplay=1&disablekb=1&fs=0&showinfo=0&rel=0&loop=1&playlist=' +
+          encodeURIComponent(props.youtubeID) +
+          '&modestbranding=1&playsinline=1&mute=1'
         }
         title="YouTube video player"
         frameBorder="0"
