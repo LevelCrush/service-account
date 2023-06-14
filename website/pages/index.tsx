@@ -14,7 +14,10 @@ export const HomePage = () => (
     </Head>
     <SiteHeader />
     <main>
-      <Hero className="min-h-[40rem] overflow-hidden top-0 relative"></Hero>
+      <Hero
+        className="min-h-[40rem] overflow-hidden top-0 relative"
+        youtubeID="5FNd-W7iEAU"
+      ></Hero>
       <div className="container mx-auto">
         <div className="flex flex-wrap justify-between">
           <div className="flex-[1_1_auto] lg:flex-[0_1_40%]">
