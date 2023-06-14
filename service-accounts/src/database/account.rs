@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use levelcrush::{database, util::unix_timestamp};
-use levelcrush_macros::{DatabaseRecord, DatabaseResultSerde};
 use sqlx::MySqlPool;
+
+use levelcrush::{database, util::unix_timestamp};
+use levelcrush_macros::{project_path, DatabaseRecord, DatabaseResultSerde};
 
 #[DatabaseResultSerde]
 pub struct AccountLinkedPlatformsResult {
@@ -24,19 +25,17 @@ pub struct Account {
 pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &MySqlPool) -> Option<Account> {
     let query_result = sqlx::query_as!(
         Account,
-        r"
-        SELECT
+        r"SELECT
             accounts.*
-        FROM accounts
+        FROM `levelcrush_accounts`.accounts AS accounts
         WHERE accounts.token = ?
         AND accounts.token_secret = ?
-        LIMIT 1
-    ",
+        LIMIT 1",
         token.into(),
         token_secret.into()
-    )
-    .fetch_optional(pool)
-    .await;
+    );
+
+    let query_result = query_result.fetch_optional(pool).await;
 
     if let Ok(query_result) = query_result {
         query_result
