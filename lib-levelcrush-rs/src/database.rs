@@ -24,7 +24,6 @@ pub async fn connect() -> MySqlPool {
 
     MySqlPoolOptions::new()
         .max_connections(max_connections)
-        .min_connections(max_connections)
         .connect_with(database_options)
         .await
         .expect("Could not make database connection")
