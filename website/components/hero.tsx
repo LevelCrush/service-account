@@ -21,7 +21,7 @@ export const Hero = (props: React.PropsWithChildren<HeroProps>) => (
       <iframe
         width="1920"
         height="1080"
-        className="w-[400%] h-[50rem] lg:h-[67.5rem] xl:h-[135rem]"
+        className="w-[400%] h-[50rem] lg:h-[67.5rem] 2k:h-[80rem] 1440p:h-[90rem] 4k:h-[135rem]"
         src={
           'https://www.youtube-nocookie.com/embed/' +
           props.youtubeID +
