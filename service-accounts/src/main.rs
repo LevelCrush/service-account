@@ -45,7 +45,7 @@ async fn main() {
     let server_port = server_port;
     Server::new(server_port)
         .enable_cors()
-        .enable_session_db(app_state.database.clone())
+        .enable_session()
         .enable_rate_limit(rate_limit, Duration::from_secs(rate_limit_per), rate_limit_buffer)
         .run(routes::router(), app_state.clone())
         .await;
