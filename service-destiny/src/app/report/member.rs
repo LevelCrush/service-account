@@ -431,7 +431,7 @@ pub async fn season<T: Into<String>>(
                             season_end
                         };
 
-                        if season_nubmer > max_snapshotable_season {
+                        if season_number > max_snapshotable_season {
                             tracing::info!(
                                 "Target {} snapshot is being ran from season {} start to now() timestamp",
                                 season_number,
