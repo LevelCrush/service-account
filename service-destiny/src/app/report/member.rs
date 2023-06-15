@@ -434,8 +434,8 @@ pub async fn season<T: Into<String>>(
                         if season_number > max_snapshotable_season {
                             tracing::info!(
                                 "Target {} snapshot is being ran from season {} start to now() timestamp",
+                                bungie_name,
                                 season_number,
-                                bungie_name
                             );
                         }
 
