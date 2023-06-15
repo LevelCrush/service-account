@@ -1,5 +1,5 @@
 use crate::{database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView};
-use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp};
+use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp, uuid::Uuid};
 use sqlx::MySqlPool;
 
 #[derive(Clone, Debug)]
@@ -9,6 +9,7 @@ pub struct AppState {
     pub profiles: MemoryCache<ProfileView>,
     pub mass_searches: MemoryCache<Vec<AccountLinkedPlatformsResult>>,
     pub searches: MemoryCache<AccountLinkedPlatformsResult>,
+    pub challenges: MemoryCache<ProfileView>,
     pub guard: RetryLock,
 }
 
@@ -29,6 +30,7 @@ impl AppState {
             mass_searches: MemoryCache::new(),
             searches: MemoryCache::new(),
             guard: RetryLock::default(),
+            challenges: MemoryCache::new(),
         }
     }
 }
