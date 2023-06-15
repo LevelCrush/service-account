@@ -1,9 +1,6 @@
+use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResultSerde, project_str, util::unix_timestamp};
+use sqlx::{Execute, MySqlPool};
 use std::collections::HashMap;
-
-use sqlx::MySqlPool;
-
-use levelcrush::{database, util::unix_timestamp};
-use levelcrush_macros::{project_path, DatabaseRecord, DatabaseResultSerde};
 
 #[DatabaseResultSerde]
 pub struct AccountLinkedPlatformsResult {
@@ -23,19 +20,12 @@ pub struct Account {
 }
 
 pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &MySqlPool) -> Option<Account> {
-    let query_result = sqlx::query_as!(
-        Account,
-        r"SELECT
-            accounts.*
-        FROM `levelcrush_accounts`.accounts AS accounts
-        WHERE accounts.token = ?
-        AND accounts.token_secret = ?
-        LIMIT 1",
-        token.into(),
-        token_secret.into()
-    );
+    let token = token.into();
+    let token_secret = token_secret.into();
 
-    let query_result = query_result.fetch_optional(pool).await;
+    let query_result = sqlx::query_file_as!(Account, "queries/account_get_by_token.sql", token, token_secret)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query_result) = query_result {
         query_result
@@ -60,45 +50,17 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     let token_secret = format!("{:x}", md5::compute(token_secret_seed.into()));
     let timestamp = unix_timestamp();
 
-    let query_result = sqlx::query!(
-        r"
-        INSERT INTO accounts
-        SET
-            id = NULL,
-            token = ?,
-            token_secret = ?,
-            admin = 0,
-            timezone = '',
-            last_login_at = 0,
-            created_at = ?,
-            updated_at = 0,
-            deleted_at = 0
-    ",
-        token,
-        token_secret,
-        timestamp
-    )
-    .execute(pool)
-    .await;
+    let query_result = sqlx::query_file!("queries/account_insert.sql", token, token_secret, timestamp)
+        .execute(pool)
+        .await;
 
     // if we were able to insert a new user fetch it based off the last inserted id from our query result
     let mut user = None;
     if let Ok(query_result) = query_result {
         let last_inserted_id = query_result.last_insert_id();
-        let account_result = sqlx::query_as!(
-            Account,
-            r"
-            SELECT
-                accounts.*
-            FROM accounts
-            WHERE accounts.id = ?
-            AND accounts.deleted_at = 0
-            LIMIT 1
-        ",
-            last_inserted_id
-        )
-        .fetch_optional(pool)
-        .await;
+        let account_result = sqlx::query_file_as!(Account, "queries/account_get_by_id.sql", last_inserted_id)
+            .fetch_optional(pool)
+            .await;
 
         if let Ok(account_result) = account_result {
             user = account_result;
@@ -113,23 +75,9 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
 }
 
 pub async fn all_data(account: &Account, pool: &MySqlPool) -> HashMap<String, HashMap<String, String>> {
-    let query_results = sqlx::query!(
-        r"
-            SELECT
-                account_platforms.platform,
-                account_platforms.platform_user,
-                account_platform_data.key,
-                account_platform_data.value
-            FROM account_platform_data
-            INNER JOIN account_platforms ON account_platform_data.platform = account_platforms.id
-            INNER JOIN accounts ON account_platform_data.account = accounts.id
-            WHERE account_platform_data.account = ?
-            ORDER BY account_platforms.platform ASC, account_platforms.id ASC, account_platform_data.key ASC
-    ",
-        account.id
-    )
-    .fetch_all(pool)
-    .await;
+    let query_results = sqlx::query_file!("queries/account_platform_all_data.sql", account.id)
+        .fetch_all(pool)
+        .await;
 
     // loop through the data and construct a hashmap of those values aggregated
     let mut results = HashMap::new();
@@ -162,24 +110,7 @@ fn with_bungie_account(search: bool, total_input: usize) -> String {
         String::new()
     };
 
-    format!(
-        r"
-        bungie_platform_accounts AS (
-            SELECT
-                account_platforms.account AS account,
-                membership_data.platform AS platform,
-                membership_data.value AS display_name
-            FROM account_platforms AS account_platforms
-            INNER JOIN account_platform_data AS membership_data ON
-                account_platforms.id = membership_data.platform AND
-                account_platforms.account = membership_data.account AND
-                account_platforms.platform = 'bungie' AND
-                membership_data.key = 'unique_name'
-            {}
-        )
-    ",
-        where_search
-    )
+    project_str!("queries/account_search.with.bungie.sql", where_search)
 }
 
 fn with_discord_account(search: bool, total_input: usize) -> String {
@@ -193,24 +124,7 @@ fn with_discord_account(search: bool, total_input: usize) -> String {
     } else {
         String::new()
     };
-    format!(
-        r"
-        discord_platform_accounts AS (
-            SELECT
-                account_platforms.account AS account,
-                membership_data.platform AS platform,
-                membership_data.value AS display_name
-            FROM account_platforms AS account_platforms
-            INNER JOIN account_platform_data AS membership_data ON
-                account_platforms.id = membership_data.platform AND
-                account_platforms.account = membership_data.account AND
-                account_platforms.platform = 'discord' AND
-                membership_data.key = 'display_name'
-            {}
-        )
-        ",
-        where_search
-    )
+    project_str!("queries/account_search.with.discord.sql", where_search)
 }
 
 fn with_twitch_account(search: bool, total_input: usize) -> String {
@@ -225,24 +139,7 @@ fn with_twitch_account(search: bool, total_input: usize) -> String {
         String::new()
     };
 
-    format!(
-        r"
-        twitch_platform_accounts AS (
-            SELECT
-                account_platforms.account AS account,
-                membership_data.platform AS platform,
-                membership_data.value AS display_name
-            FROM account_platforms AS account_platforms
-            INNER JOIN account_platform_data AS membership_data ON
-                account_platforms.id = membership_data.platform AND
-                account_platforms.account = membership_data.account AND
-                account_platforms.platform = 'twitch' AND
-                membership_data.key = 'display_name'
-            {}
-        )
-        ",
-        where_search
-    )
+    project_str!("queries/account_search.with.twitch.sql", where_search)
 }
 
 pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<AccountLinkedPlatformsResult> {
@@ -253,30 +150,13 @@ pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<Acco
     ]
     .join(",");
 
-    let statement = format!(
-        r"
-        WITH
-            {}
-        SELECT
-            accounts.token AS account_token,
-            discord_platform_accounts.display_name AS discord,
-            COALESCE(bungie_platform_accounts.display_name, '') AS bungie,
-            COALESCE(twitch_platform_accounts.display_name, '') AS twitch
-        FROM bungie_platform_accounts
-        INNER JOIN accounts ON  bungie_platform_accounts.account = accounts.id
-        INNER JOIN discord_platform_accounts ON accounts.id = discord_platform_accounts.account # Every account must have a linked discord
-        LEFT JOIN twitch_platform_accounts ON accounts.id = twitch_platform_accounts.account
-    ",
-        with_tables
-    );
-
+    let statement = project_str!("queries/account_search_by_bungie_bulk.sql", with_tables);
     let mut query_builder = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str());
     for bungie_id in bungie_ids.iter() {
         query_builder = query_builder.bind(bungie_id);
     }
 
     let query = query_builder.fetch_all(pool).await;
-
     if let Ok(query) = query {
         query
     } else {
@@ -293,24 +173,7 @@ pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLin
     ]
     .join(",");
 
-    let statement = format!(
-        r"
-        WITH
-            {}
-        SELECT
-            accounts.token AS account_token,
-            discord_platform_accounts.display_name AS discord,
-            COALESCE(bungie_platform_accounts.display_name, '') AS bungie,
-            COALESCE(twitch_platform_accounts.display_name, '') AS twitch
-        FROM bungie_platform_accounts
-        INNER JOIN accounts ON  bungie_platform_accounts.account = accounts.id
-        INNER JOIN discord_platform_accounts ON accounts.id = discord_platform_accounts.account # Every account must have a linked discord
-        LEFT JOIN twitch_platform_accounts ON accounts.id = twitch_platform_accounts.account
-        LIMIT 1
-
-    ",
-        with_tables
-    );
+    let statement = project_str!("queries/account_search_by_bungie.sql", with_tables);
 
     let query = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str())
         .bind(bungie_id)

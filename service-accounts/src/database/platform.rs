@@ -52,19 +52,8 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
     );
     let token = format!("{:X}", md5::compute(token_seed));
 
-    let query_result = sqlx::query!(
-        r"
-        INSERT INTO account_platforms
-        SET
-            id = NULL,
-            account = ?,
-            token = ?,
-            platform = ?,
-            platform_user = ?,
-            created_at = ?,
-            updated_at = 0,
-            deleted_at = 0
-    ",
+    let query_result = sqlx::query_file!(
+        "queries/account_platform_insert.sql",
         new_platform.account,
         token,
         new_platform.platform.to_string(),
@@ -77,14 +66,9 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
     // attempt to fetch the last inserted platform record
     if let Ok(query_result) = query_result {
         let last_inserted_id = query_result.last_insert_id();
-        let platform_result = sqlx::query_as!(
+        let platform_result = sqlx::query_file_as!(
             AccountPlatform,
-            r"
-                SELECT
-                    account_platforms.*
-                FROM account_platforms  
-                WHERE account_platforms.id = ?
-            ",
+            "queries/account_platform_get_by_id.sql",
             last_inserted_id
         )
         .fetch_optional(pool)
@@ -108,18 +92,9 @@ pub async fn from_account(
     platform_type: AccountPlatformType,
     pool: &MySqlPool,
 ) -> Option<AccountPlatform> {
-    let query_result = sqlx::query_as!(
+    let query_result = sqlx::query_file_as!(
         AccountPlatform,
-        r"
-        SELECT 
-            account_platforms.*
-        FROM account_platforms
-        INNER JOIN accounts ON account_platforms.account = accounts.id AND accounts.deleted_at = 0
-        WHERE accounts.id = ?
-        AND account_platforms.deleted_at = 0
-        AND account_platforms.platform = ?
-        ORDER BY account_platforms.created_at ASC
-    ",
+        "queries/account_platform_from_account.sql",
         account.id,
         platform_type.to_string()
     )
@@ -140,16 +115,9 @@ pub async fn match_account(
     platform_type: AccountPlatformType,
     pool: &MySqlPool,
 ) -> Option<Account> {
-    let query_result = sqlx::query_as!(
+    let query_result = sqlx::query_file_as!(
         Account,
-        r"
-        SELECT 
-            accounts.*
-        FROM account_platforms
-        INNER JOIN accounts ON account_platforms.account = accounts.id AND accounts.deleted_at = 0
-        WHERE account_platforms.platform = ?
-        AND account_platforms.platform_user = ?
-    ",
+        "queries/account_platform_match_account.sql",
         platform_type.to_string(),
         platform_user
     )
@@ -170,17 +138,9 @@ pub async fn read(
     platform_user: String,
     pool: &MySqlPool,
 ) -> Option<AccountPlatform> {
-    let query_result = sqlx::query_as!(
+    let query_result = sqlx::query_file_as!(
         AccountPlatform,
-        r"
-        SELECT 
-            account_platforms.*
-        FROM account_platforms
-        WHERE account_platforms.platform = ?
-        AND account_platforms.platform_user = ?
-        ORDER BY account_platforms.created_at ASC
-        LIMIT 1
-    ",
+        "queries/account_platform_read.sql",
         platform_type.to_string(),
         platform_user
     )
@@ -200,14 +160,8 @@ pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) ->
     // force the platform record to have an updated timestamp of modification
     account_platform.updated_at = unix_timestamp();
 
-    sqlx::query!(
-        r"
-            UPDATE account_platforms
-            SET 
-                account = ?,
-                updated_at = ?
-            WHERE id = ?
-    ",
+    sqlx::query_file!(
+        "queries/account_platform_update.sql",
         account_platform.account,
         account_platform.updated_at,
         account_platform.id
@@ -216,15 +170,10 @@ pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) ->
     .await
     .ok();
 
-    let query = sqlx::query_as!(
+    let query = sqlx::query_file_as!(
         AccountPlatform,
-        r"
-        SELECT
-            account_platforms.*
-        FROM account_platforms
-        WHERE account_platforms.id = ?
-    ",
-        account_platform.id
+        "queries/account_platform_get_by_id.sql",
+        account_platform.id,
     )
     .fetch_optional(pool)
     .await;
@@ -241,26 +190,14 @@ pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) ->
 /// This is a permanent operation
 pub async fn unlink(account_platform: &AccountPlatform, pool: &MySqlPool) {
     // remove the account platform data first
-    sqlx::query!(
-        r"
-        DELETE FROM account_platform_data 
-        WHERE account_platform_data.platform = ?
-        ",
-        account_platform.id
-    )
-    .execute(pool)
-    .await
-    .ok();
+    sqlx::query_file!("queries/account_platform_data_unlink.sql", account_platform.id)
+        .execute(pool)
+        .await
+        .ok();
 
     // remove the account platform now
-    sqlx::query!(
-        r"
-        DELETE FROM account_platforms
-        WHERE account_platforms.id = ?
-    ",
-        account_platform.id
-    )
-    .execute(pool)
-    .await
-    .ok();
+    sqlx::query_file!("queries/account_platform_unlink.sql", account_platform.id)
+        .execute(pool)
+        .await
+        .ok();
 }

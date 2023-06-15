@@ -16,6 +16,8 @@ cors = ["server"]
 default = ["server", "database", "session", "cors"]
 
 [dependencies]
+levelcrush-macros = { path = "../lib-levelcrush-macros-rs" }
+
 #async runtime
 tokio = { version = "1.25.0", features = ["full", "tracing"] }
 
