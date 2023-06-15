@@ -1,7 +1,8 @@
+use levelcrush::macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
+use levelcrush::project_str;
 use levelcrush::types::destiny::InstanceId;
 use levelcrush::types::{destiny::ManifestHash, RecordId};
 use levelcrush::{database, BigDecimal};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
@@ -48,16 +49,7 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<ManifestHa
     let mut results = HashMap::new();
 
     let in_prepare_pos = vec!["?"; hashes.len()].join(",");
-    let statement = format!(
-        r"
-            SELECT 
-                activities.id,
-                activities.hash
-            FROM activities
-            WHERE activities.hash IN ({})
-        ",
-        in_prepare_pos
-    );
+    let statement = project_str!("queries/activity_exist_multi.sql", in_prepare_pos);
 
     // prepare statement and then bind every hash
     let mut query = sqlx::query_as::<_, ActivitySearchResult>(statement.as_str());
@@ -84,36 +76,7 @@ pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
     let query_parameters = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
-    let statement = format!(
-        r"
-            INSERT INTO activities (
-                `id`, 
-                `hash`, 
-                `index`, 
-                `activity_type`,
-                `name`, 
-                `description`, 
-                `image_url`, 
-                `fireteam_min_size`,
-                `fireteam_max_size`,
-                `max_players`,
-                `requires_guardian_oath`,
-                `is_pvp`,
-                `matchmaking_enabled`,
-                `created_at`,
-                `updated_at`, 
-                `deleted_at`
-            )
-            VALUES {}
-            ON DUPLICATE KEY UPDATE
-                `name` = VALUES(`name`),
-                `description` = VALUES(`description`),
-                `image_url` = VALUES(`image_url`),
-                `updated_at` = VALUES(`created_at`),
-                `deleted_at` = VALUES(`deleted_at`)
-        ",
-        query_parameters
-    );
+    let statement = project_str!("queries/activity_write.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
@@ -146,25 +109,7 @@ pub async fn from_instances(instance_ids: &[InstanceId], pool: &MySqlPool) -> Ve
     }
 
     let prepared_pos = vec!["?"; instance_ids.len()].join(",");
-    let statement = format!(
-        r"
-        SELECT
-            COALESCE(activities.name, 'Classified') AS activity_name,
-            COALESCE(activities.description, 'N/A') AS activity_description,
-            instances.activity_hash AS activity_hash,
-            COALESCE(director_activity.name, 'Classified') as director_activity_name,
-            COALESCE(director_activity.description,'N/A') AS director_activity_description,
-            instances.activity_director_hash AS director_activity_hash,
-            COUNT(DISTINCT instances.instance_id) AS total,
-            SUM(instances.completed) AS total_completed
-        FROM instances
-        LEFT JOIN activities ON instances.activity_hash = activities.hash
-        LEFT JOIN activities AS director_activity ON instances.activity_director_hash = director_activity.hash
-        WHERE instances.instance_id IN ({})
-        GROUP BY  instances.activity_hash, instances.activity_director_hash
-    ",
-        prepared_pos
-    );
+    let statement = project_str!("queries/activity_from_instances.sql", prepared_pos);
 
     let mut query_builder = sqlx::query_as::<_, ActivityInstanceResult>(&statement);
     for instance in instance_ids.iter() {

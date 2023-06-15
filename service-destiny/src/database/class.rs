@@ -1,6 +1,6 @@
-use levelcrush::database;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::{destiny::ManifestHash, RecordId};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
+use levelcrush::{database, project_str};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
@@ -28,16 +28,7 @@ pub async fn exists_bulk(hashes: &[ManifestHash], pool: &MySqlPool) -> HashMap<M
     let mut results = HashMap::new();
 
     let in_prepare_pos = vec!["?"; hashes.len()].join(",");
-    let statement = format!(
-        r"
-        SELECT
-            classes.id,
-            classes.hash
-        FROM classes
-        WHERE classes.hash IN ({})
-    ",
-        in_prepare_pos
-    );
+    let statement = project_str!("queries/class_exist_multi.sql", in_prepare_pos);
 
     let mut query = sqlx::query_as::<_, ClassSearchResult>(statement.as_str());
     for hash in hashes.iter() {
@@ -64,27 +55,7 @@ pub async fn write(values: &[ClassRecord], pool: &MySqlPool) {
     let query_parameters = vec!["(?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
-    let statement = format!(
-        r"
-            INSERT INTO classes (
-                `id`,
-                `hash`,
-                `index`,
-                `type`,
-                `name`,
-                `created_at`,
-                `updated_at`,
-                `deleted_at`
-            )
-            VALUES {} 
-            ON DUPLICATE KEY UPDATE
-                `name` = VALUES(`name`),
-                `type` = VALUES(`type`),
-                `updated_at` = VALUES(`created_at`),
-                `deleted_at` = VALUES(`deleted_at`)
-        ",
-        query_parameters
-    );
+    let statement = project_str!("queries/class_write.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {

@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-
 use levelcrush::database;
-use levelcrush_macros::DatabaseRecord;
+use levelcrush::macros::DatabaseRecord;
+use levelcrush::project_str;
 use sqlx::MySqlPool;
+use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct SeasonRecord {
@@ -15,18 +15,9 @@ pub struct SeasonRecord {
 }
 
 pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
-    let query = sqlx::query_as!(
-        SeasonRecord,
-        r"
-            SELECT 
-                *
-            FROM seasons 
-            WHERE seasons.number = ?
-        ",
-        number
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get.sql", number)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query) = query {
         query
@@ -43,15 +34,7 @@ pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord
 
     let prepared_pos = vec!["?"; hashes.len()].join(",");
 
-    let statement = format!(
-        r"
-            SELECT 
-                *
-            FROM seasons
-            WHERE seasons.hash IN ({})
-        ",
-        prepared_pos
-    );
+    let statement = project_str!("queries/season_read.sql", prepared_pos);
 
     let mut query_builder = sqlx::query_as::<_, SeasonRecord>(&statement);
     for hash in hashes.iter() {
@@ -72,28 +55,7 @@ pub async fn write(records: &[SeasonRecord], pool: &MySqlPool) {
 
     let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
-    let statement = format!(
-        r"
-        INSERT INTO seasons (
-            `id`,
-            `hash`,
-            `name`,
-            `pass_hash`,
-            `number`,
-            `starts_at`,
-            `ends_at`,
-            `created_at`,
-            `updated_at`,
-            `deleted_at`
-        )
-        VALUES {}
-        ON DUPLICATE KEY UPDATE 
-            `name` = VALUES(`name`),
-            `updated_at` = VALUES(`created_at`),
-            `deleted_at` = VALUES(`deleted_at`)
-    ",
-        prepared_pos
-    );
+    let statement = project_str!("queries/season_write.sql", prepared_pos);
 
     let mut query_builder = sqlx::query(&statement);
     for record in records.iter() {

@@ -1910,7 +1910,6 @@ dependencies = [
  "base64 0.21.2",
  "clap",
  "levelcrush",
- "levelcrush-macros",
  "md5",
  "reqwest",
  "serde",

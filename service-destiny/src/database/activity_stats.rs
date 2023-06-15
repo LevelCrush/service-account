@@ -1,7 +1,8 @@
 use levelcrush::database;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
+use levelcrush::project_str;
 use levelcrush::types::destiny::{CharacterId, InstanceId};
 use levelcrush::types::RecordId;
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
@@ -48,19 +49,7 @@ pub async fn existing(
     }
 
     let prepared_statement_ins = vec!["?"; instance_ids.len()].join(",");
-
-    let statement = format!(
-        r"
-        SELECT 
-            member_activity_stats.id,
-            member_activity_stats.instance_id
-        FROM member_activity_stats
-        WHERE member_activity_stats.character_id = ?
-        AND member_activity_stats.instance_id IN({})
-
-    ",
-        prepared_statement_ins
-    );
+    let statement = project_str!("queries/activity_stats_existing.sql", prepared_statement_ins);
 
     let mut query_builder = sqlx::query_as::<_, ActivityStatExistingResult>(statement.as_str());
     // bind character id first
@@ -91,30 +80,7 @@ pub async fn write(values: &[ActivityStatRecord], pool: &MySqlPool) {
     }
 
     let query_parameters = vec!["(?,?,?, ?,?,?,?,?,?,?)"; values.len()].join(",");
-
-    let statement = format!(
-        r"
-            INSERT INTO member_activity_stats (
-                `id`,
-                `membership_id`,
-                `character_id`,
-                `instance_id`,
-                `name`,
-                `value`,
-                `value_display`,
-                `created_at`,
-                `updated_at`,
-                `deleted_at`
-            )
-            VALUES {}
-            ON DUPLICATE KEY UPDATE 
-                `value` = VALUES(`value`),
-                `value_display` = VALUES(`value_display`),
-                `updated_at` = VALUES(`created_at`),
-                `deleted_at` = VALUES(`deleted_at`)
-        ",
-        query_parameters
-    );
+    let statement = project_str!("queries/activity_stats_insert.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for record in values.iter() {
@@ -154,22 +120,7 @@ pub async fn get_instances(
         StatFilter::None => String::new(),
     };
 
-    let statement = format!(
-        r"
-        SELECT
-            member_activity_stats.membership_id,
-            member_activity_stats.instance_id,
-            member_activity_stats.value,
-            member_activity_stats.value_display
-        FROM member_activity_stats
-        WHERE member_activity_stats.name = ?
-        AND member_activity_stats.membership_id = ?
-        {}
-        AND member_activity_stats.instance_id IN ({})
-        GROUP BY member_activity_stats.membership_id, member_activity_stats.instance_id, member_activity_stats.value, member_activity_stats.value_display",
-        filter_str, prepared_pos
-    );
-
+    let statement = project_str!("queries/activity_stats_from_instances.sql", filter_str, prepared_pos);
     let mut query_builder = sqlx::query_as::<_, ActivityStatResult>(&statement)
         .bind(stat)
         .bind(membership_id);

@@ -1,6 +1,6 @@
 use levelcrush::database;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::{destiny::CharacterId, RecordId};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
 use sqlx::MySqlPool;
 
 #[DatabaseRecord]
@@ -29,19 +29,9 @@ pub struct CharacterStatusRecord {
 
 /// get a full character record from the database
 pub async fn get(character_id: CharacterId, pool: &MySqlPool) -> Option<CharacterRecord> {
-    let query = sqlx::query_as!(
-        CharacterRecord,
-        r"
-            SELECT
-                member_characters.*
-            FROM member_characters
-            WHERE member_characters.character_id = ?
-            LIMIT 1
-         ",
-        character_id
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file_as!(CharacterRecord, "queries/character_get.sql", character_id)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query) = query {
         query
@@ -53,26 +43,8 @@ pub async fn get(character_id: CharacterId, pool: &MySqlPool) -> Option<Characte
 
 /// inserts a new character record into the database
 pub async fn create(character: CharacterRecord, database: &MySqlPool) -> RecordId {
-    let query = sqlx::query!(
-        r"
-            INSERT INTO member_characters
-            SET
-                member_characters.membership_id = ?,
-                member_characters.platform = ?,
-                member_characters.character_id = ?,
-                member_characters.class_hash = ?,
-                member_characters.light = ?,
-                member_characters.last_played_at = ?,
-                member_characters.minutes_played_session = ?,
-                member_characters.minutes_played_lifetime = ?,
-                member_characters.emblem_hash = ?,
-                member_characters.emblem_url = ?,
-                member_characters.emblem_background_url = ?,
-                member_characters.created_at = ?,
-                member_characters.updated_at = 0,
-                member_characters.deleted_at = 0,
-                member_characters.id = 0
-        ",
+    let query = sqlx::query_file!(
+        "queries/character_insert.sql",
         character.membership_id,
         character.platform,
         character.character_id,
@@ -99,25 +71,8 @@ pub async fn create(character: CharacterRecord, database: &MySqlPool) -> RecordI
 
 /// updates a record in the database
 pub async fn update(character: &CharacterRecord, database: &MySqlPool) -> bool {
-    let query = sqlx::query!(
-        r"
-            UPDATE member_characters
-            SET
-                member_characters.membership_id = ?,
-                member_characters.platform = ?,
-                member_characters.character_id = ?,
-                member_characters.class_hash = ?,
-                member_characters.light = ?,
-                member_characters.last_played_at = ?,
-                member_characters.minutes_played_session = ?,
-                member_characters.minutes_played_lifetime = ?,
-                member_characters.emblem_hash = ?,
-                member_characters.emblem_url = ?,
-                member_characters.emblem_background_url = ?,
-                member_characters.updated_at = ?,
-                member_characters.deleted_at = ?
-            WHERE member_characters.id = ?
-        ",
+    let query = sqlx::query_file!(
+        "queries/character_update.sql",
         character.membership_id,
         character.platform,
         character.character_id,

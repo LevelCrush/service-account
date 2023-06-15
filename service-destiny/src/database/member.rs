@@ -1,9 +1,9 @@
-use levelcrush::database;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
 use levelcrush::{bigdecimal::ToPrimitive, BigDecimal};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
+use levelcrush::{database, project_str};
 use sqlx::{mysql::MySqlRow, MySqlPool, Row};
 
 #[DatabaseRecord]
@@ -53,15 +53,9 @@ pub async fn get_snapshot(
     version: u8,
     pool: &MySqlPool,
 ) -> Option<MemberSnapshotRecord> {
-    let query = sqlx::query_as!(
+    let query = sqlx::query_file_as!(
         MemberSnapshotRecord,
-        r"
-            SELECT *
-            FROM member_snapshots 
-            WHERE member_snapshots.membership_id = ?
-            AND member_snapshots.snapshot_name = ?
-            AND member_snapshots.version = ?
-        ",
+        "queries/member_snapshot_get.sql",
         membership_id,
         snapshot,
         version,
@@ -78,23 +72,8 @@ pub async fn get_snapshot(
 }
 
 pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version: u8, data: String, pool: &MySqlPool) {
-    let query = sqlx::query!(
-        r"INSERT INTO member_snapshots
-        (
-            `id`,
-            `membership_id`,
-            `snapshot_name`,
-            `version`,
-            `data`,
-            `created_at`,
-            `updated_at`,
-            `deleted_at`
-        )
-        VALUES (0, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-            `data` = VALUES(`data`),
-            `updated_at` = VALUES(`created_at`)
-        ",
+    let query = sqlx::query_file!(
+        "queries/member_snapshot_write.sql",
         membership_id,
         snapshot,
         version,
@@ -112,32 +91,9 @@ pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version
 /// NOTE: If in the instance that a user has an inactive linked account (not primary) and it finds it way into our system
 /// we will only return the member record that has been most recently played
 pub async fn get_by_bungie_name(bungie_name: &str, pool: &MySqlPool) -> Option<MemberResult> {
-    let query = sqlx::query!(
-        r"
-            SELECT
-                members.membership_id,
-                members.platform,
-                members.last_played_at,
-                members.display_name,
-                members.display_name_global,
-                members.updated_at,
-                COALESCE(clans.group_id, 0) AS clan_group_id,
-                COALESCE(clans.name, 0) AS clan_name,
-                COALESCE(clans.call_sign, 0) AS clan_call_sign,
-                COALESCE(clan_members.joined_at,0) AS clan_joined_at,
-                COALESCE(clan_members.group_role,0) AS clan_group_role,
-                COALESCE(clans.is_network,0) AS clan_is_network
-            FROM members
-            LEFT JOIN clan_members ON members.membership_id = clan_members.membership_id
-            LEFT JOIN clans ON clan_members.group_id = clans.group_id
-            WHERE members.display_name_global = ?
-            ORDER BY members.last_played_at DESC
-            LIMIT 1
-        ",
-        bungie_name
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file!("queries/member_get_by_bungie.sql", bungie_name)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(Some(record)) = query {
         // there has to be a better then forcing a map on sqlx like this when types mismatch
@@ -164,29 +120,9 @@ pub async fn get_by_bungie_name(bungie_name: &str, pool: &MySqlPool) -> Option<M
 }
 
 pub async fn get(membership_id: i64, pool: &MySqlPool) -> Option<MemberResult> {
-    let query = sqlx::query!(
-        r"   SELECT
-                members.membership_id,
-                members.platform,
-                members.last_played_at,
-                members.display_name,
-                members.display_name_global,
-                members.updated_at,
-                COALESCE(clans.group_id, 0) AS clan_group_id,
-                COALESCE(clans.name, 0) AS clan_name,
-                COALESCE(clans.call_sign, 0) AS clan_call_sign,
-                COALESCE(clan_members.joined_at,0) AS clan_joined_at,
-                COALESCE(clan_members.group_role,0) AS clan_group_role,
-                COALESCE(clans.is_network,0) AS clan_is_network
-            FROM members
-            LEFT JOIN clan_members ON members.membership_id = clan_members.membership_id
-            LEFT JOIN clans ON clan_members.group_id = clans.group_id
-             WHERE members.membership_id = ?
-            LIMIT 1",
-        membership_id
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file!("queries/member_get.sql", membership_id)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(Some(record)) = query {
         // there has to be a better then forcing a map on sqlx like this when types mismatch
@@ -219,29 +155,7 @@ pub async fn multi_get(membership_ids: &[i64], pool: &MySqlPool) -> Vec<MemberRe
 
     let prepared_pos = vec!["?"; membership_ids.len()].join(",");
 
-    let statement = format!(
-        r"
-            SELECT
-                members.membership_id,
-                members.platform,
-                members.last_played_at,
-                members.display_name,
-                members.display_name_global,
-                members.updated_at,
-                COALESCE(clans.group_id, 0) AS clan_group_id,
-                COALESCE(clans.name, 0) AS clan_name,
-                COALESCE(clans.call_sign, 0) AS clan_call_sign,
-                COALESCE(clan_members.joined_at,0) AS clan_joined_at,
-                COALESCE(clan_members.group_role,0) AS clan_group_role,
-                COALESCE(clans.is_network,0) AS clan_is_network
-            FROM members
-            LEFT JOIN clan_members ON members.membership_id = clan_members.membership_id
-            LEFT JOIN clans ON clan_members.group_id = clans.group_id
-            WHERE members.membership_id IN ({})
-            ",
-        prepared_pos
-    );
-
+    let statement = project_str!("queries/member_multi_get.sql", prepared_pos);
     let mut query_builder = sqlx::query(&statement);
     for membership_id in membership_ids.iter() {
         query_builder = query_builder.bind(membership_id);
@@ -278,19 +192,9 @@ pub async fn multi_get(membership_ids: &[i64], pool: &MySqlPool) -> Vec<MemberRe
 
 /// fetches a member record from the database with only the membership_id
 pub async fn get_record(membership_id: i64, pool: &MySqlPool) -> Option<MemberRecord> {
-    let query = sqlx::query_as!(
-        MemberRecord,
-        r"
-            SELECT
-                members.*
-            FROM members
-            WHERE members.membership_id = ?
-            LIMIT 1
-         ",
-        membership_id
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file_as!(MemberRecord, "queries/member_record_get.sql", membership_id)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query) = query {
         query
@@ -303,19 +207,8 @@ pub async fn get_record(membership_id: i64, pool: &MySqlPool) -> Option<MemberRe
 /// update membership record
 pub async fn update(member: &MemberRecord, database: &MySqlPool) -> bool {
     // record found, update it!
-    let query = sqlx::query!(
-        r"
-           UPDATE members 
-           SET
-                members.platform = ?,
-                members.display_name = ?,
-                members.display_name_global = ?,
-                members.guardian_rank_current = ?,
-                members.guardian_rank_lifetime = ?,
-                members.last_played_at = ?,
-                members.updated_at = ? 
-           WHERE members.id = ?
-        ",
+    let query = sqlx::query_file!(
+        "queries/member_record_update.sql",
         member.platform,
         member.display_name,
         member.display_name_global,
@@ -337,22 +230,8 @@ pub async fn update(member: &MemberRecord, database: &MySqlPool) -> bool {
 }
 
 pub async fn create(member: MemberRecord, database: &MySqlPool) -> RecordId {
-    let query = sqlx::query!(
-        r"
-        INSERT INTO members
-        SET
-            members.id = 0,
-            members.platform = ?,
-            members.membership_id = ?,
-            members.display_name = ?,
-            members.display_name_global = ?,
-            members.guardian_rank_current = ?,
-            members.guardian_rank_lifetime = ?,
-            members.last_played_at = ?,
-            members.created_at = ?,
-            members.updated_at = 0,
-            members.deleted_at = 0
-        ",
+    let query = sqlx::query_file!(
+        "queries/member_record_insert.sql",
         member.platform,
         member.membership_id,
         member.display_name,
@@ -378,25 +257,9 @@ pub async fn search_count<T: Into<String>>(display_name: T, pool: &MySqlPool) ->
     let escaped = normal_name.replace('%', "\\%").replace('_', "\\_");
     let wildcard_search = format!("%{}%", escaped);
 
-    let query = sqlx::query!(
-        r"
-        SELECT
-           COUNT(DISTINCT members.id) AS total
-        FROM members
-        LEFT JOIN clan_members ON members.membership_id = clan_members.membership_id
-        LEFT JOIN clans ON clan_members.group_id = clans.group_id
-        WHERE
-        (
-            members.display_name LIKE ? OR
-            members.display_name_global LIKE ?
-        )
-        AND members.deleted_at = 0
-    ",
-        wildcard_search,
-        wildcard_search
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file!("queries/member_search_count.sql", wildcard_search, wildcard_search)
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(Some(query)) = query {
         query.total as u32
@@ -410,32 +273,8 @@ pub async fn search<T: Into<String>>(display_name: T, offset: u32, limit: u32, p
     let normal_name = display_name.into();
     let escaped = normal_name.replace('%', "\\%").replace('_', "\\_");
     let wildcard_search = format!("%{}%", escaped);
-    let query = sqlx::query!(
-        r"
-        SELECT
-            members.membership_id,
-            members.platform,
-            members.last_played_at,
-            members.display_name,
-            members.display_name_global,
-            members.updated_at,
-            COALESCE(clans.group_id, 0) AS clan_group_id,
-            COALESCE(clans.name, 0) AS clan_name,
-            COALESCE(clans.call_sign, 0) AS clan_call_sign,
-            COALESCE(clan_members.joined_at,0) AS clan_joined_at,
-            COALESCE(clan_members.group_role,0) AS clan_group_role,
-            COALESCE(clans.is_network,0) AS clan_is_network
-        FROM members
-        LEFT JOIN clan_members ON members.membership_id = clan_members.membership_id
-        LEFT JOIN clans ON clan_members.group_id = clans.group_id
-        WHERE
-        (
-            members.display_name LIKE ? OR
-            members.display_name_global LIKE ?
-        )
-        AND members.deleted_at = 0
-        LIMIT ?, ?
-    ",
+    let query = sqlx::query_file!(
+        "queries/member_search.sql",
         wildcard_search,
         wildcard_search,
         offset,

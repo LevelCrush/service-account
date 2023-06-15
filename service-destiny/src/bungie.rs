@@ -5,8 +5,8 @@ pub mod schemas;
 use crate::bungie::enums::{DestinyComponentType, DestinyRouteParam, PlatformErrorCodes};
 use crate::env;
 use crate::env::AppVariable;
+use levelcrush::macros::ExternalAPIResponse;
 use levelcrush::serde;
-use levelcrush_macros::ExternalAPIResponse;
 use reqwest::{Client, Method};
 use std::collections::HashMap;
 

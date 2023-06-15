@@ -1,5 +1,6 @@
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
+use levelcrush::project_str;
 use levelcrush::{database, types::RecordId};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
@@ -25,16 +26,7 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, Recor
     let mut results = HashMap::new();
 
     let in_prepare_pos = vec!["?"; hashes.len()].join(",");
-    let statement = format!(
-        r"
-        SELECT
-            activity_types.id,
-            activity_types.hash
-        FROM activity_types
-        WHERE activity_types.hash IN ({})
-    ",
-        in_prepare_pos
-    );
+    let statement = project_str!("queries/activity_type_exist_multi.sql", in_prepare_pos);
 
     let mut query = sqlx::query_as::<_, ActivityTypeSearchResult>(statement.as_str());
     for hash in hashes.iter() {
@@ -62,20 +54,7 @@ pub async fn write(values: &[ActivityTypeRecord], pool: &MySqlPool) {
     let query_parameters = vec!["(?,?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
-    let statement = format!(
-        r"
-            INSERT INTO activity_types (`id`, `hash`, `name`, `description`, `icon_url`, `index`,`created_at`, `updated_at`, `deleted_at`)
-            VALUES {}
-            ON DUPLICATE KEY UPDATE
-                `name` = VALUES(`name`),
-                `description` = VALUES(`description`),
-                `icon_url` = VALUES(`icon_url`),
-                `index` = VALUES(`index`),
-                `updated_at` = VALUES(`created_at`),
-                `deleted_at` = VALUES(`deleted_at`)
-        ",
-        query_parameters
-    );
+    let statement = project_str!("queries/activity_types_write.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {

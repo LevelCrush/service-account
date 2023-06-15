@@ -1,9 +1,9 @@
 use levelcrush::bigdecimal::{BigDecimal, ToPrimitive};
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::{destiny::CharacterId, destiny::InstanceId, RecordId, UnixTimestamp};
-use levelcrush::MySqlPool;
 use levelcrush::{database, tracing};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
+use levelcrush::{project_str, MySqlPool};
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -47,17 +47,7 @@ pub async fn existing(
     }
 
     let prepared_statement_ins = vec!["?"; instance_ids.len()].join(",");
-    let statement = format!(
-        r"
-        SELECT member_activities
-            member_activities.id,
-            member_activities.instance_id
-        FROM member_activities
-        WHERE member_activities.character_id = ?
-        AND member_activities.instance_id IN ({})
-        ",
-        prepared_statement_ins
-    );
+    let statement = project_str!("queries/activity_history_existing.sql", prepared_statement_ins);
 
     let mut query = sqlx::query_as::<_, ActivityHistoryExistingResult>(statement.as_str());
     query = query.bind(character_id);
@@ -81,15 +71,9 @@ pub async fn existing(
 
 /// queries the database for the most recent timestamp of the activity that the character ran
 pub async fn last_activity_timestamp(character_id: CharacterId, pool: &MySqlPool) -> UnixTimestamp {
-    let query = sqlx::query_as!(
+    let query = sqlx::query_file_as!(
         ActivityHistoryLastEntryResult,
-        r"
-        SELECT 
-            COALESCE(MAX(member_activities.occurred_at), 0) AS  timestamp
-        FROM member_activities 
-        WHERE member_activities.character_id = ?
-        LIMIT 1
-    ",
+        "queries/character_activity_last_timestamp.sql",
         character_id
     )
     .fetch_one(pool)
@@ -110,39 +94,7 @@ pub async fn write(values: &[ActivityHistoryRecord], pool: &MySqlPool) {
     }
 
     let prepared_statement_pos = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()].join(",");
-
-    let statement = format!(
-        r"
-        INSERT INTO member_activities 
-        (
-            `id`,
-            `membership_id`,
-            `character_id`,
-            `platform_played`,
-            `activity_hash`,
-            `activity_hash_director`,
-            `instance_id`,
-            `mode`,
-            `modes`,
-            `private`,
-            `occurred_at`,
-            `created_at`,
-            `updated_at`,
-            `deleted_at`
-        )
-        VALUES {}
-        ON DUPLICATE KEY UPDATE
-            `platform_played` = VALUES(`platform_played`),
-            `activity_hash` = VALUES(`activity_hash`),
-            `activity_hash_director` = VALUES(`activity_hash_director`),
-            `mode` = VALUES(`mode`),
-            `modes` = VALUES(`modes`),
-            `occurred_at` = VALUES(`occurred_at`),
-            `updated_at` = VALUES(`created_at`),
-            `deleted_at` = VALUES(`deleted_at`)
-    ",
-        prepared_statement_pos
-    );
+    let statement = project_str!("queries/activity_history_write.sql", prepared_statement_pos);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
@@ -172,18 +124,9 @@ pub async fn write(values: &[ActivityHistoryRecord], pool: &MySqlPool) {
 }
 
 pub async fn get_oldest(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
-    let query = sqlx::query_as!(
-        ActivityHistoryRecord,
-        r"
-        SELECT 
-            * 
-        FROM member_activities
-        ORDER BY member_activities.occurred_at ASC
-        LIMIT 1
-    ",
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file_as!(ActivityHistoryRecord, "queries/activity_history_oldest.sql")
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query) = query {
         query
@@ -194,18 +137,9 @@ pub async fn get_oldest(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
 }
 
 pub async fn get_recent(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
-    let query = sqlx::query_as!(
-        ActivityHistoryRecord,
-        r"
-        SELECT 
-            * 
-        FROM member_activities
-        ORDER BY member_activities.occurred_at DESC
-        LIMIT 1
-    ",
-    )
-    .fetch_optional(pool)
-    .await;
+    let query = sqlx::query_file_as!(ActivityHistoryRecord, "queries/activity_history_recent.sql")
+        .fetch_optional(pool)
+        .await;
 
     if let Ok(query) = query {
         query
@@ -229,20 +163,7 @@ pub async fn member(
         format!("AND member_activities.mode IN ({})", prepared_statement_pos)
     };
 
-    let statement = format!(
-        r"
-        SELECT
-            *
-        FROM member_activities
-        INNER JOIN members ON member_activities.membership_id = members.membership_id 
-        WHERE members.membership_id = ?
-        AND (member_activities.occurred_at >= ? AND member_activities.occurred_at <= ?)
-        {}
-        ORDER BY member_activities.occurred_at DESC
-    ",
-        mode_string
-    );
-
+    let statement = project_str!("queries/member_activity_history_range.sql", mode_string);
     let mut query_builder = sqlx::query_as::<_, ActivityHistoryRecord>(&statement)
         .bind(membership_id)
         .bind(timestamp_start)
@@ -269,30 +190,9 @@ pub async fn missing_instance_data(
     amount: u64,
     pool: &MySqlPool,
 ) -> Vec<InstanceId> {
-    let query = sqlx::query_as!(
+    let query = sqlx::query_file_as!(
         ActivityInstanceResult,
-        r"
-        WITH
-        target_activities  AS
-        (
-            SELECT DISTINCT member_activities.instance_id FROM member_activities
-            WHERE (member_activities.occurred_at > ? AND member_activities.occurred_at < ?)
-        ),
-        instance_member_count AS (
-            SELECT
-                target_activities.instance_id,
-                COUNT(instance_members.id) AS instance_members
-            FROM target_activities
-            LEFT JOIN instance_members ON target_activities.instance_id = instance_members.instance_id
-            GROUP BY target_activities.instance_id
-        )
-        SELECT
-            target_activities.instance_id
-        FROM target_activities
-        INNER JOIN instance_member_count ON target_activities.instance_id = instance_member_count.instance_id
-        WHERE instance_member_count.instance_members = 0
-        LIMIT ?
-        ",
+        "queries/activity_history_missing_instance_data.sql",
         start_timestamp,
         end_timestamp,
         amount

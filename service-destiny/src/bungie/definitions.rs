@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use levelcrush::chrono;
-use levelcrush_macros::ExternalAPIResponse;
+use levelcrush::macros::ExternalAPIResponse;
+use std::collections::HashMap;
 
 #[ExternalAPIResponse]
 pub struct DestinyDisplayProperties {
