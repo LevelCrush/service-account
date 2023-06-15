@@ -73,7 +73,7 @@ export const AccountObserver = () => {
   const [accountTimerInterval, setAccountTimerInterval] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const sendChallenge = async (challenge_token: string) => {
+  const saveChallenge = async (challenge_token: string) => {
     const endpoint = ENV.hosts.frontend + '/api/challenge';
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -128,13 +128,14 @@ export const AccountObserver = () => {
         data.response.is_admin ? 'yes' : 'no'
       );
       window.localStorage.setItem('session_logged_in', 'yes');
+
       setDisplayName(data.response.display_name);
       setLoggedIn(true);
       setPlatformData(data.response.platforms);
       setIsAdmin(data.response.is_admin);
 
       console.log('Sending challenge');
-      sendChallenge(data.response.challenge).finally(() =>
+      saveChallenge(data.response.challenge).finally(() =>
         console.log('Challenge delivered')
       );
     } else {
@@ -194,6 +195,16 @@ export const AccountObserver = () => {
       setAccountTimerInterval(0);
     };
   }, [loggedIn]);
+
+  // this is double work and absolutely redudanent.
+  // but in the event a user **manually** alters the react state, this will fire off
+  // there are better ways to get the same effect without having to repeat the same call
+  // but at the same time, the redudant request will just return a cache copy regardless, no database overhead
+  useEffect(() => {
+    accountLoginCheck()
+      .then(() => console.log('Login state changed. Double confirming state'))
+      .finally(() => console.log('Login double check completed'));
+  }, [loggedIn, isAdmin]);
 
   // anytime our platform data changes this effect should run and we should emit an event
   useDeepCompareEffect(() => {
