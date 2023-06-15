@@ -55,7 +55,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       {isLoading ? (
         <NextNProgress
           color="linear-gradient(90deg, #22D3EE, #FACC15)"
-          height="4"
+          height={4}
           transformCSS={(css: string) => {
             return (
               <style>

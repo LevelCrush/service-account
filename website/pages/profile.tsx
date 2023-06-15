@@ -6,13 +6,13 @@ import { H3, H4, H5 } from '@website/components/elements/headings';
 import OffCanvas from '@website/components/offcanvas';
 import LoginGuard from '@website/components/login_guard';
 import {
-  AccountPlatformBungie,
   subscribeAccountEvent,
   unsubscribeAccountEvent,
 } from '@website/components/account_observer';
 import { HyperlinkButton } from '@website/components/elements/button';
 import ENV from '@website/core/env';
 import GoosePost from '@website/components/goose_post';
+import { AccountPlatformBungie } from '@website/core/api_responses';
 
 type LinkedPlatformMap = {
   discord: string | null;
