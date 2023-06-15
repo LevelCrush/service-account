@@ -382,7 +382,6 @@ pub async fn season<T: Into<String>>(
 ) -> (UnixTimestamp, Option<MemberReport>) {
     let bungie_name = bungie_name.into();
     let modes = modes.to_vec();
-    tracing::info!("{:?}", modes);
 
     let mut state = state.clone();
     let mode_str = modes.iter().map(|m| m.to_string()).collect::<Vec<String>>().join(",");
@@ -433,7 +432,13 @@ pub async fn season<T: Into<String>>(
 
                         if season_number > max_snapshotable_season {
                             tracing::info!(
-                                "Target {} snapshot is being ran from season {} start to now() timestamp",
+                                "Target {} snapshot is being ran from season {} start to unix_timestamp()",
+                                bungie_name,
+                                season_number,
+                            );
+                        } else {
+                            tracing::info!(
+                                "Target {} snapshot is being ran from season {} start to season end",
                                 bungie_name,
                                 season_number,
                             );
