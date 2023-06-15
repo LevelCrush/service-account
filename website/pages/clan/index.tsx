@@ -3,7 +3,7 @@ import React from 'react';
 import Hero from '@website/components/hero';
 import { SiteHeader } from '@website/components/site_header';
 import OffCanvas from '@website/components/offcanvas';
-import { GetServerSideProps, GetStaticProps } from 'next';
+import { GetStaticProps } from 'next';
 import ENV from '@website/core/env';
 import { H3 } from '@website/components/elements/headings';
 import { HyperlinkButton } from '@website/components/elements/button';

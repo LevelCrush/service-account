@@ -120,17 +120,7 @@ export const AccountObserver = () => {
     {} as AccountResponse['response']['platforms']
   );
   const [accountTimerInterval, setAccountTimerInterval] = useState(0);
-
   const [isAdmin, setIsAdmin] = useState(false);
-  const [storageIsAdmin, setStorageIsAdmin] = useState(
-    window.localStorage.getItem('sess_admin') === 'yes'
-  );
-
-  const [storageDisplayName, setStorageDisplayName] = useState(
-    window.localStorage.getItem('sess_display_name') === 'yes'
-  );
-
-  console.log('StorageLogge');
 
   // setup an account session check
   const accountLoginCheck = async () => {
@@ -151,6 +141,15 @@ export const AccountObserver = () => {
       : null;
 
     if (data !== null && data.success) {
+      window.localStorage.setItem(
+        'session_display_name',
+        data.response.display_name
+      );
+      window.localStorage.setItem(
+        'session_is_admin',
+        data.response.is_admin ? 'yes' : 'no'
+      );
+      window.localStorage.setItem('session_logged_in', 'yes');
       setDisplayName(data.response.display_name);
       setLoggedIn(true);
       setPlatformData(data.response.platforms);
@@ -160,11 +159,21 @@ export const AccountObserver = () => {
       setPlatformData({});
       setLoggedIn(false);
       setIsAdmin(false);
+
+      window.localStorage.removeItem('session_logged_in');
+      window.localStorage.removeItem('session_is_admin');
+      window.localStorage.removeItem('session_display_name');
     }
   };
 
   // when we mount our component we will run this effect
   useEffect(() => {
+    if (window.localStorage) {
+      setDisplayName(window.localStorage.getItem('session_display_name') || '');
+      setIsAdmin(window.localStorage.getItem('session_is_admin') === 'yes');
+      setLoggedIn(window.localStorage.getItem('session_logged_in') === 'yes');
+    }
+
     // run the initial login check, we don't care
     accountLoginCheck().finally(() =>
       console.log('Initial login check completed')
