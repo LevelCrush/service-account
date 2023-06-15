@@ -35,21 +35,9 @@ async fn read(headers: HeaderMap, Path(feed): Path<String>, State(mut state): St
     let data = if cache_data.is_none() {
         // query database and obtain a record
         // when reading allow any valid access key to read from any feed
-        let query = sqlx::query!(
-            r"
-        SELECT 
-            feeds.data
-        FROM feeds
-        INNER JOIN access_keys ON access_keys.public_key = ?
-        WHERE feeds.deleted_at = 0
-        AND feeds.slug  = ? 
-        LIMIT 1
-    ",
-            public_key,
-            feed
-        )
-        .fetch_optional(&state.database)
-        .await;
+        let query = sqlx::query_file!("queries/feed_data_get.sql", public_key, feed)
+            .fetch_optional(&state.database)
+            .await;
 
         let data = if let Ok(query) = query {
             match query {
@@ -110,21 +98,9 @@ async fn write(
         return (StatusCode::BAD_REQUEST, "No key provided");
     }
 
-    let access_key_record = sqlx::query!(
-        r"
-           SELECT
-                access_keys.*
-           FROM access_keys
-           WHERE access_keys.public_key = ?
-           AND access_keys.private_key = ?
-           AND access_keys.deleted_at = 0
-           LIMIT 1
-        ",
-        public_key,
-        private_key
-    )
-    .fetch_one(&state.database)
-    .await;
+    let access_key_record = sqlx::query_file!("queries/access_key_get.sql", public_key, private_key)
+        .fetch_one(&state.database)
+        .await;
 
     // extract access key out of our record
     let access_key = match access_key_record {
@@ -138,35 +114,17 @@ async fn write(
         return (StatusCode::BAD_REQUEST, "Please provide a valid access key");
     }
 
-    let feed_record = sqlx::query!(
-        r"
-         SELECT
-            feeds.id
-        FROM feeds
-        WHERE feeds.access_key = ? 
-        AND feeds.slug = ?
-        AND feeds.deleted_at = 0
-        LIMIT 1
-    ",
-        access_key,
-        feed
-    )
-    .fetch_optional(&state.database)
-    .await;
+    let feed_record = sqlx::query_file!("queries/feed_get.sql", access_key, feed)
+        .fetch_optional(&state.database)
+        .await;
 
     if let Ok(feed_record) = feed_record {
         let mut write_succeeded = false;
         if let Some(feed_record) = feed_record {
             tracing::info!("Updating feed target: {}", feed_record.id);
             // update the feed
-            let result = sqlx::query!(
-                "
-            UPDATE feeds
-            SET 
-                feeds.data = ?,
-                feeds.updated_at = ?
-            WHERE feeds.id = ?
-        ",
+            let result = sqlx::query_file!(
+                "queries/feed_update.sql",
                 body.as_str(),
                 unix_timestamp(),
                 feed_record.id
@@ -179,18 +137,8 @@ async fn write(
         } else {
             tracing::info!("Creating feed target");
             // create the feed
-            let result = sqlx::query!(
-                r"
-              INSERT INTO feeds
-              SET
-                id = NULL,
-                access_key = ?,
-                slug = ?,
-                data = ?,
-                created_at = ?,
-                updated_at = 0,
-                deleted_at = 0
-        ",
+            let result = sqlx::query_file!(
+                "queries/feed_insert.sql",
                 access_key,
                 feed,
                 body.as_str(),

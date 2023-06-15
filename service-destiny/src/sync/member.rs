@@ -1,4 +1,4 @@
-use crate::bungie::schemas::{DestinyProfileComponent, DestinyRecordComponent, DestinyRecordComponentMap};
+use crate::bungie::schemas::{DestinyProfileComponent, DestinyRecordComponentMap};
 use crate::database;
 use crate::database::member::MemberRecord;
 use crate::database::triumph::MemberTriumphRecord;

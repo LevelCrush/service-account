@@ -1926,7 +1926,6 @@ name = "service-feed"
 version = "0.1.0"
 dependencies = [
  "levelcrush",
- "levelcrush-macros",
  "sqlx",
 ]
 
