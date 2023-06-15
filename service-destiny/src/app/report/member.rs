@@ -414,13 +414,22 @@ pub async fn season<T: Into<String>>(
             target_manager
                 .queue(Box::new(move || {
                     Box::pin(async move {
+                        let max_snapshotable_season = std::env::var("REPORT_SEASON_MAX")
+                            .unwrap_or_default()
+                            .parse::<i32>()
+                            .unwrap_or(20);
+
                         let season = database::seasons::get(season, &thread_app_state.database).await;
                         let (season_start, season_end, season_number) = match season {
                             Some(record) => (record.starts_at, record.ends_at, record.number),
                             _ => (0, 0, -1),
                         };
 
-                        let end_timestamp: u64 = season_end;
+                        let end_timestamp: u64 = if season_number > max_snapshotable_season {
+                            unix_timestamp()
+                        } else {
+                            season_end
+                        };
                         let start_timestamp = season_start;
                         let mut reports = Vec::new();
 
