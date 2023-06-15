@@ -1,8 +1,8 @@
 use crate::database::account::Account;
 use levelcrush::database;
+use levelcrush::macros::DatabaseRecord;
 use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
-use levelcrush_macros::DatabaseRecord;
 use sqlx::MySqlPool;
 
 pub enum AccountPlatformType {

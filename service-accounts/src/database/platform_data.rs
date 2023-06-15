@@ -1,7 +1,7 @@
 use crate::database::platform::AccountPlatform;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{project_str, tracing, types::RecordId};
-use levelcrush_macros::{DatabaseRecord, DatabaseResult};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 

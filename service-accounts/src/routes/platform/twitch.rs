@@ -8,7 +8,6 @@ use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries, OA
 use crate::routes::profile::CACHE_KEY_PROFILE;
 use crate::{app, database, env};
 use axum::extract::{Query, State};
-use axum::http::HeaderMap;
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::Router;

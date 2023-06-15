@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-levelcrush-macros = { path = "../lib-levelcrush-macros-rs" }
 levelcrush = { path = "../lib-levelcrush-rs", features=["server","cors", "session", "database"], default_features = false }
 
 serde = { version = "1.0.152", features = ["derive"] }

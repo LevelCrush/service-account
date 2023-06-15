@@ -1,12 +1,6 @@
-use std::collections::HashMap;
-
+use crate::{database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView};
 use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp};
 use sqlx::MySqlPool;
-
-use crate::{
-    database::account::{Account, AccountLinkedPlatformsResult},
-    routes::profile::ProfileView,
-};
 
 #[derive(Clone, Debug)]
 pub struct AppState {

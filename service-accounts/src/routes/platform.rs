@@ -1,11 +1,6 @@
-use axum::response::Redirect;
-use axum::routing::get;
-use axum::Router;
-use axum_sessions::extractors::{ReadableSession, WritableSession};
-use levelcrush::axum;
-use levelcrush::axum_sessions;
-
 use crate::app::state::AppState;
+use axum::Router;
+use levelcrush::axum;
 
 pub mod bungie;
 pub mod discord;

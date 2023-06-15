@@ -1,14 +1,7 @@
-use std::{env, ffi::OsString, fs, path::PathBuf};
-
 use proc_macro::TokenStream;
-use proc_macro2::{Group, Span};
-use quote::{quote, ToTokens};
-use syn::{
-    parse::{Parse, ParseStream, Parser},
-    parse2, parse_macro_input,
-    punctuated::Punctuated,
-    Expr, FnArg, ItemFn, ItemStruct, Macro, Token,
-};
+use quote::quote;
+use std::env;
+use syn::{parse::Parser, parse_macro_input, ItemStruct};
 
 /// appends standard fields related to a record
 #[proc_macro_attribute]

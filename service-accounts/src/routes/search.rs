@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::app::state::AppState;
 use crate::database;
 use crate::database::account::AccountLinkedPlatformsResult;
@@ -11,6 +9,7 @@ use levelcrush::axum::routing::post;
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::tracing;
 use levelcrush::{axum, server::APIResponse};
+use std::collections::HashMap;
 
 pub fn router() -> Router<AppState> {
     Router::new()

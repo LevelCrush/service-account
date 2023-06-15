@@ -1,6 +1,5 @@
-use levelcrush::axum_sessions;
-
 use axum_sessions::async_session::Session;
+use levelcrush::axum_sessions;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 

@@ -13,7 +13,6 @@ use axum::routing::get;
 use axum::Router;
 use axum_sessions::extractors::{ReadableSession, WritableSession};
 use levelcrush::axum;
-use levelcrush::axum::headers::HeaderMapExt;
 use levelcrush::axum_sessions;
 use levelcrush::tokio;
 use levelcrush::tracing;
@@ -147,7 +146,6 @@ pub async fn unlink(
     let cache_key = format!("{}{}", CACHE_KEY_PROFILE, session_id);
 
     // make sure we know where to return our user to after they are done logging in
-    let server_url = env::get(AppVariable::ServerUrl);
     let final_fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_redirect = query_fields.redirect.unwrap_or(final_fallback_url);
 
@@ -184,7 +182,6 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: W
     let query_fields = login_fields;
 
     // make sure we know where to return our user to after they are done logging in
-    let server_url = env::get(AppVariable::ServerUrl);
     let final_fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_redirect = query_fields.redirect.unwrap_or(final_fallback_url);
 
@@ -219,8 +216,6 @@ pub async fn validate(
 
     let session_id = session.id();
     let cache_key = format!("{}{}", CACHE_KEY_PROFILE, session_id);
-
-    let server_url = env::get(AppVariable::ServerUrl);
     let final_fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_redirect =
         app::session::read::<String>(SessionKey::PlatformBungieCallerUrl, &session).unwrap_or(final_fallback_url);
@@ -302,7 +297,6 @@ pub async fn validate(
     do_process = validation_response.is_some();
 
     let mut access_token = String::new();
-    let mut refresh_token = String::new();
     let mut membership_id = String::new();
     let mut membership_data = None;
     let mut user_data = None;
@@ -310,7 +304,6 @@ pub async fn validate(
         tracing::info!("Validated. Getting more information about the user");
         let validation_response = validation_response.unwrap_or_default();
         access_token = validation_response.access_token.clone();
-        refresh_token = validation_response.refresh_token.clone();
         membership_id = validation_response.membership_id.clone();
 
         // construct our endpoint urls that we will need to run

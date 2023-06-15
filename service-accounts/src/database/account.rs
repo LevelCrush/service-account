@@ -1,5 +1,5 @@
 use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResultSerde, project_str, util::unix_timestamp};
-use sqlx::{Execute, MySqlPool};
+use sqlx::MySqlPool;
 use std::collections::HashMap;
 
 #[DatabaseResultSerde]

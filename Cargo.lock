@@ -1892,7 +1892,6 @@ version = "0.1.0"
 dependencies = [
  "base64 0.21.2",
  "levelcrush",
- "levelcrush-macros",
  "md5",
  "rand",
  "reqwest",

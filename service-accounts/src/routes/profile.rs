@@ -1,20 +1,15 @@
+use crate::app::session::SessionKey;
+use crate::app::state::AppState;
+use crate::{app, database};
 use axum::extract::State;
-use levelcrush::cache::{CacheDuration, CacheValue};
-use levelcrush::server::APIResponse;
-use levelcrush::util::unix_timestamp;
-use reqwest::header::HeaderMap;
-use std::collections::HashMap;
-use std::time::Duration;
-
 use axum::Router;
 use axum::{routing::get, Json};
 use axum_sessions::extractors::ReadableSession;
 use levelcrush::axum_sessions;
+use levelcrush::cache::{CacheDuration, CacheValue};
+use levelcrush::server::APIResponse;
 use levelcrush::{axum, tracing};
-
-use crate::app::session::SessionKey;
-use crate::app::state::AppState;
-use crate::{app, database};
+use std::collections::HashMap;
 
 #[derive(serde::Serialize, Default, Clone, Debug)]
 pub struct ProfileView {

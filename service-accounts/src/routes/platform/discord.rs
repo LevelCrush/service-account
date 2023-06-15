@@ -1,8 +1,10 @@
 use crate::app::session::SessionKey;
+use crate::app::state::AppState;
 use crate::database::platform::{AccountPlatformType, NewAccountPlatform};
 use crate::database::platform_data::NewAccountPlatformData;
 use crate::env::AppVariable;
 use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries, OAuthLoginValidationRequest};
+use crate::{app, database, env};
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
@@ -11,9 +13,6 @@ use axum_sessions::extractors::WritableSession;
 use levelcrush::axum;
 use levelcrush::axum_sessions;
 use levelcrush::tracing;
-
-use crate::app::state::AppState;
-use crate::{app, database, env};
 use levelcrush::util::unix_timestamp;
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Debug)]

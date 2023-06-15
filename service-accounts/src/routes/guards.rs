@@ -1,16 +1,11 @@
-use super::platform::OAuthLoginQueries;
+use crate::app;
 use crate::app::session::SessionKey;
-use crate::env::AppVariable;
-use crate::{app, env};
-use axum::extract::Query;
 use axum::http::Request;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_sessions::SessionHandle;
-use levelcrush::axum::http::request::Parts;
 use levelcrush::axum_sessions;
 use levelcrush::{axum, tracing};
-use urlencoding;
 
 // checks to make sure their is a account session variable inside the user session
 pub async fn session_logged_in<B>(req: Request<B>, next: Next<B>) -> Response {
