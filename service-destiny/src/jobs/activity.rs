@@ -52,8 +52,8 @@ pub async fn crawl_instances(args: &[String]) {
     tracing::info!("Getting most recent record");
     let recent_record = database::activity_history::get_recent(&state.database).await;
     let max_timestamp = match recent_record {
-        Some(record) => record.occurred_at,
-        _ => unix_timestamp() - 3600, // whatever the current time is of running this program - one hour
+        Some(record) => record.occurred_at + 1, // whatever our most recent record occurred_at stamp is, + 1 second
+        _ => unix_timestamp() - 3600,           // whatever the current time is of running this program - one hour
     };
 
     // work backwords
@@ -109,8 +109,8 @@ pub async fn instance_member_profiles(args: &[String]) {
     tracing::info!("Getting most recent record");
     let recent_record = database::instance::get_recent(&state.database).await;
     let max_timestamp = match recent_record {
-        Some(record) => record.occurred_at,
-        _ => unix_timestamp() - 3600, // whatever the current time is of running this program - one hour
+        Some(record) => record.occurred_at + 1, // whatever recent occurred at is + 1 second
+        _ => unix_timestamp() - 3600,           // whatever the current time is of running this program - one hour
     };
 
     // work backwords
