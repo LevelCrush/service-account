@@ -1,56 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ENV from '@website/core/env';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-
-/**
- * Expected data from a platform if it is discord
- */
-export interface AccountPlatformDiscord {
-  display_name: string;
-  discord_id: string;
-}
-
-/**
- * Expected data from a platform if it is twitch
- */
-export interface AccountPlatformTwitch {
-  profile_image_url: string;
-  twitch_id: string;
-  display_name: string;
-  login: string;
-  offline_image_url: string;
-}
-
-/**
- * Expected data from our AccountResponse if our platform is bungie related
- */
-export interface AccountPlatformBungie {
-  display_name: string;
-  unique_name: string;
-  memberships: string;
-  raid_report: string;
-  primary_membership_id: string;
-  primary_platform: string;
-  [membership_key: string]: string;
-}
-
-/**
- * The expected response from our server when querying for profile information
- */
-export interface AccountResponse {
-  success: boolean;
-  response: {
-    display_name: string;
-    is_admin: boolean;
-    platforms: {
-      [platform: string]:
-        | AccountPlatformDiscord
-        | AccountPlatformBungie
-        | AccountPlatformTwitch;
-    };
-  };
-  errors: unknown[]; // this response will not return a route, so if there are any, it's unknown and we don't know how to handle it
-}
+import { AccountResponse } from '@website/core/api_responses';
 
 /**
  * An interface that details the expected events to emit from this observer and the expected types to feed to those dispatched events
@@ -122,6 +73,33 @@ export const AccountObserver = () => {
   const [accountTimerInterval, setAccountTimerInterval] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const sendChallenge = async (challenge_token: string) => {
+    const endpoint = ENV.hosts.frontend + '/api/challenge';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      credentials: 'include',
+      mode: 'cors',
+      cache: 'no-store',
+      next: {
+        revalidate: 0,
+      },
+      body: challenge_token,
+    });
+  };
+
+  const sendLogout = async () => {
+    const endpoint = ENV.hosts.frontend + '/api/logout';
+    await fetch(endpoint, {
+      method: 'GET',
+      credentials: 'include',
+      mode: 'cors',
+      cache: 'no-store',
+      next: {
+        revalidate: 0,
+      },
+    });
+  };
+
   // setup an account session check
   const accountLoginCheck = async () => {
     console.log('Set in Host', ENV.hosts.accounts);
@@ -154,6 +132,11 @@ export const AccountObserver = () => {
       setLoggedIn(true);
       setPlatformData(data.response.platforms);
       setIsAdmin(data.response.is_admin);
+
+      console.log('Sending challenge');
+      sendChallenge(data.response.challenge).finally(() =>
+        console.log('Challenge delivered')
+      );
     } else {
       setDisplayName('');
       setPlatformData({});
@@ -196,6 +179,9 @@ export const AccountObserver = () => {
         }, 1000 * 60)
       );
     } else {
+      // attempt logout
+      sendLogout().finally(() => console.log('Attempted logout'));
+
       // log out, stop running interval
       clearInterval(accountTimerInterval);
       setAccountTimerInterval(0);

@@ -9,6 +9,7 @@ use levelcrush::axum_sessions;
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::server::APIResponse;
 use levelcrush::util::unix_timestamp;
+use levelcrush::uuid::Uuid;
 use levelcrush::{axum, tracing};
 use std::collections::HashMap;
 
@@ -35,16 +36,25 @@ pub fn router() -> Router<AppState> {
 }
 
 pub async fn challenge_view(
-    State(mut state): State<AppState>,
+    State(state): State<AppState>,
     Json(payload): Json<ChallengePayload>,
 ) -> Json<APIResponse<ProfileView>> {
     let mut response = APIResponse::new();
 
     let challenge_profile = state.challenges.access(&payload.challenge).await;
+    if challenge_profile.is_some() {
+        tracing::info!("Found challenge match!: {}", payload.challenge);
+    }
     response.data(challenge_profile);
 
     response.complete();
     Json(response)
+}
+
+fn generate_challenge(display_name: &str, admin: i8) -> String {
+    let uuid = Uuid::new_v4().to_string();
+    let challenge_digest = md5::compute(format!("{}{}{}{}", unix_timestamp(), display_name, admin, uuid));
+    format!("{:x}", challenge_digest)
 }
 
 /// output a json view of the data related to the currently logged in session
@@ -115,15 +125,24 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
                 }
             }
 
-            let challenge_digest = md5::compute(format!("{}{}{}", unix_timestamp(), display_name, account.admin));
-            let challenge_hash = format!("{:x}", challenge_digest);
-
+            // we will only keep this profile in the challenge cache for 5 minutes
+            tracing::info!("Storing in challenge cache!: {}", display_name);
+            let challenge_hash = generate_challenge(&display_name, account.admin);
             let data = ProfileView {
                 display_name,
                 platforms,
                 is_admin: account.admin == 1,
                 challenge: challenge_hash.clone(),
             };
+
+            // intentionally keep this challenge cache around longer then the profile cache result
+            state
+                .challenges
+                .write(
+                    challenge_hash,
+                    CacheValue::with_duration(data.clone(), CacheDuration::TenMinutes, CacheDuration::TenMinutes),
+                )
+                .await;
 
             // save into cache
             tracing::info!("Storing in cache!: {}", data.display_name);
@@ -132,16 +151,6 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
                 .write(
                     cache_key.clone(),
                     CacheValue::with_duration(data.clone(), CacheDuration::Minute, CacheDuration::FiveMinutes),
-                )
-                .await;
-
-            // we will only keep this profile in the challenge cache for 5 minutes
-            tracing::info!("Storing in challenge cache!: {}", data.display_name);
-            state
-                .challenges
-                .write(
-                    challenge_hash,
-                    CacheValue::with_duration(data.clone(), CacheDuration::FiveMinutes, CacheDuration::FiveMinutes),
                 )
                 .await;
 
