@@ -47,11 +47,7 @@ pub async fn crawl_instances(args: &[String]) {
 
     // our starting record
     tracing::info!("Getting oldest record");
-    let first_record = database::activity_history::get_oldest(&state.database).await;
-    let earliest_timestamp = match first_record {
-        Some(record) => record.occurred_at,
-        _ => 1498881600, // July 1st, 2017, Destiny 2 technically released on the 6th of September 2017, so this should cover fairly well
-    };
+    let earliest_timestamp = 1498881600; // July 1st, 2017, Destiny 2 technically released on the 6th of September 2017, so this should cover fairly well
 
     tracing::info!("Getting most recent record");
     let recent_record = database::activity_history::get_recent(&state.database).await;
@@ -108,11 +104,7 @@ pub async fn instance_member_profiles(args: &[String]) {
 
     // our starting record
     tracing::info!("Getting oldest record");
-    let first_record = database::instance::get_oldest(&state.database).await;
-    let earliest_timestamp = match first_record {
-        Some(record) => record.occurred_at,
-        _ => 1498881600, // Just 1st, 2017, Destiny 2 technically released on the 6th of September 2017, so this should cover fairly well
-    };
+    let earliest_timestamp = 1498881600; // Just 1st, 2017, Destiny 2 technically released on the 6th of September 2017, so this should cover fairly well
 
     tracing::info!("Getting most recent record");
     let recent_record = database::instance::get_recent(&state.database).await;
