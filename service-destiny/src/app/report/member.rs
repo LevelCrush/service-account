@@ -430,6 +430,15 @@ pub async fn season<T: Into<String>>(
                         } else {
                             season_end
                         };
+
+                        if season_nubmer > max_snapshotable_season {
+                            tracing::info!(
+                                "Target {} snapshot is being ran from season {} start to now() timestamp",
+                                season_number,
+                                bungie_name
+                            );
+                        }
+
                         let start_timestamp = season_start;
                         let mut reports = Vec::new();
 
