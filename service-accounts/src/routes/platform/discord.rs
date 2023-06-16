@@ -4,6 +4,7 @@ use crate::database::platform::{AccountPlatformType, NewAccountPlatform};
 use crate::database::platform_data::NewAccountPlatformData;
 use crate::env::AppVariable;
 use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries, OAuthLoginValidationRequest};
+use crate::routes::responses::{DiscordUserResponse, DiscordValidationResponse};
 use crate::{app, database, env};
 use axum::extract::{Query, State};
 use axum::response::Redirect;
@@ -14,22 +15,6 @@ use levelcrush::axum;
 use levelcrush::axum_sessions;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
-
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
-pub struct DiscordValidationResponse {
-    pub access_token: String,
-    pub refresh_token: String,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
-pub struct DiscordUserResponse {
-    pub id: String,
-    pub username: String,
-    pub discriminator: String,
-    pub avatar: String,
-    pub email: String,
-    pub verified: bool,
-}
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -168,7 +153,7 @@ pub async fn validate(
 
         let request = state
             .http_client
-            .get("https://discord.com/api/v8/users/@me")
+            .get("https://discord.com/api/v10/users/@me")
             .bearer_auth(access_token.clone())
             .send()
             .await;
@@ -272,15 +257,26 @@ pub async fn validate(
             account_platform.expect("No account platform was found. even though it should of been there");
 
         // everytime we log in, we are going to write out this information here
-        let display_name = if discord_user.discriminator == "0" {
+        let discord_user_name = if discord_user.discriminator == "0" {
             discord_user.username.clone()
         } else {
             format!("{}#{}", discord_user.username, discord_user.discriminator)
         };
+
+        let display_name = if let Some(discord_display_name) = discord_user.display_name {
+            discord_display_name.clone()
+        } else {
+            discord_user_name.clone()
+        };
+
         let data = vec![
             NewAccountPlatformData {
                 key: "discord_id".to_string(),
                 value: discord_user.id,
+            },
+            NewAccountPlatformData {
+                key: "username".to_string(),
+                value: discord_user_name.clone(),
             },
             NewAccountPlatformData {
                 key: "display_name".to_string(),
@@ -302,6 +298,7 @@ pub async fn validate(
         app::session::write(SessionKey::Account, account.token, &mut session);
         app::session::write(SessionKey::AccountSecret, account.token_secret, &mut session);
         app::session::write(SessionKey::DisplayName, display_name, &mut session);
+        app::session::write(SessionKey::Username, discord_user_name, &mut session);
     }
 
     // no matter what we redirect back to our caller

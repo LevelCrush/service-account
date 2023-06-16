@@ -1,7 +1,9 @@
 pub mod guards;
+pub mod link;
 pub mod platform;
 pub mod profile;
 pub mod search;
+pub mod responses;
 use crate::app::state::AppState;
 use crate::env::{self, AppVariable};
 use crate::routes::platform::OAuthLoginQueries;
@@ -20,6 +22,7 @@ pub fn router() -> Router<AppState> {
         .nest("/platform", platform::router())
         .nest("/profile", profile::router())
         .nest("/search", search::router())
+        .nest("/link", link::router())
 }
 
 pub async fn login(Query(login_fields): Query<OAuthLoginQueries>) -> Redirect {

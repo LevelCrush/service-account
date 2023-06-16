@@ -19,6 +19,7 @@ mod app;
 mod database;
 mod env;
 mod routes;
+pub mod sync;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
