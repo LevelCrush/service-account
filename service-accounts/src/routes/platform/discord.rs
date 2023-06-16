@@ -31,7 +31,7 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: W
 
     let client_id = env::get(AppVariable::DiscordClientId);
     let authorize_redirect = env::get(AppVariable::DiscordValidateUrl);
-    let scopes = vec!["identify", "email"].join("+");
+    let scopes = vec!["identify"].join("+");
 
     let hash_input = md5::compute(format!("{}||{}", client_id, unix_timestamp()));
     let discord_state = format!("{:x}", hash_input);
@@ -107,7 +107,7 @@ pub async fn validate(
         let client_id = env::get(AppVariable::DiscordClientId);
         let client_secret = env::get(AppVariable::DiscordClientSecret);
         let authorize_redirect = env::get(AppVariable::DiscordValidateUrl);
-        let scopes = vec!["identify", "email"].join("+");
+        let scopes = vec!["identify"].join("+");
 
         let request = state
             .http_client
@@ -196,12 +196,7 @@ pub async fn validate(
                 discord_user.id.clone(),
                 discord_user.discriminator.clone()
             );
-            let token_secret_seed = format!(
-                "..{}..||..{}..||..{}..",
-                token_seed.clone(),
-                discord_user.email.clone(),
-                timestamp
-            );
+            let token_secret_seed = format!("..{}..||..{}..||..{}..", token_seed.clone(), discord_user.id, timestamp);
 
             // create an account for this
             tracing::info!("Creating account");

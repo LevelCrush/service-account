@@ -12,8 +12,6 @@ pub struct DiscordUserResponse {
     pub username: String,
     pub discriminator: String,
     pub avatar: String,
-    pub email: String,
-    pub verified: bool,
     pub global_name: Option<String>,
     pub display_name: Option<String>,
 }

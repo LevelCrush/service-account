@@ -1,13 +1,14 @@
+use super::responses::LinkGeneratedResponse;
 use crate::{
     app::{self, state::AppState},
     env::{self, AppVariable},
-    sync,
 };
 use axum::Router;
 use levelcrush::{
     axum::{
         self,
-        extract::{Query, State},
+        extract::{Path, Query, State},
+        http::HeaderMap,
         response::Redirect,
         routing::{get, post},
         Json,
@@ -15,11 +16,8 @@ use levelcrush::{
     axum_sessions::extractors::WritableSession,
     cache::{CacheDuration, CacheValue},
     server::APIResponse,
-    tracing,
-    util::unix_timestamp,
+    util::{slugify, unix_timestamp},
 };
-
-use super::responses::LinkGeneratedResponse;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 pub struct LinkGeneratePayload {
@@ -34,16 +32,26 @@ pub struct LinkQuery {
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/generate", post(link_generate))
-        .route("/bungie", get(link_bungie))
-        .route("/twitch", get(link_twitch))
+        .route("/platform/:platform", get(link_platform))
         .route("/done", get(link_done))
         .route("/bad", get(link_bad))
 }
 
 async fn link_generate(
+    headers: HeaderMap,
     State(mut state): State<AppState>,
     Json(payload): Json<LinkGeneratePayload>,
 ) -> Json<APIResponse<LinkGeneratedResponse>> {
+    let key_header = match headers.get("Account-Key") {
+        Some(header_value) => header_value.to_str().expect("Unable to convert header value to str"),
+        _ => "",
+    };
+
+    let server_key = env::get(AppVariable::AccountKey);
+    if server_key != key_header {
+        return Json(APIResponse::new());
+    }
+
     let mut response = APIResponse::new();
 
     let member = app::discord::member(&payload.id, &state).await;
@@ -76,14 +84,18 @@ async fn link_generate(
     Json(response)
 }
 
-async fn link_bungie(
+async fn link_platform(
     Query(query): Query<LinkQuery>,
+    Path(target_platform): Path<String>,
     State(mut state): State<AppState>,
     mut session: WritableSession,
 ) -> Redirect {
     let member = {
         if let Some(code) = query.code {
-            state.link_gens.access(&code).await
+            let sync_result = state.link_gens.access(&code).await;
+            state.link_gens.delete(&code).await;
+
+            sync_result
         } else {
             None
         }
@@ -91,10 +103,12 @@ async fn link_bungie(
 
     if let Some(member) = member {
         app::session::login(&mut session, member);
+        let platform = slugify(&target_platform.to_lowercase());
         let done_url = format!("{}/link/done", env::get(AppVariable::HostAccounts));
         let redirect_url = format!(
-            "{}/platform/bungie/login?redirect={}",
+            "{}/platform/{}/login?redirect={}",
             env::get(AppVariable::HostAccounts),
+            urlencoding::encode(&platform),
             urlencoding::encode(&done_url)
         );
         Redirect::temporary(&redirect_url)
@@ -102,10 +116,6 @@ async fn link_bungie(
         let redirect_url = format!("{}/link/bad", env::get(AppVariable::HostAccounts));
         Redirect::temporary(&redirect_url)
     }
-}
-
-async fn link_twitch() -> &'static str {
-    "Hello twitch!"
 }
 
 async fn link_done() -> &'static str {

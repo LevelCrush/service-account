@@ -1,5 +1,6 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, InteractionResponse, Message } from 'discord.js';
 import { Command } from './base_command';
+import type { APIResponse } from '@levelcrush';
 
 const COMMAND_NAME = 'link';
 
@@ -25,7 +26,13 @@ export const LinkCommand = {
         const subcommand = interaction.options.getSubcommand(true);
 
         const user = interaction.user.id;
-        console.log(user, interaction.user);
+        const msgs = [] as (InteractionResponse | Message)[];
+        msgs.push(
+            await interaction.reply({
+                content: 'Generating you a private link. One second!',
+                ephemeral: true,
+            }),
+        );
 
         const gen_key = process.env['ACCOUNT_KEY'] || '';
         const endpoint = process.env['HOST_ACCOUNTS'] || '';
@@ -40,15 +47,34 @@ export const LinkCommand = {
             }),
         });
 
-        const msg = await interaction.reply({
-            content: 'Generating you a private link. One second!',
-            ephemeral: true,
-        });
+        let code = '';
+        if (link_request.ok) {
+            const json = (await link_request.json()) as APIResponse<{ code: string }>;
+            code = json.response && json.response !== null ? json.response.code : '';
+        }
 
-        await interaction.followUp({
-            content: 'Now executing',
-            ephemeral: true,
-        });
+        if (code) {
+            const link = endpoint + '/link/platform/' + subcommand + '?code=' + encodeURIComponent(code);
+            msgs.push(
+                await interaction.followUp({
+                    content: 'Please follow this link to validate: ' + link,
+                    ephemeral: true,
+                }),
+            );
+        } else {
+            msgs.push(
+                await interaction.followUp({
+                    content: 'No code was provided. Cannot link currently',
+                    ephemeral: true,
+                }),
+            );
+        }
+
+        setTimeout(() => {
+            for (let i = 0; i < msgs.length; i++) {
+                msgs[i].delete();
+            }
+        }, 300000); // after 5 minutes delete all of messages
     },
 } as Command;
 

@@ -1,11 +1,16 @@
 use levelcrush::tracing;
 
 use super::state::AppState;
-use crate::{routes::responses::DiscordUserResponse, sync, sync::discord::MemberSyncResult};
+use crate::{
+    env::{self, AppVariable},
+    routes::responses::DiscordUserResponse,
+    sync,
+    sync::discord::MemberSyncResult,
+};
 
 /// queries a discord user directly by their discord id
 pub async fn member_api(discord_id: &str, state: &AppState) -> Option<DiscordUserResponse> {
-    let bot_token = std::env::var("DISCORD_BOT_TOKEN").unwrap_or_default();
+    let bot_token = env::get(AppVariable::DiscordBotToken);
     let bot_auth = format!("Bot {}", bot_token);
     let discord_user_id = discord_id;
 
