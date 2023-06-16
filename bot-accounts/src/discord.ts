@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, Partials, REST, Routes, Interaction } from 'discord.js';
 import LinkCommand from './commands/link';
 import { Command } from './commands/base_command';
+import AccountCommand from './commands/account';
 
 /**
  * Creates a Discord client based off .env variables
@@ -34,7 +35,8 @@ export async function slash_commands() {
     // todo!
     const command_map = new Map<string, Command>();
     command_map.set(LinkCommand.name, LinkCommand);
-
+    command_map.set(AccountCommand.name, AccountCommand);
+    
     const commands = [];
     for (const command of command_map.values()) {
         commands.push(command.data.toJSON());
