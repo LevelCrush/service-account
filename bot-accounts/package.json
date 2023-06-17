@@ -8,7 +8,7 @@
         "debug": "ts-node src/index.ts",
         "debug:invite": "ts-node src/index.ts --invite",
         "invite": "node dist/index.js --invite",
-        "run": "node dist/index.js"
+        "start": "node dist/index.js"
     },
     "author": "",
     "license": "ISC",
