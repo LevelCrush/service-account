@@ -44,13 +44,7 @@ export const AccountCommand = {
     execute: async (interaction: ChatInputCommandInteraction) => {
         const subcommand = interaction.options.getSubcommand(true);
 
-        await interaction.reply({
-            content:
-                subcommand === 'me'
-                    ? 'Checking for your linked Level Crush accounts'
-                    : 'Querying target users linked Level Crush accounts',
-            ephemeral: true,
-        });
+        await interaction.deferReply();
 
         const user = subcommand === 'me' ? interaction.user.username : interaction.options.getUser('user')?.username;
         if (!user) {
@@ -98,12 +92,13 @@ export const AccountCommand = {
                     .setTitle(data.discord + ' Linked Accounts')
                     .addFields({ name: 'Linked Accounts', value: linked.length.toString(), inline: false })
                     .addFields(linked);
+
                 await interaction.followUp({
                     embeds: [embed],
                 });
             } else {
                 await interaction.followUp({
-                    content: 'You have no linked platforms to your level crush account',
+                    content: 'No linked platforms found!',
                     ephemeral: true,
                 });
             }
