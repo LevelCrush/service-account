@@ -50,7 +50,7 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
         new_platform.platform_user.clone(),
         unix_timestamp()
     );
-    let token = format!("{:X}", md5::compute(token_seed));
+    let token = format!("{:x}", md5::compute(token_seed));
 
     let query_result = sqlx::query_file!(
         "queries/account_platform_insert.sql",

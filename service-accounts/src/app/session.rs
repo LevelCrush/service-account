@@ -1,3 +1,5 @@
+use crate::app;
+use crate::sync::discord::MemberSyncResult;
 use axum_sessions::async_session::Session;
 use levelcrush::axum_sessions;
 use serde::de::DeserializeOwned;
@@ -7,6 +9,7 @@ pub enum SessionKey {
     Account,
     AccountSecret,
     DisplayName,
+    Username,
     PlatformDiscordCallerUrl,
     PlatformDiscordState,
     PlatformTwitchCallerUrl,
@@ -21,6 +24,7 @@ impl From<SessionKey> for &'static str {
             SessionKey::Account => "account",
             SessionKey::AccountSecret => "account_secret",
             SessionKey::DisplayName => "display_name",
+            SessionKey::Username => "username",
             SessionKey::PlatformDiscordCallerUrl => "platform_discord_caller_url",
             SessionKey::PlatformDiscordState => "platform_discord_state",
             SessionKey::PlatformTwitchCallerUrl => "platform_twitch_caller_url",
@@ -65,4 +69,15 @@ pub fn clear(session: &mut Session) {
     session.remove(SessionKey::PlatformTwitchState.into());
     session.remove(SessionKey::PlatformBungieCallerUrl.into());
     session.remove(SessionKey::PlatformBungieState.into());
+}
+
+pub fn login(session: &mut Session, member: MemberSyncResult) {
+    // clear the session variables out, this is safe since discord is our primary login
+    app::session::clear(session);
+
+    // in the session store important information related to the account, the account token and the token secret
+    app::session::write(SessionKey::Account, member.account_token, session);
+    app::session::write(SessionKey::AccountSecret, member.account_token_secret, session);
+    app::session::write(SessionKey::DisplayName, member.display_name, session);
+    app::session::write(SessionKey::Username, member.username, session);
 }
