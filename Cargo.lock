@@ -1891,6 +1891,7 @@ name = "service-accounts"
 version = "0.1.0"
 dependencies = [
  "base64 0.21.2",
+ "clap",
  "levelcrush",
  "md5",
  "rand",
