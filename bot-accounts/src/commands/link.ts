@@ -1,4 +1,10 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, InteractionResponse, Message } from 'discord.js';
+import {
+    SlashCommandBuilder,
+    ChatInputCommandInteraction,
+    InteractionResponse,
+    Message,
+    MessageFlags,
+} from 'discord.js';
 import { Command } from './base_command';
 import type { APIResponse } from '@levelcrush';
 
@@ -55,6 +61,7 @@ export const LinkCommand = {
             await interaction.followUp({
                 content: 'Please follow this link to validate: ' + link,
                 ephemeral: true,
+                flags: [MessageFlags.SuppressEmbeds],
             });
         } else {
             await interaction.followUp({
