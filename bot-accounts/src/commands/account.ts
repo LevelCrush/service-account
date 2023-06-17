@@ -90,8 +90,13 @@ export const AccountCommand = {
 
                 const embed = new EmbedBuilder()
                     .setTitle(data.discord + ' Linked Accounts')
+                    .setURL(process.env['HOST_FRONTEND'] || '')
+                    .setColor('#1ABC9C')
                     .addFields({ name: 'Linked Accounts', value: linked.length.toString(), inline: false })
-                    .addFields(linked);
+                    .addFields(linked)
+                    .setFooter({
+                        text: 'Visit ' + (process.env['HOST_FRONTEND'] || '') + '/profile to manage your profile',
+                    });
 
                 await interaction.followUp({
                     embeds: [embed],
