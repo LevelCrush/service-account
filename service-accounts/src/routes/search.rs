@@ -13,13 +13,43 @@ use std::collections::HashMap;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("by/discord/:discord", get(discord_search))
+        .route("/by/discord/:discord", get(discord_search))
         .route("/by/bungie/:bungie", get(bungie_search))
         .route("/by/bungie", post(bungie_search_mass))
 }
 
-async fn discord_search(State(mut state): State<AppState>, Path(discord): Path<String>) {
-    
+async fn discord_search(
+    State(mut state): State<AppState>,
+    Path(discord): Path<String>,
+) -> Json<APIResponse<AccountLinkedPlatformsResult>> {
+    let mut response = APIResponse::new();
+
+    let cache_key = format!("search_discord||{}", discord);
+
+    let linked_accounts = if let Some(data) = state.searches.access(&cache_key).await {
+        Some(data)
+    } else {
+        let results = database::account::by_discord(discord, &state.database).await;
+        if let Some(results) = &results {
+            state
+                .searches
+                .write(
+                    &cache_key,
+                    CacheValue::with_duration(results.clone(), CacheDuration::Minute, CacheDuration::Minute),
+                )
+                .await;
+        }
+        results
+    };
+
+    if linked_accounts.is_some() {
+        response.data(linked_accounts);
+    } else {
+        response.error("bungie", "Could not find a match");
+    }
+
+    response.complete();
+    Json(response)
 }
 
 pub async fn bungie_search(

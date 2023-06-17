@@ -2,9 +2,11 @@ use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResultSerde, 
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
-#[DatabaseResultSerde]
+#[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow, Debug, Clone, Default, ts_rs::TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-accounts/")]
 pub struct AccountLinkedPlatformsResult {
     pub account_token: String,
+    pub username: String,
     pub discord: String,
     pub bungie: String,
     pub twitch: String,
@@ -98,59 +100,9 @@ pub async fn all_data(account: &Account, pool: &MySqlPool) -> HashMap<String, Ha
     results
 }
 
-fn with_bungie_account(search: bool, total_input: usize) -> String {
-    let where_search = if search {
-        if total_input > 1 {
-            let prepared_pos = vec!["?"; total_input].join(",");
-            format!("WHERE membership_data.value IN ({})", prepared_pos)
-        } else {
-            "WHERE membership_data.value = ?".to_string()
-        }
-    } else {
-        String::new()
-    };
-
-    project_str!("queries/account_search.with.bungie.sql", where_search)
-}
-
-fn with_discord_account(search: bool, total_input: usize) -> String {
-    let where_search = if search {
-        if total_input > 1 {
-            let prepared_pos = vec!["?"; total_input].join(",");
-            format!("WHERE membership_data.value IN ({})", prepared_pos)
-        } else {
-            "WHERE membership_data.value = ?".to_string()
-        }
-    } else {
-        String::new()
-    };
-    project_str!("queries/account_search.with.discord.sql", where_search)
-}
-
-fn with_twitch_account(search: bool, total_input: usize) -> String {
-    let where_search = if search {
-        if total_input > 1 {
-            let prepared_pos = vec!["?"; total_input].join(",");
-            format!("WHERE membership_data.value IN ({})", prepared_pos)
-        } else {
-            "WHERE membership_data.value = ?".to_string()
-        }
-    } else {
-        String::new()
-    };
-
-    project_str!("queries/account_search.with.twitch.sql", where_search)
-}
-
 pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<AccountLinkedPlatformsResult> {
-    let with_tables = vec![
-        with_bungie_account(true, bungie_ids.len()),
-        with_discord_account(false, 0),
-        with_twitch_account(false, 0),
-    ]
-    .join(",");
-
-    let statement = project_str!("queries/account_search_by_bungie_bulk.sql", with_tables);
+    let prepared_pos = vec!["?"; bungie_ids.len()].join(",");
+    let statement = project_str!("queries/account_search_by_bungie_bulk.sql", prepared_pos);
     let mut query_builder = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str());
     for bungie_id in bungie_ids.iter() {
         query_builder = query_builder.bind(bungie_id);
@@ -166,19 +118,13 @@ pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<Acco
 }
 
 pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
-    let with_tables = vec![
-        with_bungie_account(true, 1),
-        with_discord_account(false, 0),
-        with_twitch_account(false, 0),
-    ]
-    .join(",");
-
-    let statement = project_str!("queries/account_search_by_bungie.sql", with_tables);
-
-    let query = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str())
-        .bind(bungie_id)
-        .fetch_optional(pool)
-        .await;
+    let query = sqlx::query_file_as!(
+        AccountLinkedPlatformsResult,
+        "queries/account_search_by_bungie.sql",
+        bungie_id
+    )
+    .fetch_optional(pool)
+    .await;
 
     if let Ok(query) = query {
         query
@@ -188,19 +134,14 @@ pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLin
     }
 }
 
-pub async fn by_discord(discord_id: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
-    let with_tables = vec![
-        with_bungie_account(false, 0),
-        with_discord_account(true, 1),
-        with_twitch_account(false, 0),
-    ]
-    .join(",");
-
-    let statement = project_str!("queries/account_search_by_discord.sql", with_tables);
-    let query = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str())
-        .bind(bungie_id)
-        .fetch_optional(pool)
-        .await;
+pub async fn by_discord(discord_handle: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
+    let query = sqlx::query_file_as!(
+        AccountLinkedPlatformsResult,
+        "queries/account_search_by_discord.sql",
+        discord_handle
+    )
+    .fetch_optional(pool)
+    .await;
 
     if let Ok(query) = query {
         query

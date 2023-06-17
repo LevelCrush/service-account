@@ -1,9 +1,13 @@
 WITH
 source_platform AS (
     SELECT
-        *
-    FROM account_platforms
-    WHERE account_platforms.platform_user = ?
+        account_platforms.*
+    FROM account_platform_data
+    INNER JOIN account_platforms ON
+        account_platform_data.platform = account_platforms.id AND
+        account_platforms.platform = 'discord'
+    WHERE account_platform_data.key = 'username'
+    AND account_platform_data.value = ?
     ORDER BY account_platforms.updated_at DESC
     LIMIT 1
 ),
