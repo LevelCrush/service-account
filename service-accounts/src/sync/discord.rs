@@ -19,8 +19,9 @@ pub struct MemberSyncResult {
 
 /// Syncs the api response from discord and returns a member sync result
 pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Option<MemberSyncResult> {
+    let discord_user_id = discord_user.id.unwrap_or_default();
     let mut account =
-        database::platform::match_account(discord_user.id.clone(), AccountPlatformType::Discord, pool).await;
+        database::platform::match_account(discord_user_id.clone(), AccountPlatformType::Discord, pool).await;
     let mut new_account = false;
     let mut sync_result = MemberSyncResult::default();
     if account.is_none() {
@@ -30,7 +31,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
         let token_seed = format!(
             "{}||{}||{}||{}",
             timestamp,
-            discord_user.id.clone(),
+            discord_user_id.clone(),
             discord_user.discriminator.clone(),
             Uuid::new_v4(),
         );
@@ -53,7 +54,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
                 NewAccountPlatform {
                     account: account.id,
                     platform: AccountPlatformType::Discord,
-                    platform_user: discord_user.id.clone(),
+                    platform_user: discord_user_id,
                 },
                 pool,
             )
