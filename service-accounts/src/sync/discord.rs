@@ -6,7 +6,7 @@ use crate::{
     },
     routes::responses::DiscordUserResponse,
 };
-use levelcrush::{tracing, util::unix_timestamp, uuid::Uuid};
+use levelcrush::{tokio, tracing, util::unix_timestamp, uuid::Uuid};
 use sqlx::MySqlPool;
 
 #[derive(Default, Clone, Debug)]
@@ -69,7 +69,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
         sync_result.account_token_secret = account.token_secret;
     }
 
-    if let Some(account_platform) = account_platform {
+    if let Some(mut account_platform) = account_platform {
         // everytime we log in, we are going to write out this information here
         let discord_user_name = if discord_user.discriminator == "0" {
             discord_user.username.clone()
@@ -106,6 +106,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
 
         // write the metadata out to be linked to the platform
         database::platform_data::write(&account_platform, &data, pool).await;
+        database::platform::update(&mut account_platform, pool).await;
 
         sync_result.display_name = display_name;
         sync_result.username = discord_user_name;

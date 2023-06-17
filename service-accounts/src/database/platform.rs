@@ -201,3 +201,19 @@ pub async fn unlink(account_platform: &AccountPlatform, pool: &MySqlPool) {
         .await
         .ok();
 }
+
+pub async fn need_update(platform: AccountPlatformType, limit: u64, pool: &MySqlPool) -> Vec<String> {
+    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform.to_string(), limit)
+        .fetch_all(pool)
+        .await;
+
+    if let Ok(query) = query {
+        query
+            .into_iter()
+            .map(|record| record.discord_id)
+            .collect::<Vec<String>>()
+    } else {
+        database::log_error(query);
+        Vec::new()
+    }
+}
