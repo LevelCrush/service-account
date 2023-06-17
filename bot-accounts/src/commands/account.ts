@@ -23,19 +23,44 @@ export const AccountCommand = {
     /**
      * Command configuration
      */
-    data: new SlashCommandBuilder().setName(COMMAND_NAME).setDescription('Get your linked account information'),
-
+    data: new SlashCommandBuilder()
+        .setName(COMMAND_NAME)
+        .setDescription('Get linked account information')
+        .addSubcommand((subcommand) =>
+            subcommand.setName('me').setDescription('Display your own linked account information'),
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName('user')
+                .setDescription('Query another users linked account information')
+                .addUserOption((option) =>
+                    option.setName('user').setDescription('The user you want to query').setRequired(true),
+                ),
+        ),
     /**
      * Execute command logic
      * @param interaction
      */
     execute: async (interaction: ChatInputCommandInteraction) => {
+        const subcommand = interaction.options.getSubcommand(true);
+
         await interaction.reply({
-            content: 'Checking for your linked level crush accounts',
+            content:
+                subcommand === 'me'
+                    ? 'Checking for your linked Level Crush accounts'
+                    : 'Querying target users linked Level Crush accounts',
             ephemeral: true,
         });
 
-        const user = interaction.user.username;
+        const user = subcommand === 'me' ? interaction.user.username : interaction.options.getUser('user')?.username;
+        if (!user) {
+            await interaction.followUp({
+                content: 'No user was included in the request',
+                ephemeral: true,
+            });
+            return;
+        }
+
         const endpoint = process.env['HOST_ACCOUNTS'] || '';
         const search_request = await fetch(endpoint + '/search/by/discord/' + encodeURIComponent(user));
         if (search_request.ok) {
