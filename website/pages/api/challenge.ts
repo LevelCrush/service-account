@@ -7,7 +7,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 async function loginChallenge(req: NextApiRequest, res: NextApiResponse) {
   try {
     const challenge = await req.body;
-    console.log('Storing challenge: ', challenge);
     req.session.challenge = challenge as string;
     await req.session.save();
   } catch (err) {
