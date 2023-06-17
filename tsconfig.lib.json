@@ -5,6 +5,7 @@
             "@levelcrush" : ["lib-levelcrush-ts/dist/index"],
             "@levelcrush/server" : ["lib-levelcrush-ts/dist/index_server"],
             "@levelcrush/service-destiny": ["lib-levelcrush-ts/dist/index_service_destiny"],
+            "@levelcrush/service-accounts": ["lib-levelcrush-ts/dist/index_service_accounts"],
             "@website/components/*" : ["website/components/*"],
             "@website/core/*" : ["website/core/*"],
             "@website/pages/*" : ["website/pages/*"],

@@ -15,8 +15,8 @@ discord_data AS (
     SELECT
         source_platform.account,
         source_platform.id AS platform,
-        displayname_data.value AS username,
-        username_data.value AS display_name
+        displayname_data.value AS display_name,
+        username_data.value AS username
     FROM source_platform
     INNER JOIN account_platform_data AS displayname_data ON
         source_platform.id = displayname_data.platform AND
