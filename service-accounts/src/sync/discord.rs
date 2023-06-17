@@ -88,7 +88,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
         let data = vec![
             NewAccountPlatformData {
                 key: "discord_id".to_string(),
-                value: discord_user.id,
+                value: account_platform.platform_user.clone(),
             },
             NewAccountPlatformData {
                 key: "username".to_string(),

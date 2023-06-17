@@ -8,7 +8,6 @@ pub struct DiscordValidationResponse {
 
 #[ExternalAPIResponse]
 pub struct DiscordUserResponse {
-    pub id: String,
     pub username: String,
     pub discriminator: String,
     pub avatar: String,
