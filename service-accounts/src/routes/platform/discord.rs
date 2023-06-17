@@ -1,11 +1,8 @@
 use crate::app::session::SessionKey;
 use crate::app::state::AppState;
-use crate::database::platform::{AccountPlatformType, NewAccountPlatform};
-use crate::database::platform_data::NewAccountPlatformData;
 use crate::env::AppVariable;
-use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries, OAuthLoginValidationRequest};
-use crate::routes::responses::{DiscordUserResponse, DiscordValidationResponse};
-use crate::{app, database, env};
+use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries};
+use crate::{app, env};
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
@@ -56,7 +53,7 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: W
 
 pub async fn validate(
     Query(validation_query): Query<OAuthLoginValidationQueries>,
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
     mut session: WritableSession,
 ) -> Redirect {
     let query_fields = validation_query;
@@ -110,6 +107,11 @@ pub async fn validate(
     if let Some(member) = member_sync {
         app::session::login(&mut session, member);
     }
+
+    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let search_cache_key = format!("search_discord||{}", discord_username);
+    tracing::info!("Busting search key: {}", search_cache_key);
+    state.searches.delete(&search_cache_key).await;
 
     // no matter what we redirect back to our caller
     Redirect::temporary(final_redirect.as_str())

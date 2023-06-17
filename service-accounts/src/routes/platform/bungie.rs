@@ -174,6 +174,11 @@ pub async fn unlink(
     tracing::info!("Busting cache on profile at {}", cache_key);
     state.profiles.delete(&cache_key).await;
 
+    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let search_cache_key = format!("search_discord||{}", discord_username);
+    tracing::info!("Busting search key: {}", search_cache_key);
+    state.searches.delete(&search_cache_key).await;
+
     // Now redirect
     Redirect::temporary(final_redirect.as_str())
 }
@@ -493,6 +498,11 @@ pub async fn validate(
     // bust cache key
     tracing::info!("Busting cache key: {}", cache_key);
     state.profiles.delete(&cache_key).await;
+
+    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let search_cache_key = format!("search_discord||{}", discord_username);
+    tracing::info!("Busting search key: {}", search_cache_key);
+    state.searches.delete(&search_cache_key).await;
 
     // no matter what we redirect back to our caller
     Redirect::temporary(final_redirect.as_str())
