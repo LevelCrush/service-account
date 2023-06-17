@@ -36,7 +36,8 @@ export async function slash_commands() {
     const command_map = new Map<string, Command>();
     command_map.set(LinkCommand.name, LinkCommand);
     command_map.set(AccountCommand.name, AccountCommand);
-    
+
+    // now parse commands
     const commands = [];
     for (const command of command_map.values()) {
         commands.push(command.data.toJSON());

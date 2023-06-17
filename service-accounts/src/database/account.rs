@@ -187,3 +187,25 @@ pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLin
         None
     }
 }
+
+pub async fn by_discord(discord_id: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
+    let with_tables = vec![
+        with_bungie_account(false, 0),
+        with_discord_account(true, 1),
+        with_twitch_account(false, 0),
+    ]
+    .join(",");
+
+    let statement = project_str!("queries/account_search_by_discord.sql", with_tables);
+    let query = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str())
+        .bind(bungie_id)
+        .fetch_optional(pool)
+        .await;
+
+    if let Ok(query) = query {
+        query
+    } else {
+        database::log_error(query);
+        None
+    }
+}

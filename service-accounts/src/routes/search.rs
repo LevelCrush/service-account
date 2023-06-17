@@ -13,8 +13,13 @@ use std::collections::HashMap;
 
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("by/discord/:discord", get(discord_search))
         .route("/by/bungie/:bungie", get(bungie_search))
         .route("/by/bungie", post(bungie_search_mass))
+}
+
+async fn discord_search(State(mut state): State<AppState>, Path(discord): Path<String>) {
+    
 }
 
 pub async fn bungie_search(
