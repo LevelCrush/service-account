@@ -44,6 +44,9 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     discord: null,
     twitch: null,
   } as LinkedPlatformMap);
+  const [linkedPlatformResult, setLinkedPlatformResult] = useState(
+    null as null | AccountLinkedPlatformResult
+  );
   const [accountToken, setAccountToken] = useState('');
   useEffect(() => {
     if (!props.data && !props.asHeaders) {
@@ -85,6 +88,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
             twitch: parsed.response.twitch || null,
           });
           setAccountToken(parsed.response.account_token);
+          setLinkedPlatformResult(parsed.response);
         }
       };
 
@@ -103,6 +107,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
         discord: props.platforms.discord || null,
         twitch: props.platforms.twitch || null,
       });
+      setLinkedPlatformResult(props.platforms);
       setAccountToken(props.platforms.account_token);
     }
   }, []);
@@ -220,7 +225,11 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                   }
                   onClick={(ev) => {
                     navigator.clipboard.writeText(
-                      linkedPlatforms[platform] as string
+                      platform === 'discord'
+                        ? linkedPlatformResult !== null
+                          ? linkedPlatformResult.username
+                          : (linkedPlatforms[platform] as string)
+                        : (linkedPlatforms[platform] as string)
                     );
                     const btn = ev.target as HTMLButtonElement;
                     const origHtml = btn.innerHTML;
@@ -238,8 +247,6 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                   className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
                   intention={'inactive'}
                   title={linkedPlatforms[platform] as string}
-                  data-platform={platform}
-                  data-platform-id={linkedPlatforms[platform] as string}
                   key={
                     'member_' +
                     props.display_name +
