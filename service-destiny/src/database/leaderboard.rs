@@ -1,7 +1,7 @@
-use levelcrush::{database, proc_macros::DatabaseResultSerde, BigDecimal};
+use levelcrush::{database, proc_macros::DatabaseResult, BigDecimal};
 use sqlx::MySqlPool;
 
-#[DatabaseResultSerde]
+#[DatabaseResult]
 pub struct LeaderboardEntry {
     pub display_name: String,
     pub amount: BigDecimal,
