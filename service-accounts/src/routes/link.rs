@@ -90,11 +90,11 @@ async fn link_platform(
     State(mut state): State<AppState>,
     mut session: WritableSession,
 ) -> Redirect {
+    let mut link_code = String::new();
     let member = {
         if let Some(code) = query.code {
             let sync_result = state.link_gens.access(&code).await;
-            state.link_gens.delete(&code).await;
-
+            link_code = code.clone();
             sync_result
         } else {
             None
@@ -104,7 +104,11 @@ async fn link_platform(
     if let Some(member) = member {
         app::session::login(&mut session, member);
         let platform = slugify(&target_platform.to_lowercase());
-        let done_url = format!("{}/link/done", env::get(AppVariable::HostAccounts));
+        let done_url = format!(
+            "{}/link/done?code={}",
+            env::get(AppVariable::HostAccounts),
+            urlencoding::encode(&link_code),
+        );
         let redirect_url = format!(
             "{}/platform/{}/login?redirect={}",
             env::get(AppVariable::HostAccounts),
@@ -118,7 +122,10 @@ async fn link_platform(
     }
 }
 
-async fn link_done() -> &'static str {
+async fn link_done(Query(query): Query<LinkQuery>, State(mut state): State<AppState>) -> &'static str {
+    if let Some(code) = query.code {
+        state.link_gens.delete(&code).await;
+    }
     "Thank you for linking your account. You can close this tab/window now"
 }
 
