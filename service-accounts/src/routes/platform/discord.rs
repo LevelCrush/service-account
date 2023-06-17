@@ -100,51 +100,12 @@ pub async fn validate(
     }
 
     // now validate the code returned to us if we are allowed to process
-    let mut validation_response = None;
-
-    if do_process {
-        let client_id = env::get(AppVariable::DiscordClientId);
-        let client_secret = env::get(AppVariable::DiscordClientSecret);
-        let authorize_redirect = env::get(AppVariable::DiscordValidateUrl);
-        let scopes = vec!["identify"].join("+");
-
-        let request = state
-            .http_client
-            .post("https://discord.com/api/oauth2/token")
-            .body(
-                serde_urlencoded::to_string(OAuthLoginValidationRequest {
-                    client_id: client_id.clone(),
-                    client_secret: client_secret.clone(),
-                    grant_type: "authorization_code".to_string(),
-                    code: oauth_code.clone(),
-                    redirect_uri: authorize_redirect.clone(),
-                    scope: scopes,
-                })
-                .unwrap_or_default(),
-            )
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Accept", "application/json")
-            .send()
-            .await;
-
-        if request.is_ok() {
-            let oauth_result = request.unwrap().json::<DiscordValidationResponse>().await;
-            if oauth_result.is_ok() {
-                validation_response = oauth_result.ok();
-            } else {
-                tracing::error!(
-                    "Could not parse the oauth validation response for discord: \r\n{}",
-                    oauth_result.err().unwrap()
-                );
-                validation_response = None;
-            }
-        }
-    }
-
-    let mut member_sync = None;
-    if let Some(validation) = validation_response {
-        member_sync = app::discord::member_oauth(&validation.access_token, &state).await;
-    }
+    let validation_response = app::discord::validate_oauth(&oauth_code, &state).await;
+    let member_sync = if let Some(validation) = validation_response {
+        app::discord::member_oauth(&validation.access_token, &state).await
+    } else {
+        None
+    };
 
     if let Some(member) = member_sync {
         app::session::login(&mut session, member);

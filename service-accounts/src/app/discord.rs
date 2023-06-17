@@ -3,10 +3,52 @@ use levelcrush::tracing;
 use super::state::AppState;
 use crate::{
     env::{self, AppVariable},
-    routes::responses::DiscordUserResponse,
+    routes::{
+        platform::OAuthLoginValidationRequest,
+        responses::{DiscordUserResponse, DiscordValidationResponse},
+    },
     sync,
     sync::discord::MemberSyncResult,
 };
+
+pub async fn validate_oauth(oauth_code: &str, state: &AppState) -> Option<DiscordValidationResponse> {
+    let client_id = env::get(AppVariable::DiscordClientId);
+    let client_secret = env::get(AppVariable::DiscordClientSecret);
+    let authorize_redirect = env::get(AppVariable::DiscordValidateUrl);
+    let scopes = vec!["identify"].join("+");
+
+    let request = state
+        .http_client
+        .post("https://discord.com/api/oauth2/token")
+        .body(
+            serde_urlencoded::to_string(OAuthLoginValidationRequest {
+                client_id: client_id.clone(),
+                client_secret: client_secret.clone(),
+                grant_type: "authorization_code".to_string(),
+                code: oauth_code.to_string(),
+                redirect_uri: authorize_redirect.clone(),
+                scope: scopes,
+            })
+            .unwrap_or_default(),
+        )
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Accept", "application/json")
+        .send()
+        .await;
+
+    if let Ok(response) = request {
+        let json = response.json::<DiscordValidationResponse>().await;
+        if let Ok(data) = json {
+            Some(data)
+        } else {
+            let err = json.err().unwrap();
+            tracing::error!("Could not parse oauth validation response! {}", err);
+            None
+        }
+    } else {
+        None
+    }
+}
 
 /// queries a discord user directly by their discord id
 pub async fn member_api(discord_id: &str, state: &AppState) -> Option<DiscordUserResponse> {
@@ -51,7 +93,7 @@ pub async fn member_oauth_api(access_token: &str, state: &AppState) -> Option<Di
     let request = state
         .http_client
         .get("https://discord.com/api/v10/users/@me")
-        .bearer_auth(access_token.clone())
+        .bearer_auth(access_token)
         .send()
         .await;
 

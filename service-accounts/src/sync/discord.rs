@@ -32,14 +32,9 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
             timestamp,
             discord_user.id.clone(),
             discord_user.discriminator.clone(),
-            Uuid::new_v4().to_string(),
+            Uuid::new_v4(),
         );
-        let token_secret_seed = format!(
-            "..{}..||..{}..||..{}..",
-            token_seed.clone(),
-            Uuid::new_v4().to_string(),
-            timestamp
-        );
+        let token_secret_seed = format!("..{}..||..{}..||..{}..", token_seed.clone(), Uuid::new_v4(), timestamp);
 
         // create an account for this
         tracing::info!("Creating account");
@@ -60,7 +55,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
                     platform: AccountPlatformType::Discord,
                     platform_user: discord_user.id.clone(),
                 },
-                &pool,
+                pool,
             )
             .await;
         } else {
@@ -83,7 +78,9 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Opti
         };
 
         let display_name = if let Some(discord_display_name) = discord_user.display_name {
-            discord_display_name.clone()
+            discord_display_name
+        } else if let Some(global) = discord_user.global_name {
+            global
         } else {
             discord_user_name.clone()
         };
