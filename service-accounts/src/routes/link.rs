@@ -56,7 +56,7 @@ async fn link_generate(
 
     let member = app::discord::member(&payload.id, &state).await;
     if let Some(member) = member {
-        let input = format!(
+        let input: String = format!(
             "{}@{}::{}@{}",
             member.account_token_secret,
             member.username,

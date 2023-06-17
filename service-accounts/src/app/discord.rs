@@ -45,3 +45,37 @@ pub async fn member(discord_id: &str, state: &AppState) -> Option<MemberSyncResu
         None
     }
 }
+
+/// query discord api with oauth authentication
+pub async fn member_oauth_api(access_token: &str, state: &AppState) -> Option<DiscordUserResponse> {
+    let request = state
+        .http_client
+        .get("https://discord.com/api/v10/users/@me")
+        .bearer_auth(access_token.clone())
+        .send()
+        .await;
+
+    if let Ok(result) = request {
+        let json = result.json::<DiscordUserResponse>().await;
+        if let Ok(data) = json {
+            Some(data)
+        } else {
+            let err = json.err().unwrap();
+            tracing::error!("Unable to parse oauth validation response: {}", err);
+            None
+        }
+    } else {
+        None
+    }
+}
+
+/// Query a member via oauth authentication
+/// Update them in our database
+pub async fn member_oauth(access_token: &str, state: &AppState) -> Option<MemberSyncResult> {
+    let oauth_response = member_oauth_api(access_token, state).await;
+    if let Some(user_response) = oauth_response {
+        sync::discord::member(user_response, &state.database).await
+    } else {
+        None
+    }
+}
