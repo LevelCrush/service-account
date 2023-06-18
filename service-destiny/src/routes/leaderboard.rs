@@ -7,10 +7,10 @@ use levelcrush::{
 use super::responses::{Leaderboard, LeaderboardEntry};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/titles", get(leadeboard_titles))
+    Router::new().route("/titles", get(leaderboard_titles))
 }
 
-async fn leadeboard_titles(State(mut state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
+async fn leaderboard_titles(State(mut state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
     let entries = database::leaderboard::titles(&state.database).await;
 
