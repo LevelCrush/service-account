@@ -15,7 +15,7 @@ async fn leadeboard_titles(State(mut state): State<AppState>) -> Json<APIRespons
     let entries = database::leaderboard::titles(&state.database).await;
 
     let leaderboard = Leaderboard {
-        name: "Title Collectors".to_string(),
+        name: "Title Leaderboard".to_string(),
         entries: entries.into_iter().map(LeaderboardEntry::from_db).collect(),
     };
 
