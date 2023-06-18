@@ -101,6 +101,7 @@ leaderboard_standings AS (
     SELECT
         leaderboard.display_name,
         leaderboard.amount,
+        (RANK() OVER w) AS `standing`,
         (CUME_DIST() OVER w)  * 100 AS `distance`,
         (PERCENT_RANK() OVER w) * 100 AS `ranking`
     FROM leaderboard
@@ -108,5 +109,6 @@ leaderboard_standings AS (
 )
 
 SELECT
-    *
+    leaderboard_standings.*
 FROM leaderboard_standings
+ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC

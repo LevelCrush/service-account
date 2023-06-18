@@ -41,14 +41,31 @@ triumph_titles AS (
         triumphs.*
     FROM triumphs
     WHERE triumphs.is_title = 1
+),
+leaderboard AS (
+    SELECT
+        COALESCE(linked_discords.discord_display_name,
+        target_members.display_name_global)      AS display_name,
+        COALESCE(SUM(member_triumphs.state & 64 = 64), 0) AS amount
+    FROM target_members
+          INNER JOIN member_triumphs ON target_members.membership_id = member_triumphs.membership_id
+          INNER JOIN triumph_titles ON member_triumphs.hash = triumph_titles.hash
+          LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
+          LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
+    GROUP BY target_members.display_name_global, linked_discords.discord_display_name
+),
+leaderboard_standings AS (
+    SELECT
+        leaderboard.display_name,
+        leaderboard.amount,
+        (RANK() OVER w) AS `standing`,
+        (CUME_DIST() OVER w)  * 100 AS `distance`,
+        (PERCENT_RANK() OVER w) * 100 AS `ranking`
+    FROM leaderboard
+    WINDOW w AS (ORDER BY leaderboard.amount DESC)
 )
+
 SELECT
-    COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
-    COALESCE(SUM(member_triumphs.state & 64 = 64), 0) AS amount
-FROM target_members
-INNER JOIN member_triumphs ON target_members.membership_id = member_triumphs.membership_id
-INNER JOIN triumph_titles ON member_triumphs.hash = triumph_titles.hash
-LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
-LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
-GROUP BY target_members.display_name_global, linked_discords.discord_display_name
-ORDER BY amount DESC, display_name ASC
+    leaderboard_standings.*
+FROM leaderboard_standings
+ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC
