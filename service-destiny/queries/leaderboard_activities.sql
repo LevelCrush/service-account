@@ -43,7 +43,7 @@ target_activities AS
        member_activities.membership_id
    FROM target_members
    INNER JOIN member_activities ON target_members.membership_id = member_activities.membership_id
-   WHERE member_activities.mode = 4 /*aids */
+   WHERE member_activities.mode IN({})
    GROUP BY member_activities.instance_id, member_activities.membership_id
 ),
 target_activities_with_durations AS
@@ -84,7 +84,6 @@ full_clear_activities AS
         (instances.occurred_at >= 1605045600 AND instances.occurred_at <= 1645567200) OR
         (instances.occurred_at >= 1645567200 AND instances.started_from_beginning = 1)
     )
-    AND target_activities_with_durations.activityDurationSeconds > 600 /* only accept if they are longer then 10 minutes long */
     GROUP BY instances.instance_id, target_activities_with_durations.membership_id
 ),
 

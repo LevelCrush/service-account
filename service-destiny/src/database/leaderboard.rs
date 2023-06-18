@@ -1,4 +1,4 @@
-use levelcrush::{database, proc_macros::DatabaseResult, BigDecimal};
+use levelcrush::{database, proc_macros::DatabaseResult, project_str, BigDecimal};
 use sqlx::MySqlPool;
 
 #[DatabaseResult]
@@ -31,6 +31,28 @@ pub async fn raids(pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
     let query = sqlx::query_file_as!(LeaderboardEntryResult, "queries/leaderboard_raids.sql")
         .fetch_all(pool)
         .await;
+
+    if let Ok(query) = query {
+        query
+    } else {
+        database::log_error(query);
+        Vec::new()
+    }
+}
+
+pub async fn generic(modes: &[i32], pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
+    if modes.is_empty() {
+        return Vec::new();
+    }
+
+    let prepared_pos = vec!["?"; modes.len()].join(",");
+    let statement = project_str!("queries/leaderboard_activities.sql", prepared_pos);
+    let mut query = sqlx::query_as::<_, LeaderboardEntryResult>(&statement);
+    for mode in modes.iter() {
+        query = query.bind(mode);
+    }
+
+    let query = query.fetch_all(pool).await;
 
     if let Ok(query) = query {
         query
