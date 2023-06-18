@@ -310,7 +310,7 @@ async fn merge_reports(
         .map(|(mode, count)| {
             let mode: DestinyActivityModeType = mode.into();
             MemberReportActivityMode {
-                mode: mode.to_string(),
+                mode: mode.as_str().to_string(),
                 count,
             }
         })

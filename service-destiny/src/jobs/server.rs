@@ -1,8 +1,9 @@
 use std::time::Duration;
 
-use crate::app::state::AppState;
+use crate::app::state::{AppState, Setting};
 use crate::env::AppVariable;
-use crate::{env, routes};
+use crate::{app, database, env, routes};
+use levelcrush::cache::CacheValue;
 use levelcrush::server::Server;
 use levelcrush::{tokio, tracing};
 
@@ -19,6 +20,24 @@ pub async fn run() {
         loop {
             app_state_bg.cache.prune().await;
             tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        }
+    });
+
+    let mut settings_app_state = app_state.clone();
+    let settings_updater = tokio::spawn(async move {
+        loop {
+            // update modes into our setting cache
+            let modes = database::setting::modes(&settings_app_state.database).await;
+            settings_app_state
+                .settings
+                .write(
+                    app::settings::CACHE_KEY_MODES,
+                    CacheValue::persistant(Setting::Modes(modes)),
+                )
+                .await;
+
+            // let the settings be updated every 5 minutes
+            tokio::time::sleep(tokio::time::Duration::from_secs(300)).await;
         }
     });
 
@@ -62,5 +81,5 @@ pub async fn run() {
     });
 
     // run both  concurrently
-    (_, _, _) = tokio::join!(server_task, cache_task, task_manager);
+    (_, _, _, _) = tokio::join!(server_task, cache_task, task_manager, settings_updater);
 }

@@ -10,3 +10,4 @@ pub mod member;
 pub mod seasons;
 pub mod triumph;
 pub mod leaderboard;
+pub mod setting;
