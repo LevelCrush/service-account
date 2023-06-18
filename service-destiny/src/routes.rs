@@ -1,4 +1,5 @@
 pub mod clan;
+pub mod control;
 pub mod leaderboard;
 pub mod member;
 pub mod network;
@@ -16,4 +17,5 @@ pub fn router() -> Router<AppState> {
         .nest("/member", member::router())
         .nest("/clan", clan::router())
         .nest("/leaderboard", leaderboard::router())
+        .nest("/control", control::router())
 }
