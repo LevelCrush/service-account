@@ -168,6 +168,9 @@ pub enum ReportOutput {
 pub struct LeaderboardEntry {
     pub display_name: String,
     pub amount: i32,
+    pub standing: i32,
+    pub percent_ranking: f64,
+    pub percent_distance: f64,
 }
 
 impl LeaderboardEntry {
@@ -175,6 +178,9 @@ impl LeaderboardEntry {
         LeaderboardEntry {
             display_name: record.display_name,
             amount: record.amount.to_i32().unwrap_or_default(),
+            standing: record.standing as i32,
+            percent_ranking: record.percent_ranking,
+            percent_distance: record.percent_ranking,
         }
     }
 }
