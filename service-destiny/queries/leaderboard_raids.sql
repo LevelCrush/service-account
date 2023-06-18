@@ -72,13 +72,15 @@ full_clear_activities AS
     #WHERE instance_members.completed = 1
     WHERE instances.completed = 1
     AND (
-        # any activity before beyond light **may** have a starting phase index set. In our system if they came in with a starting phase index or not does not matter
-        # we default to 0 if there is none present. So starting phase index = 0 equals the start of an activity (the beginning)
-        # unless there is somewhere in the documentation that says otherwise (this is an assumption, could not find any additional info in documentation)
+        /* 
+        any activity before beyond light **may** have a starting phase index set. In our system if they came in with a starting phase index or not does not matter
+        we default to 0 if there is none present. So starting phase index = 0 equals the start of an activity (the beginning)
+        unless there is somewhere in the documentation that says otherwise (this is an assumption, could not find any additional info in documentation) */
         (instances.occurred_at <= 1605045600 AND instances.starting_phase_index = 0) OR
-        # any instance that occurred after beyond light, will not have a starting phase index. So it is effectively 0 always no point in including it
-        # any activity between now and witch queen release **should** not have a starting_from_beginnning field populated so that will equal 0.
-        # this is according to bungie documentation.
+        /*
+        any instance that occurred after beyond light, will not have a starting phase index. So it is effectively 0 always no point in including it
+        any activity between now and witch queen release **should** not have a starting_from_beginnning field populated so that will equal 0.
+        this is according to bungie documentation. */
         (instances.occurred_at >= 1605045600 AND instances.occurred_at <= 1645567200) OR
         (instances.occurred_at >= 1645567200 AND instances.started_from_beginning = 1)
     )
@@ -88,8 +90,7 @@ full_clear_activities AS
 
 leaderboard AS (
     SELECT
-        COALESCE(linked_discords.discord_display_name,
-        target_members.display_name_global)        AS display_name,
+        COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
         COUNT(DISTINCT full_clear_activities.instance_id) AS amount
     FROM target_members
     LEFT JOIN full_clear_activities ON target_members.membership_id = full_clear_activities.membership_id
@@ -102,13 +103,18 @@ leaderboard_standings AS (
         leaderboard.display_name,
         leaderboard.amount,
         (RANK() OVER w) AS `standing`,
-        (CUME_DIST() OVER w)  * 100 AS `distance`,
-        (PERCENT_RANK() OVER w) * 100 AS `ranking`
+        (CUME_DIST() OVER w)  * 100 AS `percent_distance`,
+        (PERCENT_RANK() OVER w) * 100 AS `percent_ranking`
     FROM leaderboard
     WINDOW w AS (ORDER BY leaderboard.amount DESC)
 )
 
+/* normalize expected output */
 SELECT
-    leaderboard_standings.*
+    leaderboard_standings.display_name,
+    leaderboard_standings.amount + 0.0 AS amount, /* this seems silly, but is required for BigDecimal to be mapped as our uniform type */
+    leaderboard_standings.standing,
+    leaderboard_standings.percent_distance,
+    leaderboard_standings.percent_ranking
 FROM leaderboard_standings
 ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC
