@@ -1,13 +1,13 @@
+use crate::app::report::member::MemberReport;
+use crate::database::clan::ClanInfoResult;
+use crate::database::leaderboard::LeaderboardEntryResult;
+use crate::database::triumph::TriumphTitleResult;
+use crate::{app, database::member::MemberResult};
 use levelcrush::bigdecimal::ToPrimitive;
 use levelcrush::server::{APIResponse, PaginationResponse};
 use levelcrush::types::destiny::GroupId;
 use levelcrush::types::{destiny::MembershipId, destiny::MembershipType, UnixTimestamp};
 use ts_rs::TS;
-
-use crate::app::report::member::MemberReport;
-use crate::database::clan::ClanInfoResult;
-use crate::database::triumph::TriumphTitleResult;
-use crate::{app, database::member::MemberResult};
 
 // clan responses
 #[derive(serde::Serialize, TS, Default, Debug, Clone)]
@@ -161,6 +161,29 @@ pub struct MemberTitleResponse {
 pub enum ReportOutput {
     TaskRunning(UnixTimestamp),
     Report(Box<MemberReport>),
+}
+
+#[derive(serde::Serialize, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct LeaderboardEntry {
+    pub display_name: String,
+    pub amount: i32,
+}
+
+impl LeaderboardEntry {
+    pub fn from_db(record: LeaderboardEntryResult) -> LeaderboardEntry {
+        LeaderboardEntry {
+            display_name: record.display_name,
+            amount: record.amount.to_i32().unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(serde::Serialize, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct Leaderboard {
+    pub name: String,
+    pub entries: Vec<LeaderboardEntry>,
 }
 
 // type aliases
