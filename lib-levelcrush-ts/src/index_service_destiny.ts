@@ -65,7 +65,8 @@ export async function getDestinySeasons(host: string) {
  */
 export async function getDestinyModeGroups(host: string) {
   let settings = [] as SettingModeRecord[];
-  const request = await fetch(host + "/setting/modes");
+  const request = await fetch(host + "/settings/modes");
+
   if (request.ok) {
     const json = (await request.json()) as APIResponse<SettingModeRecord[]>;
     settings = json.response !== null ? json.response : [];

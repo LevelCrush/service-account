@@ -41,13 +41,17 @@ export const LeaderboardCommand = {
         const focused = interaction.options.getFocused();
 
         const endpoint = process.env['HOST_DESTINY'] || '';
-        const modes = await getDestinyModeGroups(endpoint);
+        let modes = await getDestinyModeGroups(endpoint);
+
+        // remove the first mode
+        modes = modes.slice(1);
+
         const filtered = modes.filter((choice) => choice.name.startsWith(focused));
 
         const respond_width = filtered.map((choice) => {
             return {
                 name: choice.name,
-                value: choice.value,
+                value: choice.name,
             };
         }) as ApplicationCommandOptionChoiceData[];
         await interaction.respond(respond_width);

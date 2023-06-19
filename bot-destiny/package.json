@@ -5,10 +5,11 @@
     "main": "./dist/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "debug": "ts-node src/index.ts",
-        "debug:invite": "ts-node src/index.ts --invite",
+        "debug": "ts-node -r tsconfig-paths/register src/index.ts",
+        "debug:invite": "ts-node  src/index.ts --invite",
         "invite": "node dist/index.js --invite",
-        "start": "node dist/index.js"
+        "start": "node dist/index.js",
+        "build": "tsc && tsc-alias"
     },
     "author": "",
     "license": "ISC",
@@ -19,7 +20,10 @@
         "eslint": "^8.42.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-plugin-prettier": "^4.2.1",
+        "node-polyfill-webpack-plugin": "^2.0.1",
+        "ts-loader": "^9.4.3",
         "ts-node": "^10.9.1",
+        "tsconfig-paths": "^4.2.0",
         "typescript": "^5.1.3"
     },
     "files": [
