@@ -19,6 +19,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/titles", get(leaderboard_titles))
         .route("/raids", get(leaderboard_raids))
+        .route("/raid", get(leaderboard_raids))
         .route("/:activity", get(leaderboard_generic))
 }
 
@@ -57,8 +58,16 @@ async fn leaderboard_generic(
         }
     }
 
-    let modes = target_group_modes.unwrap_or_default();
-    let entries = database::leaderboard::generic(&modes, &state.database).await;
+    let mut modes = target_group_modes.unwrap_or_default();
+    modes.sort();
+
+    let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");
+
+    let entries = match state.leaderboards.access(&mode_str).await {
+        Some(data) => data,
+        _ => Vec::new(),
+    };
+
     let mode_names = modes
         .into_iter()
         .map(|m| {
@@ -67,6 +76,7 @@ async fn leaderboard_generic(
         })
         .collect::<Vec<&str>>()
         .join(", ");
+
     let leaderboard = Leaderboard {
         name: format!("{} Leaderboard", mode_names),
         entries: entries.into_iter().map(LeaderboardEntry::from_db).collect(),
@@ -78,9 +88,13 @@ async fn leaderboard_generic(
     Json(response)
 }
 
-async fn leaderboard_titles(State(mut state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
+async fn leaderboard_titles(State(state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
-    let entries = database::leaderboard::titles(&state.database).await;
+
+    let entries = match state.leaderboards.access("Titles").await {
+        Some(data) => data,
+        _ => Vec::new(),
+    };
 
     let leaderboard = Leaderboard {
         name: "Title Leaderboard".to_string(),
@@ -93,9 +107,13 @@ async fn leaderboard_titles(State(mut state): State<AppState>) -> Json<APIRespon
     Json(response)
 }
 
-async fn leaderboard_raids(State(mut state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
+async fn leaderboard_raids(State(state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
-    let entries = database::leaderboard::raids(&state.database).await;
+
+    let entries = match state.leaderboards.access("Raid").await {
+        Some(data) => data,
+        _ => Vec::new(),
+    };
 
     let leaderboard = Leaderboard {
         name: "Raid Leaderboard".to_string(),
