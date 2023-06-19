@@ -50,17 +50,17 @@ export const AccountCommand = {
         if (subcommand === 'me') {
             const discrim = interaction.user.discriminator.trim();
             if (discrim.length === 0 || discrim === '0') {
-                user = interaction.user.username + '#' + discrim;
-            } else {
                 user = interaction.user.username;
+            } else {
+                user = interaction.user.username + '#' + discrim;
             }
         } else {
             const user_field = interaction.options.getUser('user', true);
             const discrim = user_field.discriminator.trim();
             if (discrim.length === 0 || discrim === '0') {
-                user = user_field.username + '#' + discrim;
-            } else {
                 user = user_field.username;
+            } else {
+                user = user_field.username + '#' + discrim;
             }
         }
 
