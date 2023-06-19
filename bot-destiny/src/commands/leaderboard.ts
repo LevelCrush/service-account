@@ -94,7 +94,11 @@ export const LeaderboardCommand = {
 
             const embed = new EmbedBuilder()
                 .setColor('#1ABC9C')
-                .setTitle(leaderboard.name)
+                .setTitle(
+                    leaderboard.name.trim().length > 255
+                        ? leaderboard.name.slice(0, 252) + '...'
+                        : leaderboard.name.trim(),
+                )
                 .setDescription(standings.join('\r\n'));
             interaction.followUp({
                 embeds: [embed],
