@@ -9,6 +9,7 @@ use levelcrush::{
         routing::get,
         Json, Router,
     },
+    cache::{CacheDuration, CacheValue},
     server::APIResponse,
     tracing,
 };
@@ -62,11 +63,25 @@ async fn leaderboard_generic(
     modes.sort();
 
     let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");
-
+    let mut did_db_update = false;
     let entries = match state.leaderboards.access(&mode_str).await {
         Some(data) => data,
-        _ => Vec::new(),
+        _ => {
+            did_db_update = true;
+            database::leaderboard::generic(&modes, &state.database).await
+        }
     };
+
+    if did_db_update {
+        // not in app groups should be cached for only an hour
+        state
+            .leaderboards
+            .write(
+                &mode_str,
+                CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
+            )
+            .await
+    }
 
     let mode_names = modes
         .into_iter()

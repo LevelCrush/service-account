@@ -20,6 +20,9 @@ pub async fn run() {
     let cache_task = tokio::spawn(async move {
         loop {
             app_state_bg.cache.prune().await;
+
+            // all known app defiend groups will stay in cache. But this will catch any stray entries
+            app_state_bg.leaderboards.prune().await;
             tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
         }
     });
