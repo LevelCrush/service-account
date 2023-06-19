@@ -1,5 +1,6 @@
 import type { APIResponse } from "./index_server";
 import type { MemberResponse } from "./service-destiny/MemberResponse";
+import type { SettingModeRecord } from "./service-destiny/SettingModeRecord";
 
 export * from "./service-destiny/ClanInformation";
 export * from "./service-destiny/ClanResponse";
@@ -13,6 +14,9 @@ export * from "./service-destiny/MemberTitleResponse";
 export * from "./service-destiny/MemberReportStats";
 export * from "./service-destiny/ReportOutput";
 export * from "./service-destiny/MemberResponse";
+export * from "./service-destiny/Leaderboard";
+export * from "./service-destiny/LeaderboardEntry";
+export * from "./service-destiny/SettingModeRecord";
 
 /**
  * Intended to represent combinations of the the enumeration "DestinyActivityModeType".
@@ -60,15 +64,29 @@ export async function getDestinySeasons(host: string) {
  * @returns
  */
 export async function getDestinyModeGroups(host: string) {
-  const modes = [
+  let settings = [] as SettingModeRecord[];
+  const request = await fetch(host + "/setting/modes");
+  if (request.ok) {
+    const json = (await request.json()) as APIResponse<SettingModeRecord[]>;
+    settings = json.response !== null ? json.response : [];
+  }
+
+  let modes = [
     {
       name: "All",
       value: "all",
     },
-    {
-      name: "Raid",
-      value: "4",
-    },
   ] as DestinyActivityModeGroup[];
+
+  // combine from our database
+  modes = modes.concat(
+    settings.map((val) => {
+      return {
+        name: val.name,
+        value: val.value,
+      };
+    })
+  );
+
   return modes;
 }

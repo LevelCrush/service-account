@@ -23,6 +23,24 @@ async function bot() {
         console.log('Client ready!');
     });
 
+    // handle auto complete commands
+    client.on(Events.InteractionCreate, async (interaction) => {
+        if (!interaction.isAutocomplete()) {
+            return;
+        }
+
+        const command = commands.get(interaction.commandName);
+        if (!command || !command.autocomplete) {
+            console.log('Command not accepted: ', interaction.commandName);
+        } else {
+            try {
+                await command.autocomplete(interaction);
+            } catch (err) {
+                console.log('Auto complete failed! ', err);
+            }
+        }
+    });
+
     // handle slash commands
     client.on(Events.InteractionCreate, async (interaction) => {
         if (!interaction.isChatInputCommand()) {

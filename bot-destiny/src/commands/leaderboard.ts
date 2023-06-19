@@ -4,9 +4,13 @@ import {
     InteractionResponse,
     Message,
     MessageFlags,
+    AutocompleteInteraction,
+    ApplicationCommandChoicesData,
+    ApplicationCommandOptionChoiceData,
 } from 'discord.js';
 import { Command } from './base_command';
-import type { APIResponse } from '@levelcrush';
+import type { APIResponse, ServiceDestiny } from '@levelcrush';
+import { getDestinyModeGroups } from '@levelcrush/service-destiny';
 
 const COMMAND_NAME = 'leaderboard';
 
@@ -28,6 +32,26 @@ export const LeaderboardCommand = {
                 .setDescription('The type of leaderboard/activity you want to get')
                 .setRequired(true),
         ),
+
+    /**
+     * Auto complete ooptions for this command
+     * @param interaction
+     */
+    autocomplete: async (interaction: AutocompleteInteraction) => {
+        const focused = interaction.options.getFocused();
+
+        const endpoint = process.env['HOST_DESTINY'] || '';
+        const modes = await getDestinyModeGroups(endpoint);
+        const filtered = modes.filter((choice) => choice.name.startsWith(focused));
+
+        const respond_width = filtered.map((choice) => {
+            return {
+                name: choice.name,
+                value: choice.value,
+            };
+        }) as ApplicationCommandOptionChoiceData[];
+        await interaction.respond(respond_width);
+    },
     /**
      *  Execute command logic
      * @param interaction
