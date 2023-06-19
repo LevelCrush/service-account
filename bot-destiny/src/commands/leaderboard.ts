@@ -92,14 +92,18 @@ export const LeaderboardCommand = {
                     ')*',
             );
 
+            const frontend_url = process.env['HOST_FRONTEND'] || '';
+            const url = frontend_url + '/leaderboard/' + encodeURIComponent(leaderboard_type);
             const embed = new EmbedBuilder()
                 .setColor('#1ABC9C')
-                .setTitle(
-                    leaderboard.name.trim().length > 255
-                        ? leaderboard.name.slice(0, 252) + '...'
-                        : leaderboard.name.trim(),
-                )
-                .setDescription(standings.join('\r\n'));
+                .setURL(url)
+                .setTitle(leaderboard_type + ' Leaderboard')
+                .setDescription(leaderboard.name)
+                .setDescription(standings.join('\r\n'))
+                .setFooter({
+                    text: 'For the full leaderboard, visit ' + url,
+                });
+
             interaction.followUp({
                 embeds: [embed],
                 ephemeral: false,
