@@ -37,6 +37,42 @@ pub fn DatabaseRecord(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+/// appends standard fields related to a record
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
+pub fn DatabaseRecordSerde(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut item_struct = parse_macro_input!(item as ItemStruct);
+
+    if let syn::Fields::Named(ref mut fields) = item_struct.fields {
+        // created_at field
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub created_at: u64 }).unwrap());
+
+        // updated_at field
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub updated_at: u64 }).unwrap());
+
+        // deleted_at field
+        fields
+            .named
+            .push(syn::Field::parse_named.parse2(quote! { pub deleted_at: u64 }).unwrap());
+
+        // deleted_at field
+        fields
+            .named
+            .insert(0, syn::Field::parse_named.parse2(quote! { pub id: i64 }).unwrap());
+    }
+
+    quote! {
+        #[derive(sqlx::FromRow, Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+        #item_struct
+    }
+    .into()
+}
+
 /// appends standard fields related to a record
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
@@ -62,7 +98,7 @@ pub fn TimestampFields(_attr: TokenStream, item: TokenStream) -> TokenStream {
         // deleted_at field
         fields
             .named
-            .push(syn::Field::parse_named.parse2(quote! { pub id: i32 }).unwrap());
+            .push(syn::Field::parse_named.parse2(quote! { pub id: i64 }).unwrap());
     }
 
     quote! {

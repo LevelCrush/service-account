@@ -310,7 +310,7 @@ async fn merge_reports(
         .map(|(mode, count)| {
             let mode: DestinyActivityModeType = mode.into();
             MemberReportActivityMode {
-                mode: mode.to_string(),
+                mode: mode.as_str().to_string(),
                 count,
             }
         })
@@ -696,14 +696,18 @@ async fn get_stats(membership_id: MembershipId, instance_ids: &[InstanceId], sta
     );
 
     let mut unique_instances = HashSet::new();
-    let mut complete_full_instances = Vec::new();
+    let mut complete_full_instances = HashSet::new();
     for instance in instances_completed.iter() {
         unique_instances.insert(instance.instance_id);
     }
 
     for instance in instances_data.iter() {
-        if instance.started_from_beginning == 1 && instance.completed == 1 {
-            complete_full_instances.push(instance.instance_id);
+        if ((instance.occurred_at <= 1605045600 && instance.starting_phase_index == 0)
+            || (instance.occurred_at >= 1605045600 && instance.occurred_at <= 1645567200)
+            || (instance.occurred_at >= 1645567200 && instance.started_from_beginning == 1))
+            && unique_instances.contains(&instance.instance_id)
+        {
+            complete_full_instances.insert(instance.instance_id);
         }
     }
 

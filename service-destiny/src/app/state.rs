@@ -1,7 +1,9 @@
 use super::report::member::MemberReport;
 use crate::database::clan::ClanInfoResult;
 use crate::database::instance::InstanceMemberRecord;
+use crate::database::leaderboard::LeaderboardEntryResult;
 use crate::database::member::MemberResult;
+use crate::database::setting::SettingModeRecord;
 use crate::database::triumph::TriumphTitleResult;
 use crate::{bungie::BungieClient, database::activity_history::ActivityHistoryRecord};
 use levelcrush::task_manager::TaskManager;
@@ -22,12 +24,19 @@ pub enum CacheItem {
     MemberTitles(Vec<TriumphTitleResult>),
 }
 
+#[derive(Clone, Debug)]
+pub enum Setting {
+    Modes(Vec<SettingModeRecord>),
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub database: MySqlPool,            // MySqlPool is already wrapped in a arc, safe to clone
     pub bungie: BungieClient,           // safe to clone, underlying implementation uses handles/arc
     pub cache: MemoryCache<CacheItem>,  // memory cache uses Arc's internally. Safe to clone
     pub task_running: MemoryCache<u64>, // keep track whenever we started these task
+    pub settings: MemoryCache<Setting>,
+    pub leaderboards: MemoryCache<Vec<LeaderboardEntryResult>>,
     pub tasks: TaskManager,
     pub priority_tasks: TaskManager,
 }
@@ -51,6 +60,8 @@ impl AppState {
 
         AppState {
             database,
+            leaderboards: MemoryCache::new(),
+            settings: MemoryCache::new(),
             bungie: BungieClient::new(),
             cache: MemoryCache::new(), // cache for 24 hours (a members profile does not update this often, except for last login at and character)      }
             task_running: MemoryCache::new(),
