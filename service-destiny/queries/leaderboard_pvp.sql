@@ -43,15 +43,15 @@ target_activities AS
        member_activities.membership_id
    FROM target_members
    INNER JOIN member_activities ON target_members.membership_id = member_activities.membership_id
-   WHERE member_activities.mode IN(10,12,15,19,25,31,37,38,39,41,42,43,44,45,48,49,50,59,60,61,62,65,68,69,70,71,72,73,74,80,81,84,89,90,91) /*aids */
+   WHERE member_activities.mode IN(39,41,42,84, 69,72,74,10,12,15,19,25,31,37,38,39,41,42,43,44,45,48,49,50,59,60,61,62,65,68,69,70,71,72,73,74,80,81,84,89,90,91) /*aids */
    GROUP BY member_activities.instance_id, member_activities.membership_id
 ),
 match_standings AS (
     SELECT
         target_activities.instance_id,
         target_activities.membership_id,
-        (member_activity_stats.value_display = 'Victory' OR member_activity_stats.value = 0) AS had_victory,
-        member_activity_stats.value_display = 'Defeat' AS had_defeat
+        member_activity_stats.value = 0 AS had_victory,
+        member_activity_stats.value >= 1 AS had_defeat
     FROM target_activities
     INNER JOIN member_activity_stats ON
            target_activities.instance_id = member_activity_stats.instance_id AND
@@ -63,7 +63,11 @@ match_standings AS (
 leaderboard AS (
     SELECT
         COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
-        SUM(match_standings.had_victory) / SUM(match_standings.had_defeat) AS amount
+        SUM(match_standings.had_victory) / SUM(match_standings.had_defeat) AS wl_ratio, /* win/loss ratio */
+        (SUM(match_standings.had_victory) / COUNT(DISTINCT match_standings.instance_id) * 100) AS win_rate,
+        SUM(match_standings.had_victory) AS wins,
+        SUM(match_standings.had_defeat) AS losses,
+        COUNT(DISTINCT match_standings.instance_id) AS total_matches
     FROM target_members
     LEFT JOIN match_standings ON target_members.membership_id = match_standings.membership_id
     LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
@@ -73,19 +77,28 @@ leaderboard AS (
 leaderboard_standings AS (
     SELECT
         leaderboard.display_name,
-        leaderboard.amount,
+        leaderboard.wl_ratio,
+        leaderboard.win_rate,
+        leaderboard.wins,
+        leaderboard.losses,
+        leaderboard.total_matches,
         (RANK() OVER w) AS `standing`,
         (CUME_DIST() OVER w)  * 100 AS `percent_distance`,
         (PERCENT_RANK() OVER w) * 100 AS `percent_ranking`
     FROM leaderboard
-    WINDOW w AS (ORDER BY leaderboard.amount DESC)
+    WHERE leaderboard.total_matches >= 100
+    WINDOW w AS (ORDER BY leaderboard.win_rate DESC)
 )
 
 /* normalize expected output */
 SELECT
     leaderboard_standings.display_name,
-    leaderboard_standings.amount + 0.0 AS amount, /* this seems silly, but is required for BigDecimal to be mapped as our uniform type */
+    leaderboard_standings.wl_ratio + 0.0 AS amount, /* this seems silly, but is required for BigDecimal to be mapped as our uniform type */
+    leaderboard_standings.win_rate,
     leaderboard_standings.standing,
+    leaderboard_standings.wins,
+    leaderboard_standings.losses,
+    leaderboard_standings.total_matches,
     leaderboard_standings.percent_distance,
     leaderboard_standings.percent_ranking
 FROM leaderboard_standings
