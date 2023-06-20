@@ -5,6 +5,8 @@ use sqlx::MySqlPool;
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct SettingModeRecord {
     pub id: i64,
+    pub leaderboard: i8,
+    pub dashboard: i8,
     pub name: String,
     pub value: String,
     pub order: i32,

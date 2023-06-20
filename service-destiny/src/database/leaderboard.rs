@@ -10,6 +10,17 @@ pub struct LeaderboardEntryResult {
     pub percent_ranking: f64,
 }
 
+#[DatabaseResult]
+pub struct LeaderbordPvPEntryResult {
+    pub display_name: String,
+    pub wl_ratio: f64,
+    pub win_rate: f64,
+    pub wins: i64,
+    pub losses: i64,
+    pub total_matches: i64,
+    pub percent_ranking: f64,
+}
+
 /// query the database and get leaderboard info by
 /// at the moment this just gets **everyone** in the network clans
 /// this works for now but will need to be adjusted later for sure
@@ -31,6 +42,28 @@ pub async fn raids(pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
     let query = sqlx::query_file_as!(LeaderboardEntryResult, "queries/leaderboard_raids.sql")
         .fetch_all(pool)
         .await;
+
+    if let Ok(query) = query {
+        query
+    } else {
+        database::log_error(query);
+        Vec::new()
+    }
+}
+
+pub async fn pvp_based(modes: &[i32], pool: &MySqlPool) -> Vec<LeaderbordPvPEntryResult> {
+    if modes.is_empty() {
+        return Vec::new();
+    }
+
+    let prepared_pos = vec!["?"; modes.len()].join(",");
+    let statement = project_str!("queries/leaderboard_pvp.sql", prepared_pos);
+    let mut query = sqlx::query_as::<_, LeaderbordPvPEntryResult>(&statement);
+    for mode in modes.iter() {
+        query = query.bind(mode);
+    }
+
+    let query = query.fetch_all(pool).await;
 
     if let Ok(query) = query {
         query
