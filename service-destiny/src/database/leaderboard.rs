@@ -6,18 +6,6 @@ pub struct LeaderboardEntryResult {
     pub display_name: String,
     pub amount: BigDecimal,
     pub standing: u64,
-    pub percent_distance: f64,
-    pub percent_ranking: f64,
-}
-
-#[DatabaseResult]
-pub struct LeaderbordPvPEntryResult {
-    pub display_name: String,
-    pub wl_ratio: f64,
-    pub win_rate: f64,
-    pub wins: i64,
-    pub losses: i64,
-    pub total_matches: i64,
     pub percent_ranking: f64,
 }
 
@@ -51,14 +39,14 @@ pub async fn raids(pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
     }
 }
 
-pub async fn pvp_based(modes: &[i32], pool: &MySqlPool) -> Vec<LeaderbordPvPEntryResult> {
+pub async fn pvp_based(modes: &[i32], pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
     if modes.is_empty() {
         return Vec::new();
     }
 
     let prepared_pos = vec!["?"; modes.len()].join(",");
     let statement = project_str!("queries/leaderboard_pvp.sql", prepared_pos);
-    let mut query = sqlx::query_as::<_, LeaderbordPvPEntryResult>(&statement);
+    let mut query = sqlx::query_as::<_, LeaderboardEntryResult>(&statement);
     for mode in modes.iter() {
         query = query.bind(mode);
     }

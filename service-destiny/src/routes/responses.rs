@@ -190,6 +190,7 @@ impl LeaderboardEntry {
 pub struct Leaderboard {
     pub name: String,
     pub entries: Vec<LeaderboardEntry>,
+    pub description: String,
 }
 
 // type aliases

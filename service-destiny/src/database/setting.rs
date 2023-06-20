@@ -9,6 +9,7 @@ pub struct SettingModeRecord {
     pub dashboard: i8,
     pub name: String,
     pub value: String,
+    pub description: String,
     pub order: i32,
     pub created_at: u64,
     pub updated_at: u64,

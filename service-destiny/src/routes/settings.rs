@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::app;
 use crate::app::state::AppState;
 use crate::database::setting::SettingModeRecord;

@@ -103,7 +103,6 @@ leaderboard_standings AS (
         leaderboard.display_name,
         leaderboard.amount,
         (RANK() OVER w) AS `standing`,
-        (CUME_DIST() OVER w)  * 100 AS `percent_distance`,
         (PERCENT_RANK() OVER w) * 100 AS `percent_ranking`
     FROM leaderboard
     WINDOW w AS (ORDER BY leaderboard.amount DESC)
@@ -114,7 +113,6 @@ SELECT
     leaderboard_standings.display_name,
     leaderboard_standings.amount + 0.0 AS amount, /* this seems silly, but is required for BigDecimal to be mapped as our uniform type */
     leaderboard_standings.standing,
-    leaderboard_standings.percent_distance,
     leaderboard_standings.percent_ranking
 FROM leaderboard_standings
 ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC
