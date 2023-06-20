@@ -19,8 +19,11 @@ use super::responses::{Leaderboard, LeaderboardEntry};
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/titles", get(leaderboard_titles))
+        .route("/Titles", get(leaderboard_titles))
         .route("/raids", get(leaderboard_raids))
+        .route("/Raids", get(leaderboard_raids))
         .route("/raid", get(leaderboard_raids))
+        .route("/Raid", get(leaderboard_raids))
         .route("/:activity", get(leaderboard_generic))
 }
 

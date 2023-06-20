@@ -18,6 +18,7 @@ export * from "./service-destiny/Leaderboard";
 export * from "./service-destiny/LeaderboardEntry";
 export * from "./service-destiny/SettingModeRecord";
 
+export type DestinyModeTypeSearch = "all" | "leaderboards" | "dashboard";
 /**
  * Intended to represent combinations of the the enumeration "DestinyActivityModeType".
  *
@@ -63,9 +64,15 @@ export async function getDestinySeasons(host: string) {
  * @param host
  * @returns
  */
-export async function getDestinyModeGroups(host: string) {
+export async function getDestinyModeGroups(
+  host: string,
+  mode_type: DestinyModeTypeSearch
+) {
   let settings = [] as SettingModeRecord[];
-  const request = await fetch(host + "/settings/modes");
+  const target_type = mode_type ? mode_type : "all";
+  const request = await fetch(
+    host + "/settings/modes/" + encodeURIComponent(target_type)
+  );
 
   if (request.ok) {
     const json = (await request.json()) as APIResponse<SettingModeRecord[]>;

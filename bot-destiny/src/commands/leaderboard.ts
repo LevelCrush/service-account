@@ -42,12 +42,8 @@ export const LeaderboardCommand = {
         const focused = interaction.options.getFocused();
 
         const endpoint = process.env['HOST_DESTINY'] || '';
-        let modes = await getDestinyModeGroups(endpoint);
-
-        // remove the first mode
-        modes = modes.slice(1);
-
-        const filtered = modes.filter((choice) => choice.name.startsWith(focused.trim()));
+        const modes = await getDestinyModeGroups(endpoint, 'leaderboards');
+        const filtered = modes.filter((choice) => choice.name.toLowerCase().startsWith(focused.toLowerCase().trim()));
 
         const respond_width = filtered.map((choice) => {
             return {
@@ -81,6 +77,9 @@ export const LeaderboardCommand = {
                 ephemeral: false,
             });
         } else {
+            // this is hacky, but it works for now for our needs
+            // will be revistiing this sooner then later
+            const is_pvp = leaderboard.name.toLowerCase().includes('pvp');
             const top = leaderboard.entries.slice(0, 10);
             const standings = top.map(
                 (val) =>
@@ -89,6 +88,7 @@ export const LeaderboardCommand = {
                     val.display_name +
                     ' *(' +
                     val.amount +
+                    (is_pvp ? '%' : '') +
                     ')*',
             );
 

@@ -62,10 +62,10 @@ leaderboard AS (
     SELECT
         COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
         /*SUM(match_standings.had_victory = 1) / SUM(match_standings.had_victory = 0) AS wl_ratio, */ /* win/loss ratio */
-        (SUM(match_standings.had_victory = 1) / COUNT(DISTINCT match_standings.instance_id) * 100) AS win_rate
+        (SUM(match_standings.had_victory = 1) / COUNT(DISTINCT match_standings.instance_id) * 100) AS win_rate,
        /* SUM(match_standings.had_victory) AS wins,
-        SUM(match_standings.had_victory = 0) AS losses,
-        COUNT(DISTINCT match_standings.instance_id) AS total_matches */
+        SUM(match_standings.had_victory = 0) AS losses, */
+        COUNT(DISTINCT match_standings.instance_id) AS total_matches
     FROM target_members
     LEFT JOIN match_standings ON target_members.membership_id = match_standings.membership_id
     LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
@@ -90,12 +90,13 @@ leaderboard_standings AS (
 /* normalize expected output */
 SELECT
     leaderboard_standings.display_name,
-   /* leaderboard_standings.wl_ratio */,
+   /* leaderboard_standings.wl_ratio , */
     leaderboard_standings.win_rate AS amount,
-    /*leaderboard_standings.standing,
+    leaderboard_standings.standing,
+    /*
     leaderboard_standings.wins,
     leaderboard_standings.losses,
-    leaderboard_standings.total_matches,
-    leaderboard_standings.percent_ranking */
+    leaderboard_standings.total_matches, */
+    leaderboard_standings.percent_ranking 
 FROM leaderboard_standings
 ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC

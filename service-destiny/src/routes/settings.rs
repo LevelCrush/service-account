@@ -10,9 +10,9 @@ use levelcrush::server::APIResponse;
 pub fn router() -> Router<AppState> {
     Router::new()
         // .route("/member/:bungie_name", get(search_by_bungie_name))
-        .route("/all/modes", get(get_modes))
-        .route("/dashboard/modes", get(get_dashboard_modes))
-        .route("/leaderboard/modes", get(get_leaderboard_modes))
+        .route("/modes/all", get(get_modes))
+        .route("/modes/dashboard", get(get_dashboard_modes))
+        .route("/modes/leaderboards", get(get_leaderboard_modes))
 }
 
 async fn get_leaderboard_modes(State(state): State<AppState>) -> Json<APIResponse<Vec<SettingModeRecord>>> {
