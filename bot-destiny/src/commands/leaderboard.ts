@@ -62,8 +62,24 @@ export const LeaderboardCommand = {
             ephemeral: false,
         });
 
-        const leaderboard_type = interaction.options.getString('type', true);
+        let leaderboard_type = interaction.options.getString('type', true);
         const endpoint = process.env['HOST_DESTINY'] || '';
+        const modes = await getDestinyModeGroups(endpoint, 'leaderboards');
+
+        // one more layer of validation here
+        const matching_modes = modes.filter(
+            (v) => v.name.toLowerCase().trim() == leaderboard_type.toLowerCase().trim(),
+        );
+
+        leaderboard_type = matching_modes.length >= 1 ? matching_modes[0].name : '';
+        if (!leaderboard_type) {
+            await interaction.followUp({
+                content: 'No leaderboard matching your input could be found',
+                ephemeral: true,
+            });
+            return;
+        }
+
         const leaderboard_request = await fetch(endpoint + '/leaderboard/' + encodeURIComponent(leaderboard_type));
         let leaderboard = null;
         if (leaderboard_request.ok) {
