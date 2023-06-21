@@ -159,7 +159,7 @@ export const RankCommand = {
                             target_entry.standing +
                             ' with ' +
                             (is_pvp
-                                ? ' a win rate of ' + target_entry.amount
+                                ? ' a win rate of ' + target_entry.amount + '%'
                                 : is_raid
                                 ? target_entry.amount + ' full completions'
                                 : target_entry.amount + ' completions'),
