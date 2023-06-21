@@ -98,8 +98,10 @@ export const LeaderboardCommand = {
                 .setColor('#1ABC9C')
                 .setURL(url)
                 .setTitle(leaderboard_type + ' Leaderboard')
-                .setDescription(leaderboard.name)
-                .setDescription(standings.join('\r\n'))
+                .setDescription(
+                    (is_pvp ? 'Standings are Win Rate % based' : 'Standings are based on full completions' + '\r\n') +
+                        standings.join('\r\n'),
+                )
                 .setFooter({
                     text: 'For the full leaderboard, visit ' + url,
                 });
