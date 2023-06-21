@@ -3,6 +3,7 @@ pub mod leaderboard;
 pub mod member;
 pub mod network;
 pub mod queries;
+pub mod rank;
 pub mod responses;
 pub mod search;
 pub mod settings;
@@ -17,5 +18,6 @@ pub fn router() -> Router<AppState> {
         .nest("/member", member::router())
         .nest("/clan", clan::router())
         .nest("/leaderboard", leaderboard::router())
+        .nest("/rank", rank::router())
         .nest("/settings", settings::router())
 }

@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, Partials, REST, Routes, Interaction } from 'discord.js';
 import LeaderboardCommand from './commands/leaderboard';
 import { Command } from './commands/base_command';
+import RankCommand from './commands/rank';
 
 /**
  * Creates a Discord client based off .env variables
@@ -34,6 +35,7 @@ export async function slash_commands() {
     // todo!
     const command_map = new Map<string, Command>();
     command_map.set(LeaderboardCommand.name, LeaderboardCommand);
+    command_map.set(RankCommand.name, RankCommand);
 
     // now parse commands
     const commands = [];

@@ -95,7 +95,7 @@ export const LeaderboardCommand = {
         } else {
             // this is hacky, but it works for now for our needs
             // will be revistiing this sooner then later
-            const is_pvp = leaderboard.name.toLowerCase().includes('pvp');
+            const is_pvp = leaderboard_type.toLowerCase().includes('pvp');
             const top = leaderboard.entries.slice(0, 10);
             const standings = top.map(
                 (val) =>

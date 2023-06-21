@@ -37,6 +37,7 @@ pub struct AppState {
     pub task_running: MemoryCache<u64>, // keep track whenever we started these task
     pub settings: MemoryCache<Setting>,
     pub leaderboards: MemoryCache<Vec<LeaderboardEntryResult>>,
+    pub ranks: MemoryCache<Vec<LeaderboardEntryResult>>,
     pub tasks: TaskManager,
     pub priority_tasks: TaskManager,
 }
@@ -60,6 +61,7 @@ impl AppState {
 
         AppState {
             database,
+            ranks: MemoryCache::new(),
             leaderboards: MemoryCache::new(),
             settings: MemoryCache::new(),
             bungie: BungieClient::new(),
