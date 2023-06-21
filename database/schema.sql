@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.32, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: levelcrush_destiny
+-- Host: 127.0.0.1    Database: levelcrush_accounts
 -- ------------------------------------------------------
 -- Server version	8.0.32
 
@@ -14,6 +14,150 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Current Database: `levelcrush_accounts`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `levelcrush_accounts` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `levelcrush_accounts`;
+
+--
+-- Table structure for table `account_platform_data`
+--
+
+DROP TABLE IF EXISTS `account_platform_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `account_platform_data` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `account` bigint NOT NULL,
+  `platform` bigint NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value_bigint` bigint NOT NULL,
+  `value_big` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `account_platform_data_account_platform_key` (`key`,`account`,`platform`),
+  KEY `account_platform_data_account_index` (`account`),
+  KEY `account_platform_data_key_index` (`key`),
+  KEY `account_platform_data_platform_index` (`platform`),
+  KEY `account_platform_data_value_index` (`value`),
+  KEY `account_platform_data_value_bigint_index` (`value_bigint`)
+) ENGINE=InnoDB AUTO_INCREMENT=131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `account_platforms`
+--
+
+DROP TABLE IF EXISTS `account_platforms`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `account_platforms` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `account` bigint NOT NULL,
+  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `platform` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `platform_user` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `account_platforms_token` (`token`),
+  KEY `account_platforms_account_index` (`account`),
+  KEY `account_platforms_platform_index` (`platform`),
+  KEY `account_platforms_platform_platform_user_index` (`platform`,`platform_user`),
+  KEY `account_platforms_platform_user_index` (`platform_user`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `accounts`
+--
+
+DROP TABLE IF EXISTS `accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `accounts` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `timezone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `admin` tinyint(1) NOT NULL,
+  `last_login_at` bigint unsigned NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `accounts_token_secret_unique` (`token_secret`),
+  UNIQUE KEY `accounts_token_unique` (`token`),
+  KEY `accounts_timezone_index` (`timezone`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `application_users`
+--
+
+DROP TABLE IF EXISTS `application_users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `application_users` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `application` bigint NOT NULL,
+  `account` bigint NOT NULL,
+  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` int unsigned NOT NULL,
+  `updated_at` int unsigned NOT NULL,
+  `deleted_at` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `application_users_account_app_uk` (`account`,`application`),
+  UNIQUE KEY `application_users_uk_app_token_token_secret` (`application`,`token`,`token_secret`),
+  KEY `application_users_account_index` (`account`),
+  KEY `application_users_application_index` (`application`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `applications`
+--
+
+DROP TABLE IF EXISTS `applications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `applications` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `applications_token` (`token`),
+  UNIQUE KEY `applications_token_secret` (`token_secret`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `async_sessions`
+--
+
+DROP TABLE IF EXISTS `async_sessions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `async_sessions` (
+  `id` varchar(128) NOT NULL,
+  `expires` timestamp(6) NULL DEFAULT NULL,
+  `session` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `expires` (`expires`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Current Database: `levelcrush_destiny`
@@ -89,7 +233,7 @@ CREATE TABLE `clan_members` (
   `group_id` bigint NOT NULL,
   `group_role` tinyint NOT NULL,
   `membership_id` bigint NOT NULL,
-  `platform` int DEFAULT NULL,
+  `platform` int NOT NULL,
   `joined_at` bigint unsigned NOT NULL,
   `created_at` bigint unsigned NOT NULL,
   `updated_at` bigint unsigned NOT NULL,
@@ -97,7 +241,10 @@ CREATE TABLE `clan_members` (
   PRIMARY KEY (`id`),
   KEY `clan_members_group_id_index` (`group_id`),
   KEY `clan_members_membership_id_index` (`membership_id`),
-  KEY `clan_members_group_role_index` (`group_role`)
+  KEY `clan_members_group_role_index` (`group_role`),
+  KEY `clan_members_group_id_membership_id_index` (`group_id`,`membership_id`),
+  KEY `clan_members_group_role_index2` (`group_role`),
+  KEY `clan_members_platform_index` (`platform`)
 ) ENGINE=InnoDB AUTO_INCREMENT=361 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -253,7 +400,9 @@ CREATE TABLE `member_activities` (
   KEY `member_activities_mode_index` (`mode`),
   KEY `member_activities_platform_played_index` (`platform_played`),
   KEY `member_activities_private_index` (`private`),
-  KEY `member_activities_instance_id_index` (`instance_id`)
+  KEY `member_activities_instance_id_index` (`instance_id`),
+  KEY `member_activities_instance_id_character_id_index` (`instance_id`,`character_id`),
+  KEY `member_activities_membership_id_instance_id_index` (`membership_id`,`instance_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=638260 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -281,7 +430,11 @@ CREATE TABLE `member_activity_stats` (
   KEY `member_activity_stats_instance_id_index` (`instance_id`),
   KEY `member_activity_stats_membership_id_index` (`membership_id`),
   KEY `member_activity_stats_name_index` (`name`),
-  KEY `member_activity_stats_member_char_inst` (`membership_id`,`character_id`,`instance_id`)
+  KEY `member_activity_stats_member_char_inst` (`membership_id`,`character_id`,`instance_id`),
+  KEY `member_activity_stats_name_instance_id_character_id_index` (`name`,`instance_id`,`character_id`),
+  KEY `member_activity_stats_name_instance_id_membership_id_index` (`name`,`instance_id`,`membership_id`),
+  KEY `member_activity_stats_value_display_index` (`value_display`),
+  KEY `member_activity_stats_value_index` (`value`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12401643 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -340,7 +493,7 @@ CREATE TABLE `member_characters` (
   KEY `member_characters_membership_id_index` (`membership_id`),
   KEY `member_characters_platform_index` (`platform`),
   KEY `member_characters_emblem_hash_index` (`emblem_hash`)
-) ENGINE=InnoDB AUTO_INCREMENT=793419 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=793537 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -365,7 +518,7 @@ CREATE TABLE `member_snapshots` (
   KEY `member_snapshots_snapshot_name_index` (`snapshot_name`),
   KEY `member_snapshots_membership_id_snapshot_name_index` (`membership_id`,`snapshot_name`),
   KEY `member_snapshots_version_index` (`version`)
-) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -413,7 +566,7 @@ CREATE TABLE `member_triumphs` (
   KEY `member_triumphs_membership_id_index` (`membership_id`),
   KEY `member_triumphs_state_index` (`state`),
   KEY `member_triumphs_times_completed_index` (`times_completed`)
-) ENGINE=InnoDB AUTO_INCREMENT=21487117 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21643609 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -441,7 +594,7 @@ CREATE TABLE `members` (
   KEY `members_display_name_index` (`display_name`),
   KEY `members_platform_index` (`platform`),
   KEY `members_last_played_at_index` (`last_played_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=275853 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=275895 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -471,6 +624,31 @@ CREATE TABLE `seasons` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `setting_modes`
+--
+
+DROP TABLE IF EXISTS `setting_modes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `setting_modes` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `leaderboard` tinyint NOT NULL,
+  `dashboard` tinyint NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `order` int NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `setting_modes_unique_name` (`name`),
+  KEY `setting_modes_dashboard_index` (`dashboard`),
+  KEY `setting_modes_leaderboard_index` (`leaderboard`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `triumphs`
 --
 
@@ -495,150 +673,6 @@ CREATE TABLE `triumphs` (
   KEY `triumphs_name_index` (`name`),
   KEY `triumphs_title_index` (`title`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3920 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Current Database: `levelcrush_accounts`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `levelcrush_accounts` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-
-USE `levelcrush_accounts`;
-
---
--- Table structure for table `account_platform_data`
---
-
-DROP TABLE IF EXISTS `account_platform_data`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `account_platform_data` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `account` bigint NOT NULL,
-  `platform` bigint NOT NULL,
-  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value_bigint` bigint NOT NULL,
-  `value_big` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` bigint unsigned NOT NULL,
-  `updated_at` bigint unsigned NOT NULL,
-  `deleted_at` bigint unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `account_platform_data_account_platform_key` (`key`,`account`,`platform`),
-  KEY `account_platform_data_account_index` (`account`),
-  KEY `account_platform_data_key_index` (`key`),
-  KEY `account_platform_data_platform_index` (`platform`),
-  KEY `account_platform_data_value_index` (`value`),
-  KEY `account_platform_data_value_bigint_index` (`value_bigint`)
-) ENGINE=InnoDB AUTO_INCREMENT=86 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `account_platforms`
---
-
-DROP TABLE IF EXISTS `account_platforms`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `account_platforms` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `account` bigint NOT NULL,
-  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `platform` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `platform_user` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` bigint unsigned NOT NULL,
-  `updated_at` bigint unsigned NOT NULL,
-  `deleted_at` bigint unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `account_platforms_token` (`token`),
-  KEY `account_platforms_account_index` (`account`),
-  KEY `account_platforms_platform_index` (`platform`),
-  KEY `account_platforms_platform_platform_user_index` (`platform`,`platform_user`),
-  KEY `account_platforms_platform_user_index` (`platform_user`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `accounts`
---
-
-DROP TABLE IF EXISTS `accounts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `accounts` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `timezone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `admin` tinyint(1) NOT NULL,
-  `last_login_at` bigint unsigned NOT NULL,
-  `created_at` bigint unsigned NOT NULL,
-  `updated_at` bigint unsigned NOT NULL,
-  `deleted_at` bigint unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `accounts_token_secret_unique` (`token_secret`),
-  UNIQUE KEY `accounts_token_unique` (`token`),
-  KEY `accounts_timezone_index` (`timezone`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `application_users`
---
-
-DROP TABLE IF EXISTS `application_users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `application_users` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `application` bigint NOT NULL,
-  `account` bigint NOT NULL,
-  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` int unsigned NOT NULL,
-  `updated_at` int unsigned NOT NULL,
-  `deleted_at` int unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `application_users_account_app_uk` (`account`,`application`),
-  UNIQUE KEY `application_users_uk_app_token_token_secret` (`application`,`token`,`token_secret`),
-  KEY `application_users_account_index` (`account`),
-  KEY `application_users_application_index` (`application`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `applications`
---
-
-DROP TABLE IF EXISTS `applications`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `applications` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `token` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `token_secret` char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `applications_token` (`token`),
-  UNIQUE KEY `applications_token_secret` (`token_secret`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `async_sessions`
---
-
-DROP TABLE IF EXISTS `async_sessions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `async_sessions` (
-  `id` varchar(128) NOT NULL,
-  `expires` timestamp(6) NULL DEFAULT NULL,
-  `session` text NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `expires` (`expires`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -692,6 +726,14 @@ CREATE TABLE `feeds` (
   KEY `feeds_slug_index` (`slug`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Current Database: `levelcrush_settings`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `levelcrush_settings` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `levelcrush_settings`;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -702,4 +744,4 @@ CREATE TABLE `feeds` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-12 20:33:21
+-- Dump completed on 2023-06-21  4:29:30

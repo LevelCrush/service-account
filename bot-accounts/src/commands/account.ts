@@ -46,7 +46,24 @@ export const AccountCommand = {
 
         await interaction.deferReply();
 
-        const user = subcommand === 'me' ? interaction.user.username : interaction.options.getUser('user')?.username;
+        let user = '';
+        if (subcommand === 'me') {
+            const discrim = interaction.user.discriminator.trim();
+            if (discrim.length === 0 || discrim === '0') {
+                user = interaction.user.username;
+            } else {
+                user = interaction.user.username + '#' + discrim;
+            }
+        } else {
+            const user_field = interaction.options.getUser('user', true);
+            const discrim = user_field.discriminator.trim();
+            if (discrim.length === 0 || discrim === '0') {
+                user = user_field.username;
+            } else {
+                user = user_field.username + '#' + discrim;
+            }
+        }
+
         if (!user) {
             await interaction.followUp({
                 content: 'No user was included in the request',

@@ -4,7 +4,7 @@ linked_bungies AS
   SELECT
         bungie_platform_data.account AS account,
         bungie_platform_data.platform AS platform,
-        bungie_platform_data.value AS membership_id
+        bungie_platform_data.value_bigint AS membership_id
   FROM `levelcrush_accounts`.account_platforms  AS account_platforms
   INNER JOIN `levelcrush_accounts`.`account_platform_data` AS bungie_platform_data ON
         account_platforms.account = bungie_platform_data.account  AND
@@ -18,7 +18,7 @@ linked_discords AS
         linked_bungies.account,
         discord_platform_data.platform,
         linked_bungies.membership_id,
-        discord_platform_data.value AS discord_display_name
+        discord_platform_data.value_bigint AS discord_id
     FROM linked_bungies
     INNER JOIN `levelcrush_accounts`.account_platforms AS discord_platform ON
         linked_bungies.account = discord_platform.account AND
@@ -26,7 +26,7 @@ linked_discords AS
     INNER JOIN `levelcrush_accounts`.account_platform_data AS discord_platform_data ON
         discord_platform.account = discord_platform_data.account AND
         discord_platform.id = discord_platform_data.platform  AND
-        discord_platform_data.key = 'display_name'
+        discord_platform_data.key = 'discord_id'
 ),
 target_members AS (
     SELECT
@@ -43,50 +43,60 @@ target_activities AS
        member_activities.membership_id
    FROM target_members
    INNER JOIN member_activities ON target_members.membership_id = member_activities.membership_id
-   WHERE member_activities.mode IN({})
+   WHERE member_activities.mode IN({}) /* PvP activities here */
    GROUP BY member_activities.instance_id, member_activities.membership_id
 ),
-full_clear_activities AS
-(
+match_standings AS (
     SELECT
-        instances.instance_id,
-        target_activities.membership_id
+        target_activities.instance_id,
+        target_activities.membership_id,
+        standing_stat.value = 0 AS had_victory
     FROM target_activities
-    INNER JOIN instances ON target_activities.instance_id = instances.instance_id
-    INNER JOIN instance_members ON
-        target_activities.membership_id = instance_members.membership_id AND
-        target_activities.instance_id = instance_members.instance_id
-    WHERE instance_members.completed = 1
-    AND instances.completed = 1
-    AND instances.completion_reasons = 'Objective Completed'
-    GROUP BY instances.instance_id, target_activities.membership_id
+    INNER JOIN member_activity_stats AS standing_stat ON
+           target_activities.instance_id = standing_stat.instance_id AND
+           target_activities.membership_id = standing_stat.membership_id  AND
+           standing_stat.name = 'standing'
+    GROUP BY target_activities.instance_id, target_activities.membership_id,  standing_stat.value
 ),
-
 leaderboard AS (
     SELECT
-        COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
-        COUNT(DISTINCT full_clear_activities.instance_id) AS amount
+        COALESCE(linked_discords.discord_id, target_members.display_name_global) AS display_name,
+        /*SUM(match_standings.had_victory = 1) / SUM(match_standings.had_victory = 0) AS wl_ratio, */ /* win/loss ratio */
+        (SUM(match_standings.had_victory = 1) / COUNT(DISTINCT match_standings.instance_id) * 100) AS win_rate,
+       /* SUM(match_standings.had_victory) AS wins,
+        SUM(match_standings.had_victory = 0) AS losses, */
+        COUNT(DISTINCT match_standings.instance_id) AS total_matches
     FROM target_members
-    LEFT JOIN full_clear_activities ON target_members.membership_id = full_clear_activities.membership_id
+    LEFT JOIN match_standings ON target_members.membership_id = match_standings.membership_id
     LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
     LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
-    GROUP BY target_members.display_name_global, target_members.membership_id, linked_discords.discord_display_name
+    GROUP BY target_members.display_name_global, target_members.membership_id, linked_discords.discord_id
 ),
 leaderboard_standings AS (
     SELECT
         leaderboard.display_name,
-        leaderboard.amount,
+        /*leaderboard.wl_ratio, */
+        leaderboard.win_rate,
+        /*leaderboard.wins,
+        leaderboard.losses,
+        leaderboard.total_matches, */
         (RANK() OVER w) AS `standing`,
         (PERCENT_RANK() OVER w) * 100 AS `percent_ranking`
     FROM leaderboard
-    WINDOW w AS (ORDER BY leaderboard.amount DESC)
+    WHERE leaderboard.total_matches >= 100
+    WINDOW w AS (ORDER BY leaderboard.win_rate DESC)
 )
 
 /* normalize expected output */
 SELECT
     leaderboard_standings.display_name,
-    leaderboard_standings.amount + 0.0 AS amount, /* this seems silly, but is required for BigDecimal to be mapped as our uniform type */
+   /* leaderboard_standings.wl_ratio , */
+    leaderboard_standings.win_rate AS amount,
     leaderboard_standings.standing,
-    leaderboard_standings.percent_ranking
+    /*
+    leaderboard_standings.wins,
+    leaderboard_standings.losses,
+    leaderboard_standings.total_matches, */
+    leaderboard_standings.percent_ranking 
 FROM leaderboard_standings
-ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC
+WHERE leaderboard_standings.display_name = ?

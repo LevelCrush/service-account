@@ -16,7 +16,7 @@ import {
 import DestinyMemberReportComponent from '@website/components/destiny_member_report';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DestinyMemberInformation } from '@website/core/api_responses';
 import ENV from '@website/core/env';
 import {
@@ -30,6 +30,7 @@ export interface ReportPageSeasonProps {
   member: string;
   seasons: number[];
   target_season: string;
+  target_mode: string;
   modes: DestinyActivityModeGroup[];
   roster: DestinyMemberInformation[];
 }
@@ -43,7 +44,7 @@ export const getServerSideProps: GetServerSideProps<
   const [roster, seasons, modes] = await Promise.all([
     getNetworkRoster(ENV.hosts.destiny),
     getDestinySeasons(ENV.hosts.destiny),
-    getDestinyModeGroups(ENV.hosts.destiny),
+    getDestinyModeGroups(ENV.hosts.destiny, 'dashboard'),
   ]);
 
   return {
@@ -51,6 +52,7 @@ export const getServerSideProps: GetServerSideProps<
       seasons: seasons,
       member: context.query.member as string,
       target_season: context.query.season as string,
+      target_mode: context.query.modes as string,
       modes: modes,
       roster,
     },
@@ -58,18 +60,26 @@ export const getServerSideProps: GetServerSideProps<
 };
 
 export const ReportPage = (props: ReportPageSeasonProps) => {
-  const [targetMode, setMode] = useState('');
+  const [targetUser, setUser] = useState(props.member);
+  const [targetSnapshot, setSnapshot] = useState(props.target_season);
+
+  const [targetMode, setMode] = useState(props.target_mode);
   const router = useRouter();
 
-  function generate_url(bungie_name: string, season: string) {
+  function generate_url(bungie_name: string, season: string, mode: string) {
     return (
       '/admin/report/' +
       encodeURIComponent(bungie_name) +
       (season === 'lifetime'
         ? '/lifetime'
-        : '/season/' + encodeURIComponent(season))
+        : '/season/' + encodeURIComponent(season)) +
+      '/modes/' +
+      encodeURIComponent(mode)
     );
   }
+  useEffect(() => {
+    router.push(generate_url(targetUser, targetSnapshot, targetMode));
+  }, [targetMode, targetSnapshot, targetUser]);
 
   return (
     <OffCanvas>
@@ -93,9 +103,7 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                 <SearchSelect
                   className="mt-2"
                   defaultValue={props.member}
-                  onValueChange={(v) =>
-                    router.push(generate_url(v, props.target_season))
-                  }
+                  onValueChange={(v) => setUser(v)}
                 >
                   {props.roster.map((member, memberIndex) => (
                     <SearchSelectItem
@@ -112,10 +120,7 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                 <Select
                   defaultValue={props.target_season}
                   className="mt-2"
-                  onValueChange={(v) =>
-                    //setSeason(v === 'lifetime' ? 'lifetime' : parseInt(v))
-                    router.push(generate_url(props.member, v))
-                  }
+                  onValueChange={(v) => setSnapshot(v)}
                 >
                   {props.seasons.map((season) => {
                     const v = season === 0 ? 'lifetime' : season + '';
@@ -135,7 +140,7 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                 <Title>Modes</Title>
                 <Select
                   className="mt-2"
-                  defaultValue="all"
+                  defaultValue={props.target_mode}
                   onValueChange={(v) => setMode(v)}
                 >
                   {props.modes.map((mode, modeIndex) => (

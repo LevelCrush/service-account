@@ -55,11 +55,10 @@ export const ProfilePage = () => {
               : null,
         });
 
-        console.log(ev.detail['bungie']);
-
-        const baseBungieUrl = ev.detail['discord']
-          ? ENV.hosts.accounts + '/platform/bungie/unlink'
-          : ENV.hosts.accounts + '/platform/bungie/login';
+        const baseBungieUrl =
+          typeof ev.detail['bungie'] !== 'undefined'
+            ? ENV.hosts.accounts + '/platform/bungie/unlink'
+            : ENV.hosts.accounts + '/platform/bungie/login';
 
         setBungieAccountUrl(
           baseBungieUrl +
@@ -67,9 +66,10 @@ export const ProfilePage = () => {
             encodeURIComponent(window.location.href)
         );
 
-        const baseTwitchUrl = ev.detail['twitch']
-          ? ENV.hosts.accounts + '/platform/twitch/unlink'
-          : ENV.hosts.accounts + '/platform/twitch/login';
+        const baseTwitchUrl =
+          typeof ev.detail['twitch'] !== 'undefined'
+            ? ENV.hosts.accounts + '/platform/twitch/unlink'
+            : ENV.hosts.accounts + '/platform/twitch/login';
         setTwitchAccountUrl(
           baseTwitchUrl +
             '?redirect=' +

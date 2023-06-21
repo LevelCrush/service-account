@@ -18,13 +18,13 @@ use super::responses::{Leaderboard, LeaderboardEntry};
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/titles", get(leaderboard_titles))
-        .route("/Titles", get(leaderboard_titles))
-        .route("/raids", get(leaderboard_raids))
-        .route("/Raids", get(leaderboard_raids))
-        .route("/raid", get(leaderboard_raids))
-        .route("/Raid", get(leaderboard_raids))
-        .route("/:activity", get(leaderboard_generic))
+        .route("/titles/:display_name", get(rank_titles))
+        .route("/Titles/:display_name", get(rank_titles))
+        .route("/raids/:display_name", get(rank_raids))
+        .route("/Raids/:display_name", get(rank_raids))
+        .route("/raid/:display_name", get(rank_raids))
+        .route("/Raid/:display_name", get(rank_raids))
+        .route("/:activity/:display_name", get(rank_generic))
 }
 
 fn extract_leaderboard_modes(modes: Vec<SettingModeRecord>) -> Vec<SettingModeRecord> {
@@ -34,8 +34,8 @@ fn extract_leaderboard_modes(modes: Vec<SettingModeRecord>) -> Vec<SettingModeRe
         .collect()
 }
 
-async fn leaderboard_generic(
-    Path(activity): Path<String>,
+async fn rank_generic(
+    Path((activity, display_name)): Path<(String, String)>,
     State(mut state): State<AppState>,
 ) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
@@ -76,23 +76,22 @@ async fn leaderboard_generic(
     modes.sort();
 
     let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");
-    let mut did_db_update = false;
-    let entries = match state.leaderboards.access(&mode_str).await {
-        Some(data) => data,
-        _ => {
-            did_db_update = true;
+    let (should_cache, entries) = match state.ranks.access(&mode_str).await {
+        Some(data) => (false, data),
+        _ => (
+            true,
             if group_name.contains("PvP") {
-                database::leaderboard::pvp_based(&modes, &state.database).await
+                database::rank::pvp_based(&display_name, &modes, &state.database).await
             } else {
-                database::leaderboard::generic(&modes, &state.database).await
-            }
-        }
+                database::rank::generic(&display_name, &modes, &state.database).await
+            },
+        ),
     };
 
-    if did_db_update {
+    if should_cache {
         // not in app groups should be cached for only an hour
         state
-            .leaderboards
+            .ranks
             .write(
                 &mode_str,
                 CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
@@ -121,13 +120,26 @@ async fn leaderboard_generic(
     Json(response)
 }
 
-async fn leaderboard_titles(State(state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
+async fn rank_titles(
+    Path(display_name): Path<String>,
+    State(mut state): State<AppState>,
+) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
 
-    let entries = match state.leaderboards.access("Titles").await {
-        Some(data) => data,
-        _ => Vec::new(),
+    let (should_cache, entries) = match state.ranks.access("Titles").await {
+        Some(data) => (false, data),
+        _ => (true, database::rank::titles(&display_name, &state.database).await),
     };
+
+    if should_cache {
+        state
+            .ranks
+            .write(
+                "Titles",
+                CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
+            )
+            .await;
+    }
 
     let leaderboard = Leaderboard {
         name: "Title Leaderboard".to_string(),
@@ -141,13 +153,26 @@ async fn leaderboard_titles(State(state): State<AppState>) -> Json<APIResponse<L
     Json(response)
 }
 
-async fn leaderboard_raids(State(state): State<AppState>) -> Json<APIResponse<Leaderboard>> {
+async fn rank_raids(
+    Path(display_name): Path<String>,
+    State(mut state): State<AppState>,
+) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
 
-    let entries = match state.leaderboards.access("Raid").await {
-        Some(data) => data,
-        _ => Vec::new(),
+    let (should_cache, entries) = match state.ranks.access("Raid").await {
+        Some(data) => (false, data),
+        _ => (true, database::rank::raids(&display_name, &state.database).await),
     };
+
+    if should_cache {
+        state
+            .ranks
+            .write(
+                "Raid",
+                CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
+            )
+            .await;
+    }
 
     let leaderboard = Leaderboard {
         name: "Raid Leaderboard".to_string(),

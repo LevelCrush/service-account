@@ -170,17 +170,15 @@ pub struct LeaderboardEntry {
     pub amount: i32,
     pub standing: i32,
     pub percent_ranking: f64,
-    pub percent_distance: f64,
 }
 
 impl LeaderboardEntry {
     pub fn from_db(record: LeaderboardEntryResult) -> LeaderboardEntry {
         LeaderboardEntry {
             display_name: record.display_name,
-            amount: record.amount.to_i32().unwrap_or_default(),
+            amount: record.amount.to_f64().unwrap_or_default().ceil() as i32, // enforce rounding up no matter what
             standing: record.standing as i32,
             percent_ranking: record.percent_ranking,
-            percent_distance: record.percent_ranking,
         }
     }
 }
@@ -190,6 +188,7 @@ impl LeaderboardEntry {
 pub struct Leaderboard {
     pub name: String,
     pub entries: Vec<LeaderboardEntry>,
+    pub description: String,
 }
 
 // type aliases

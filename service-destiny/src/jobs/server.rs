@@ -58,6 +58,10 @@ pub async fn run() {
             };
 
             for group in modes.iter() {
+                if group.leaderboard == 0 {
+                    continue; // skip and move on
+                }
+
                 tracing::info!("Updating {} leaderboard", group.name);
                 let (mut target_modes, results) = if group.name == "Raid" {
                     (vec![4], database::leaderboard::raids(&leaderboard_state.database).await)
@@ -69,7 +73,11 @@ pub async fn run() {
                         .collect::<Vec<i32>>();
                     (
                         group_modes.clone(),
-                        database::leaderboard::generic(&group_modes, &leaderboard_state.database).await,
+                        if group.name.to_lowercase().contains("pvp") {
+                            database::leaderboard::pvp_based(&group_modes, &leaderboard_state.database).await
+                        } else {
+                            database::leaderboard::generic(&group_modes, &leaderboard_state.database).await
+                        },
                     )
                 };
 

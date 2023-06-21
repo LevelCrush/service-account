@@ -4,7 +4,7 @@ linked_bungies AS
   SELECT
         bungie_platform_data.account AS account,
         bungie_platform_data.platform AS platform,
-        bungie_platform_data.value AS membership_id
+        bungie_platform_data.value_bigint AS membership_id
   FROM `levelcrush_accounts`.account_platforms  AS account_platforms
   INNER JOIN `levelcrush_accounts`.`account_platform_data` AS bungie_platform_data ON
         account_platforms.account = bungie_platform_data.account  AND
@@ -18,7 +18,7 @@ linked_discords AS
         linked_bungies.account,
         discord_platform_data.platform,
         linked_bungies.membership_id,
-        discord_platform_data.value AS discord_display_name
+        discord_platform_data.value_bigint AS discord_id
     FROM linked_bungies
     INNER JOIN `levelcrush_accounts`.account_platforms AS discord_platform ON
         linked_bungies.account = discord_platform.account AND
@@ -26,7 +26,7 @@ linked_discords AS
     INNER JOIN `levelcrush_accounts`.account_platform_data AS discord_platform_data ON
         discord_platform.account = discord_platform_data.account AND
         discord_platform.id = discord_platform_data.platform  AND
-        discord_platform_data.key = 'display_name'
+        discord_platform_data.key = 'discord_id'
 ),
 target_members AS (
     SELECT
@@ -36,22 +36,41 @@ target_members AS (
     INNER JOIN members ON clan_members.membership_id = members.membership_id
     WHERE clans.is_network = 1
 ),
-triumph_titles AS (
-    SELECT
-        triumphs.*
-    FROM triumphs
-    WHERE triumphs.is_title = 1
+target_activities AS
+(
+   SELECT
+       member_activities.instance_id,
+       member_activities.membership_id
+   FROM target_members
+   INNER JOIN member_activities ON target_members.membership_id = member_activities.membership_id
+   WHERE member_activities.mode IN({})
+   GROUP BY member_activities.instance_id, member_activities.membership_id
 ),
+full_clear_activities AS
+(
+    SELECT
+        instances.instance_id,
+        target_activities.membership_id
+    FROM target_activities
+    INNER JOIN instances ON target_activities.instance_id = instances.instance_id
+    INNER JOIN instance_members ON
+        target_activities.membership_id = instance_members.membership_id AND
+        target_activities.instance_id = instance_members.instance_id
+    WHERE instance_members.completed = 1
+    AND instances.completed = 1
+    AND instances.completion_reasons = 'Objective Completed'
+    GROUP BY instances.instance_id, target_activities.membership_id
+),
+
 leaderboard AS (
     SELECT
-        COALESCE(linked_discords.discord_display_name, target_members.display_name_global)      AS display_name,
-        COALESCE(SUM(member_triumphs.state & 64 = 64), 0) AS amount
+        COALESCE(linked_discords.discord_id, target_members.display_name_global) AS display_name,
+        COUNT(DISTINCT full_clear_activities.instance_id) AS amount
     FROM target_members
-          INNER JOIN member_triumphs ON target_members.membership_id = member_triumphs.membership_id
-          INNER JOIN triumph_titles ON member_triumphs.hash = triumph_titles.hash
-          LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
-          LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
-    GROUP BY target_members.display_name_global, linked_discords.discord_display_name
+    LEFT JOIN full_clear_activities ON target_members.membership_id = full_clear_activities.membership_id
+    LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
+    LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
+    GROUP BY target_members.display_name_global, target_members.membership_id, linked_discords.discord_id
 ),
 leaderboard_standings AS (
     SELECT
@@ -70,4 +89,4 @@ SELECT
     leaderboard_standings.standing,
     leaderboard_standings.percent_ranking
 FROM leaderboard_standings
-ORDER BY leaderboard_standings.standing ASC, leaderboard_standings.display_name ASC
+WHERE leaderboard_standings.display_name = ?
