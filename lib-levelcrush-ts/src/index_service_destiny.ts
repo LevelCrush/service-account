@@ -79,12 +79,7 @@ export async function getDestinyModeGroups(
     settings = json.response !== null ? json.response : [];
   }
 
-  let modes = [
-    {
-      name: "All",
-      value: "all",
-    },
-  ] as DestinyActivityModeGroup[];
+  let modes = [] as DestinyActivityModeGroup[];
 
   // combine from our database
   modes = modes.concat(
