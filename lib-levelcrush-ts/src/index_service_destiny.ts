@@ -1,6 +1,7 @@
 import type { APIResponse } from "./index_server";
 import type { MemberResponse } from "./service-destiny/MemberResponse";
 import type { SettingModeRecord } from "./service-destiny/SettingModeRecord";
+import type { DestinySeason } from "./service-destiny/DestinySeason";
 
 export * from "./service-destiny/ClanInformation";
 export * from "./service-destiny/ClanResponse";
@@ -17,6 +18,7 @@ export * from "./service-destiny/MemberResponse";
 export * from "./service-destiny/Leaderboard";
 export * from "./service-destiny/LeaderboardEntry";
 export * from "./service-destiny/SettingModeRecord";
+export * from "./service-destiny/DestinySeason";
 
 export type DestinyModeTypeSearch = "all" | "leaderboards" | "dashboard";
 /**
@@ -53,8 +55,13 @@ export async function getNetworkRoster(host: string) {
  * @returns An array of  numbers that represent the seasons in destiny
  */
 export async function getDestinySeasons(host: string) {
-  let seasons = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-  seasons.sort((a, b) => b - a);
+  let seasons = [] as number[];
+  const request = await fetch(host + "/settings/seasons");
+  if (request.ok) {
+    const json = (await request.json()) as APIResponse<DestinySeason[]>;
+    seasons = json.response !== null ? json.response.map((v) => v.number) : [];
+  }
+
   seasons = [0].concat(seasons);
   return seasons;
 }

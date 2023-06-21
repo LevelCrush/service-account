@@ -27,6 +27,19 @@ pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
     }
 }
 
+pub async fn get_all_active(pool: &MySqlPool) -> Vec<SeasonRecord> {
+    let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get_all_active.sql")
+        .fetch_all(pool)
+        .await;
+
+    if let Ok(query) = query {
+        query
+    } else {
+        database::log_error(query);
+        Vec::new()
+    }
+}
+
 pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord> {
     if hashes.is_empty() {
         return HashMap::new();

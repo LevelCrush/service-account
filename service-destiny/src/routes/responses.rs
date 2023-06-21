@@ -1,6 +1,7 @@
 use crate::app::report::member::MemberReport;
 use crate::database::clan::ClanInfoResult;
 use crate::database::leaderboard::LeaderboardEntryResult;
+use crate::database::seasons::SeasonRecord;
 use crate::database::triumph::TriumphTitleResult;
 use crate::{app, database::member::MemberResult};
 use levelcrush::bigdecimal::ToPrimitive;
@@ -189,6 +190,30 @@ pub struct Leaderboard {
     pub name: String,
     pub entries: Vec<LeaderboardEntry>,
     pub description: String,
+}
+
+#[derive(serde::Serialize, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct DestinySeason {
+    pub name: String,
+    pub number: i32,
+
+    #[ts(type = "number")]
+    pub starts_at: UnixTimestamp,
+
+    #[ts(type = "number")]
+    pub ends_at: UnixTimestamp,
+}
+
+impl DestinySeason {
+    pub fn from_db(record: SeasonRecord) -> DestinySeason {
+        DestinySeason {
+            name: record.name,
+            number: record.number,
+            starts_at: record.starts_at,
+            ends_at: record.ends_at,
+        }
+    }
 }
 
 // type aliases

@@ -45,6 +45,20 @@ pub async fn run() {
         }
     });
 
+    let mut season_app_state = app_state.clone();
+    let seasons_updater = tokio::spawn(async move {
+        loop {
+            tracing::info!("Fetching season");
+            let seasons = database::seasons::get_all_active(&season_app_state.database).await;
+            season_app_state
+                .seasons
+                .write("active_seasons", CacheValue::persistant(seasons))
+                .await;
+
+            tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
+        }
+    });
+
     let mut leaderboard_state = app_state.clone();
     let leaderboard_updater = tokio::spawn(async move {
         let mut first_start = true;

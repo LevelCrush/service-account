@@ -3,6 +3,7 @@ use crate::database::clan::ClanInfoResult;
 use crate::database::instance::InstanceMemberRecord;
 use crate::database::leaderboard::LeaderboardEntryResult;
 use crate::database::member::MemberResult;
+use crate::database::seasons::SeasonRecord;
 use crate::database::setting::SettingModeRecord;
 use crate::database::triumph::TriumphTitleResult;
 use crate::{bungie::BungieClient, database::activity_history::ActivityHistoryRecord};
@@ -34,12 +35,13 @@ pub struct AppState {
     pub database: MySqlPool,            // MySqlPool is already wrapped in a arc, safe to clone
     pub bungie: BungieClient,           // safe to clone, underlying implementation uses handles/arc
     pub cache: MemoryCache<CacheItem>,  // memory cache uses Arc's internally. Safe to clone
-    pub task_running: MemoryCache<u64>, // keep track whenever we started these task
+    pub task_running: MemoryCache<u64>, // keep track whenever we started these task, at the moment only used by member reports
     pub settings: MemoryCache<Setting>,
     pub leaderboards: MemoryCache<Vec<LeaderboardEntryResult>>,
     pub ranks: MemoryCache<Vec<LeaderboardEntryResult>>,
-    pub tasks: TaskManager,
-    pub priority_tasks: TaskManager,
+    pub seasons: MemoryCache<Vec<SeasonRecord>>,
+    pub tasks: TaskManager,          // also used by member reports
+    pub priority_tasks: TaskManager, // also used by member reports
 }
 
 impl AppState {
@@ -61,6 +63,7 @@ impl AppState {
 
         AppState {
             database,
+            seasons: MemoryCache::new(),
             ranks: MemoryCache::new(),
             leaderboards: MemoryCache::new(),
             settings: MemoryCache::new(),

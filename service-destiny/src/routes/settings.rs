@@ -1,5 +1,6 @@
 use crate::app;
 use crate::app::state::AppState;
+use crate::database::seasons::SeasonRecord;
 use crate::database::setting::SettingModeRecord;
 use axum::routing::get;
 use axum::{Json, Router};
@@ -7,12 +8,30 @@ use levelcrush::axum;
 use levelcrush::axum::extract::State;
 use levelcrush::server::APIResponse;
 
+use super::responses::DestinySeason;
+
 pub fn router() -> Router<AppState> {
     Router::new()
         // .route("/member/:bungie_name", get(search_by_bungie_name))
         .route("/modes/all", get(get_modes))
         .route("/modes/dashboard", get(get_dashboard_modes))
         .route("/modes/leaderboards", get(get_leaderboard_modes))
+        .route("/seasons", get(get_active_seasons))
+}
+
+async fn get_active_seasons(State(state): State<AppState>) -> Json<APIResponse<Vec<DestinySeason>>> {
+    let mut response = APIResponse::new();
+
+    let seasons = match state.seasons.access("active_seasons").await {
+        Some(data) => data,
+        _ => Vec::new(),
+    };
+
+    let mapped_seasons = seasons.into_iter().map(DestinySeason::from_db).collect();
+    response.data(Some(mapped_seasons));
+
+    response.complete();
+    Json(response)
 }
 
 async fn get_leaderboard_modes(State(state): State<AppState>) -> Json<APIResponse<Vec<SettingModeRecord>>> {
