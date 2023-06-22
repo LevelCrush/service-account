@@ -98,7 +98,7 @@ const FireteamCard = (props: FireteamCardProps) => {
   return (
     <Card>
       <Title>{props.fireteamType}</Title>
-      <List className="h-[23.25rem] overflow-y-scroll">
+      <List className="h-[23.25rem] overflow-y-auto">
         {props.members.map((member, memberIndex) => (
           <ListItem
             key={props.fireteamType + '_fireteam_member_' + memberIndex}
