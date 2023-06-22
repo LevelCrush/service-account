@@ -42,11 +42,14 @@ export const getStaticProps: GetStaticProps<
 export const ClanDirectoryPage = (props: NetworkClanDirectoryPageProps) => (
   <OffCanvas>
     <Head>
-      <title>Clans | Level Crush</title>
+      <title>Network Clans | Level Crush</title>
     </Head>
     <SiteHeader />
     <main>
-      <Hero className="min-h-[40rem] overflow-hidden top-0 relative"></Hero>
+      <Hero
+        className="min-h-[40rem] overflow-hidden top-0 relative"
+        youtubeID="hgCfi27VmNQ"
+      ></Hero>
       <Container className="md:flex md:justify-between md:flex-wrap">
         {props.clans.map((clan, clanIndex) => (
           <div

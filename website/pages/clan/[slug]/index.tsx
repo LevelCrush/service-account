@@ -5,7 +5,7 @@ import { SiteHeader } from '@website/components/site_header';
 import OffCanvas from '@website/components/offcanvas';
 import { GetServerSideProps } from 'next';
 import ENV from '@website/core/env';
-import { H3 } from '@website/components/elements/headings';
+import { H2, H3 } from '@website/components/elements/headings';
 import { HyperlinkButton } from '@website/components/elements/button';
 import Container from '@website/components/elements/container';
 import {
@@ -55,7 +55,11 @@ export const ClanPage = (props: ClanPageProps) => (
     </Head>
     <SiteHeader />
     <main>
-      <Hero className="min-h-[40rem] overflow-hidden top-0 relative"></Hero>
+      <Hero className="min-h-[40rem] overflow-hidden top-0 relative">
+        <Container>
+          <H2 className="drop-shadow text-center">{props.clan.name}</H2>
+        </Container>
+      </Hero>
       <Container className="md:flex md:justify-between md:flex-wrap">
         {props.clan !== null ? (
           <div className="network-clan w-full md:w-[40%] mt-0 mb-12">
