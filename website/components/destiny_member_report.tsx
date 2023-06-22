@@ -34,6 +34,8 @@ export interface MemberReportProps {
   bungie_name: string;
   season: 'lifetime' | number;
   modes?: string[];
+  onReportLoaded?: (data: DestinyMemberReport) => void;
+  onLoadingData?: () => void;
 }
 
 interface TitleCardProps extends CardProps {
@@ -98,7 +100,7 @@ const FireteamCard = (props: FireteamCardProps) => {
   return (
     <Card>
       <Title>{props.fireteamType}</Title>
-      <List className="h-[23.25rem] overflow-y-scroll">
+      <List className="h-[23.25rem] overflow-y-auto">
         {props.members.map((member, memberIndex) => (
           <ListItem
             key={props.fireteamType + '_fireteam_member_' + memberIndex}
@@ -453,70 +455,86 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
   const [alreadyLoadedData, setAlreadyLoadedData] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
+
+  const fetchReport = async (bungie_name: string, report_type: string) => {
+    const modeString = (props.modes || []).join(',');
+    const apiResponse = await fetch(
+      ENV.hosts.destiny +
+        '/member/' +
+        encodeURIComponent(bungie_name) +
+        '/report/' +
+        report_type +
+        (modeString.length > 0
+          ? '?modes=' + encodeURIComponent(modeString)
+          : '')
+    );
+
+    const data = (await apiResponse.json()) as DestinyMemberReportResponse;
+
+    if (
+      typeof data.response === 'number' ||
+      typeof data.response === 'bigint'
+    ) {
+      setFetchTimerInterval(
+        window.setTimeout(() => {
+          fetchReport(bungie_name, report_type);
+        }, 1 * 5000)
+      ); // check on the report every 1 seconds
+      if (props.onLoadingData) {
+        props.onLoadingData();
+      }
+    } else {
+      // stop timer
+      if (fetchTimerInterval) {
+        console.log('Data received. Stopping current timer');
+        window.clearTimeout(fetchTimerInterval);
+        setFetchTimerInterval(0);
+      }
+    }
+
+    // set membger report response
+    if (!alreadyLoadedData) {
+      // if we have never loaded any data into our report, update our response
+
+      setMemberReport(data.response);
+    } else if (typeof data.response === 'object') {
+      // only update our member report when we have the report in our responsea.response.search.modes == props.modes?.join(',')
+
+      setIsLoadingData(false);
+      setMemberReport(data.response);
+    } else {
+      setIsLoadingData(true);
+    }
+
+    if (!alreadyLoadedData && typeof data.response === 'object') {
+      setAlreadyLoadedData(true);
+    }
+  };
 
   useEffect(() => {
-    if (memberReport !== null) {
+    if (
+      memberReport !== null &&
+      typeof memberReport === 'number' &&
+      typeof memberReport === 'bigint' &&
+      props.onLoadingData
+    ) {
+      console.log('Loading data!');
+      props.onLoadingData();
+    } else if (memberReport !== null && typeof memberReport === 'object') {
       setAlreadyLoadedData(true);
+      if (props.onReportLoaded) {
+        props.onReportLoaded(memberReport as DestinyMemberReport);
+      }
     }
   }, [memberReport]);
 
   // fetch the member report on load
   useEffect(() => {
-    let fetchTimerInterval = 0;
-
     const report_type =
       props.season === 'lifetime' ? 'lifetime' : 'season/' + props.season;
 
     if (props.bungie_name && props.bungie_name.trim().length > 0) {
-      const fetchReport = async (bungie_name: string, report_type: string) => {
-        const modeString = (props.modes || []).join(',');
-        const apiResponse = await fetch(
-          ENV.hosts.destiny +
-            '/member/' +
-            encodeURIComponent(bungie_name) +
-            '/report/' +
-            report_type +
-            (modeString.length > 0
-              ? '?modes=' + encodeURIComponent(modeString)
-              : '')
-        );
-
-        const data = (await apiResponse.json()) as DestinyMemberReportResponse;
-
-        if (
-          typeof data.response === 'number' ||
-          typeof data.response === 'bigint'
-        ) {
-          fetchTimerInterval = window.setTimeout(() => {
-            fetchReport(bungie_name, report_type).finally(() =>
-              console.log('Checking in')
-            );
-          }, 1 * 1000); // check on the report every 1 seconds
-        } else {
-          // stop timer
-          if (fetchTimerInterval) {
-            window.clearTimeout(fetchTimerInterval);
-            fetchTimerInterval = 0;
-          }
-        }
-
-        // set membger report response
-        if (!alreadyLoadedData) {
-          // if we have never loaded any data into our report, update our response
-          setMemberReport(data.response);
-        } else if (typeof data.response === 'object') {
-          // only update our member report when we have the report in our response
-          setIsLoadingData(false);
-          setMemberReport(data.response);
-        } else {
-          setIsLoadingData(true);
-        }
-
-        if (!alreadyLoadedData && typeof data.response === 'object') {
-          setAlreadyLoadedData(true);
-        }
-      };
-
       // fetch the member report
       fetchReport(props.bungie_name, report_type).finally(() =>
         console.log('Member report fetched for: ', props.bungie_name)
@@ -526,8 +544,9 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     return () => {
       // cleanup
       if (fetchTimerInterval) {
+        console.log('Stopping current timeout', fetchTimerInterval);
         window.clearTimeout(fetchTimerInterval);
-        fetchTimerInterval = 0;
+        setFetchTimerInterval(0);
       }
     };
   }, [props.bungie_name, props.modes, props.season]);
@@ -552,6 +571,10 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
               <span>
                 {data.member.clan ? '[' + data.member.clan.name + ']' : ''}
               </span>
+              <br />
+              <span className="text-sm">
+                {data.search.modes ? 'Modes: [' + data.search.modes + ']' : ''}
+              </span>
             </H5>
             <H5></H5>
             <p className="mt-4">
@@ -568,7 +591,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         return <>Loading</>;
     }
   } else {
-    return <></>;
+    return <>Querying! Please wait. This can take some time</>;
   }
 };
 

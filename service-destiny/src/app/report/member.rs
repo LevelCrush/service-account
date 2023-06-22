@@ -107,6 +107,14 @@ pub struct MemberReportFireteamMember {
 
 #[derive(serde::Serialize, Clone, Debug, Default, TS)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct MemberReportSearchQuery {
+    pub member: String,
+    pub modes: String,
+    pub season: String,
+}
+
+#[derive(serde::Serialize, Clone, Debug, Default, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct MemberReport {
     pub version: u8,
 
@@ -149,7 +157,8 @@ pub struct MemberReport {
     #[ts(type = "number")]
     pub total_non_clan_members: u64,
     pub titles: Vec<MemberTitle>,
-    pub member: MemberResponse, // added later on,
+    pub member: MemberResponse,
+    pub search: MemberReportSearchQuery,
 }
 
 const CACHE_KEY_LIFETIME: &str = "member_report||lifetime||";
@@ -370,6 +379,11 @@ async fn merge_reports(
         member: MemberResponse::from_db(member.unwrap_or_default()),
         top_activities: activities,
         activity_map,
+        search: MemberReportSearchQuery {
+            member: String::new(),
+            modes: String::new(),
+            season: String::new(),
+        },
     }
 }
 
@@ -478,8 +492,17 @@ pub async fn season<T: Into<String>>(
 
                         // stop getting reports.
                         let snapshot_range = format!("Season {}", season_number);
-                        let report =
-                            merge_reports(display_name_global, reports, snapshot_range, &mut thread_app_state).await;
+                        let mut report = merge_reports(
+                            display_name_global,
+                            reports,
+                            snapshot_range.clone(),
+                            &mut thread_app_state,
+                        )
+                        .await;
+
+                        report.search.season = snapshot_range;
+                        report.search.member = bungie_name;
+                        report.search.modes = mode_str;
 
                         thread_app_state
                             .cache
@@ -600,13 +623,17 @@ pub async fn lifetime<T: Into<String>>(
                             }
                         }
 
-                        let report = merge_reports(
+                        let mut report = merge_reports(
                             display_name_global,
                             reports,
                             "Lifetime".to_string(),
                             &mut thread_app_state,
                         )
                         .await;
+
+                        report.search.season = "Lifetime".to_string();
+                        report.search.member = bungie_name;
+                        report.search.modes = modes_str;
 
                         thread_app_state
                             .cache
