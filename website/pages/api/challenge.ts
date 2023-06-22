@@ -1,5 +1,3 @@
-import { AccountResponse } from '@website/core/api_responses';
-import ENV from '@website/core/env';
 import { sessionOptions } from '@website/core/session';
 import { withIronSessionApiRoute } from 'iron-session/next';
 import { NextApiRequest, NextApiResponse } from 'next';
