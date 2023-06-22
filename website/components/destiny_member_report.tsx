@@ -503,6 +503,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         // set membger report response
         if (!alreadyLoadedData) {
           // if we have never loaded any data into our report, update our response
+
           setMemberReport(data.response);
         } else if (typeof data.response === 'object') {
           // only update our member report when we have the report in our response
