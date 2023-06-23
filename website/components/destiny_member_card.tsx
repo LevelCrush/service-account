@@ -133,6 +133,8 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
   const badgeClanColors = {
     'Level Crush': 'bg-[#50AFE0] text-black',
     'Level Stomp': 'bg-[#44A8BD] text-black',
+    'Righteous Indiggnation':
+      'bg-gradient-to-r from-[#F988B6] to-[#7A4359] text-[#FAF2A2] border-[#F988B6] border-[1px]',
   } as { [clan: string]: string };
 
   if (memberInfo.clan) {
@@ -191,7 +193,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
             <span
               key={'member_' + props.display_name + '_badge_' + badgeIndex}
               className={
-                'mb-4 lg:my-0 shrink-0 grow-0 basis-auto px-2 py-1 text-sm align-middle inline-block h-auto w-[6rem] self-start ' +
+                'mb-4 lg:my-0 shrink-0 grow-0 basis-auto px-2 py-1 text-sm align-middle inline-block h-auto w-auto w-min-[6rem] w-max-[10rem] self-start border-1 ' +
                 badges[badge]
               }
             >

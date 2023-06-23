@@ -19,8 +19,14 @@ async function bot() {
     const client = discord.create();
     const commands = await discord.slash_commands();
 
+    // anything that should happen once the client has is ready
     client.on(Events.ClientReady, async () => {
         console.log('Client ready!');
+
+        const guilds = await client.guilds.fetch();
+        for (const [guid_id, guild] of guilds) {
+            //
+        }
     });
 
     // handle auto complete commands
