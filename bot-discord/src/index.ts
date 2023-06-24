@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import { ParseArgsConfig, parseArgs } from 'node:util';
 import * as discord from './discord';
-import { Events } from 'discord.js';
+import { CategoryChannel, CategoryChildChannel, ChannelType, Events, channelLink } from 'discord.js';
+import RoleDecay, { RoleDecayManager, RoleMonitorCleanup } from './role_decay';
 
 // import env settings into the process env
 dotenv.config();
@@ -19,13 +20,24 @@ async function bot() {
     const client = discord.create();
     const commands = await discord.slash_commands();
 
+    const role_decay_cleanups = [] as RoleMonitorCleanup[];
+
     // anything that should happen once the client has is ready
     client.on(Events.ClientReady, async () => {
         console.log('Client ready!');
 
-        const guilds = await client.guilds.fetch();
-        for (const [guid_id, guild] of guilds) {
-            //
+        const target_category = process.env['ROLE_DECAY_CATEGORY'] || '';
+        const target_role = process.env['ROLE_NAME_DECAY'] || '';
+        const target_decay_time = parseInt(process.env['ROLE_DECAY_TIME_SECONDS'] || '60');
+        const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CEHCK_SECS'] || '60');
+        const manager = RoleDecay(target_role, target_decay_time, target_decay_time);
+        if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
+            const guilds = await client.guilds.cache;
+            for (const [guild_id, guild] of guilds) {
+                manager.set_dont_want(guild, new Map()); // for now empty
+                manager.set_last_interactions(guild, new Map()); // for now empty
+                role_decay_cleanups.push(manager.monitor(client, guild, target_category));
+            }
         }
     });
 
