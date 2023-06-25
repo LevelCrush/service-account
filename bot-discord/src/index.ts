@@ -38,7 +38,7 @@ async function bot() {
 
         console.log(target_category);
         console.log(target_channels);
-        const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_time);
+        const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
         const log_manager = ChannelLogger();
         if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
             const guilds = await client.guilds.cache;
@@ -55,7 +55,7 @@ async function bot() {
                     }
                 }
 
-                console.log('Getting category members for guild', guild.name, 'at channels', target_category);
+                console.log('Getting category members for guild', guild.name, 'at channels', target_channels);
                 for (const chan of target_channels) {
                     const chan_users = await channel_active_users(guild.id, chan, timestamp);
                     for (const chan_user of chan_users) {
