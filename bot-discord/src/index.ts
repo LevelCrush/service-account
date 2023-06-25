@@ -49,7 +49,7 @@ async function bot() {
                 console.log('Getting category members for guild', guild.name, 'at category', target_category);
                 const last_interaction_map = new Map<string, number>();
                 for (const cat of target_category) {
-                    const category_users = await category_active_users(cat, timestamp);
+                    const category_users = await category_active_users(guild.id, cat, timestamp);
                     for (const cat_user of category_users) {
                         last_interaction_map.set(cat_user.member_id, parseFloat(cat_user.message_timestamp));
                     }

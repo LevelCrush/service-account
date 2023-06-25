@@ -1,10 +1,12 @@
 import { APIResponse, ServiceDiscord } from '@levelcrush';
 
-export async function category_active_users(category_name: string, timestamp: number) {
+export async function category_active_users(guild: string, category_name: string, timestamp: number) {
     const host = process.env['HOST_DISCORD'] || '';
     const request = await fetch(
         host +
-            '/query/categories/' +
+            '/query/guilds/' +
+            encodeURIComponent(guild) +
+            '/categories/' +
             encodeURIComponent(category_name) +
             '/users/active?timestamp=' +
             encodeURIComponent(timestamp),

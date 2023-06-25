@@ -25,11 +25,14 @@ pub struct CategoryActiveQuery {
 }
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/categories/:category/users/active", get(active_category_users))
+    Router::new().route(
+        "/guilds/:guild/categories/:category/users/active",
+        get(active_category_users),
+    )
 }
 
 pub async fn active_category_users(
-    Path(category): Path<String>,
+    Path((guild, category)): Path<(String, String)>,
     Query(options): Query<CategoryActiveQuery>,
     State(state): State<AppState>,
 ) -> Json<APIResponse<Vec<CategoryActiveUser>>> {
@@ -38,7 +41,7 @@ pub async fn active_category_users(
     let timestamp = timestamp.parse::<u64>().unwrap_or(unix_timestamp() - 3600);
     tracing::info!("Timestamp {} | Category {}", timestamp, category);
 
-    let results = database::category::active_users(&category, timestamp, &state.database).await;
+    let results = database::category::active_users(&guild, &category, timestamp, &state.database).await;
 
     let data = results
         .into_iter()

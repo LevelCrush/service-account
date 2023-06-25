@@ -8,6 +8,7 @@ pub struct CategoryActiveUserResult {
 }
 
 pub async fn active_users(
+    guild_id: &str,
     category_name: &str,
     timestamp: UnixTimestamp,
     pool: &MySqlPool,
@@ -15,6 +16,7 @@ pub async fn active_users(
     let query = sqlx::query_file_as!(
         CategoryActiveUserResult,
         "queries/category_active_users.sql",
+        guild_id,
         category_name,
         timestamp
     )

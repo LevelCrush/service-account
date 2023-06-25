@@ -4,7 +4,8 @@ SELECT
     channel_logs.member_id,
     channel_logs.message_timestamp AS message_timestamp
 FROM channel_logs
-WHERE channel_logs.category_name = ?
+WHERE channel_logs.guild_id = ?
+AND channel_logs.category_name = ?
 AND channel_logs.message_timestamp > ?
 )
 SELECT
