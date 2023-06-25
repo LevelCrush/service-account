@@ -1,9 +1,10 @@
 import dotenv from 'dotenv';
 import { ParseArgsConfig, parseArgs } from 'node:util';
 import * as discord from './discord';
-import { CategoryChannel, CategoryChildChannel, ChannelType, Events, channelLink } from 'discord.js';
+import { CategoryChannel, CategoryChildChannel, ChannelType, Events, User, channelLink } from 'discord.js';
 import RoleDecay, { RoleDecayManager, RoleMonitorCleanup } from './role_decay';
 import { ChannelLogger, ChannelLoggerCleanup } from './channel_logger';
+import { category_active_users } from './api/category';
 
 // import env settings into the process env
 dotenv.config();
@@ -29,18 +30,35 @@ async function bot() {
         console.log('Client ready!');
 
         console.log('Setting up role decay and channel logs');
-        const target_category = process.env['ROLE_DECAY_CATEGORY'] || '';
+        const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
         const target_role = process.env['ROLE_NAME_DECAY'] || '';
         const target_decay_time = parseInt(process.env['ROLE_DECAY_TIME_SECONDS'] || '60');
         const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CEHCK_SECS'] || '60');
+        const target_channels = (process.env['ROLE_DECAY_CHANNEL'] || '').split(',');
+
+        console.log(target_category);
+        console.log(target_channels);
         const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_time);
         const log_manager = ChannelLogger();
         if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
             const guilds = await client.guilds.cache;
             for (const [guild_id, guild] of guilds) {
+                const unix_timestamp = Math.ceil(Date.now() / 1000);
+                const timestamp = unix_timestamp - (target_decay_time + 1);
+                console.log(timestamp);
+                console.log('Getting category members for guild', guild.name, 'at category', target_category);
+                const last_interaction_map = new Map<string, number>();
+                for (const cat of target_category) {
+                    const category_users = await category_active_users(cat, timestamp);
+                    for (const cat_user of category_users) {
+                        last_interaction_map.set(cat_user.member_id, parseFloat(cat_user.message_timestamp));
+                    }
+                }
+                console.log(last_interaction_map);
+
                 decay_manager.set_dont_want(guild, new Map()); // for now empty
-                decay_manager.set_last_interactions(guild, new Map()); // for now empty
-                guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category));
+                decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
+                guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
                 guild_logs.set(guild.id, log_manager.monitor(client, guild));
             }
         }

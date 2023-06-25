@@ -1,3 +1,4 @@
+import { Channel } from 'diagnostics_channel';
 import { Events, Client, Guild, CategoryChildChannel, User, Message, Role, GuildMember, Collection } from 'discord.js';
 
 export type UserMap = Map<string, User>;
@@ -29,7 +30,7 @@ export interface RoleDecayManager {
      * @param target_channels
      * @returns
      */
-    monitor: (client: Client, guild: Guild, category: string) => RoleMonitorCleanup;
+    monitor: (client: Client, guild: Guild, category: string[], channels: string[]) => RoleMonitorCleanup;
 }
 
 /**
@@ -52,7 +53,7 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
         users_dont_want.set(target_guild.id, users);
     };
 
-    const monitor: RoleDecayManager['monitor'] = (client, target_guild, target_category) => {
+    const monitor: RoleDecayManager['monitor'] = (client, target_guild, target_categories, target_channels) => {
         // this function will always query the guild we are targeting and find the role that matches the name
         // this is not the most efficient way to go about it, but it is the most flexible
         const find_role = () => {
@@ -70,9 +71,13 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
             // check to see if this channel is a child of the target category
             const message_channel = message.channel as CategoryChildChannel;
             const is_in_category =
-                message_channel.parent && message_channel.parent.name.toLowerCase() == target_category.toLowerCase();
+                message_channel.parent && target_categories.includes(message_channel.parent.name.toLowerCase());
 
-            if (!is_in_category) {
+            const channel = target_guild.channels.cache.find((v) => v.id === message.channel.id);
+            const is_in_channel = channel ? target_channels.includes(channel.name.toLowerCase()) : false;
+
+            // if we are neither in a designated channel AND not in category we dont want to worry abotu adding or tracking this
+            if (!is_in_category && !is_in_channel) {
                 return;
             }
 

@@ -12,18 +12,21 @@ export async function log_channel(type: ChannelLogType, message: Message | Parti
     const category = (message.channel as CategoryChildChannel).parent;
     const member = message.member;
 
-    console.log('Timestamp: ', message.createdTimestamp, Math.ceil(message.createdTimestamp / 1000));
+    // console.log('Timestamp: ', message.createdTimestamp, Math.ceil(message.createdTimestamp / 1000));
     const payload = {
         guild_id: message.guildId,
-        category_id: category ? category.id : 0,
+        category_id: category ? category.id : '0',
+        category_name: category !== null ? category.name : '',
         channel_id: message.channelId,
-        channel_name: message_channel ? message_channel.name : message.channelId,
+        channel_name: message_channel ? message_channel.name : message.channelId.toString(),
         member_id: member !== null ? member.user.id : 0,
         message_id: message.id,
         message_timestamp: Math.ceil(message.createdTimestamp / 1000).toString(),
         event_type: type,
         data: JSON.stringify(message.toJSON()),
     } as ServiceDiscord.ChannelLogPayload;
+
+    //  console.log(payload);
 
     const endpoint = process.env['HOST_DISCORD'] || '';
     try {

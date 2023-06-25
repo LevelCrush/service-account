@@ -4,6 +4,7 @@ SET
     `event_type` = ?,
     `guild_id` = ?,
     `category_id` = ?,
+    `category_name` = ?,
     `channel_id` = ?,
     `channel_name` = ?,
     `message_id` = ?,

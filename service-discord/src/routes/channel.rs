@@ -17,6 +17,7 @@ pub struct ChannelLogPayload {
     pub event_type: String,
     pub guild_id: String,
     pub category_id: String,
+    pub category_name: String,
     pub channel_id: String,
     pub channel_name: String,
     pub message_id: String,
@@ -40,7 +41,8 @@ pub async fn create_log(
     let log = ChannelLogRecord {
         id: 0,
         guild_id: payload.guild_id.parse::<u64>().unwrap_or_default(),
-        category_id: payload.guild_id.parse::<u64>().unwrap_or_default(),
+        category_id: payload.category_id.parse::<u64>().unwrap_or_default(),
+        category_name: payload.category_name,
         channel_id: payload.channel_id.parse::<u64>().unwrap_or_default(),
         channel_name: payload.channel_name,
         message_id: payload.message_id.parse::<u64>().unwrap_or_default(),
