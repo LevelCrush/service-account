@@ -2,13 +2,14 @@
     "name": "bot-accounts",
     "version": "1.0.0",
     "description": "",
-    "main": "./dist/index.js",
+    "main": "./dist/bot.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "debug": "ts-node src/index.ts",
-        "debug:invite": "ts-node src/index.ts --invite",
-        "invite": "node dist/index.js --invite",
-        "start": "node dist/index.js"
+        "debug": "ts-node -r tsconfig-paths/register src/index.ts",
+        "debug:invite": "ts-node -r tsconfig-paths/register src/index.ts --invite",
+        "invite": "node dist/bot.js --invite",
+        "start": "node dist/bot.js",
+        "build": "esbuild ./src/index.ts --bundle --platform=node --outfile=./dist/bot.js"
     },
     "author": "",
     "license": "ISC",
@@ -16,6 +17,8 @@
         "@types/node": "^20.3.1",
         "@typescript-eslint/eslint-plugin": "^5.59.11",
         "@typescript-eslint/parser": "^5.59.11",
+        "esbuild": "^0.18.8",
+        "esbuild-node-tsc": "^2.0.5",
         "eslint": "^8.42.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-plugin-prettier": "^4.2.1",
