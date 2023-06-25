@@ -4,5 +4,6 @@ members = [
     "./lib-levelcrush-rs",
     "./service-accounts",
     "./service-destiny",
-    "./service-feed"
+    "./service-feed",
+    "./service-discord"
 ]

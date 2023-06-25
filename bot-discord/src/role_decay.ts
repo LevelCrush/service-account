@@ -132,6 +132,7 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
                 const timestamp = guild_interactions.get(discord_id) || 0;
                 const has_decayed = now_timestamp - timestamp > decay_time_seconds;
                 const has_role = member.roles.cache.some((role) => role.id === decayed_role.id);
+
                 if (has_role && has_decayed) {
                     try {
                         await member.roles.remove(decayed_role);
