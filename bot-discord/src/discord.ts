@@ -1,5 +1,6 @@
 import { Client, Events, GatewayIntentBits, Partials, REST, Routes, Interaction } from 'discord.js';
 import { Command } from './commands/base_command';
+import RoleCommand from './commands/role';
 
 /**
  * Creates a Discord client based off .env variables
@@ -32,6 +33,7 @@ export async function connect(client: Client) {
 export async function slash_commands() {
     // todo!
     const command_map = new Map<string, Command>();
+    command_map.set(RoleCommand.name, RoleCommand);
 
     // no commands currently for this bot
 

@@ -23,6 +23,8 @@ pub enum AppVariable {
     DiscordClientSecret,
     DiscordPublicKey,
     DiscordBotToken,
+
+    AccessKey,
 }
 
 impl From<AppVariable> for &'static str {
@@ -42,6 +44,7 @@ impl From<AppVariable> for &'static str {
             AppVariable::ServerFallbackUrl => "SERVER_FALLBACK_URL",
             AppVariable::HostAccounts => "HOST_ACCOUNTS",
             AppVariable::DiscordBotToken => "DISCORD_BOT_TOKEN",
+            AppVariable::AccessKey => "ACCESS_KEY",
         }
     }
 }

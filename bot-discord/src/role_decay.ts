@@ -1,5 +1,17 @@
 import { Channel } from 'diagnostics_channel';
-import { Events, Client, Guild, CategoryChildChannel, User, Message, Role, GuildMember, Collection } from 'discord.js';
+import {
+    Events,
+    Client,
+    Guild,
+    CategoryChildChannel,
+    User,
+    Message,
+    Role,
+    GuildMember,
+    Collection,
+    APIRole,
+    PartialGuildMember,
+} from 'discord.js';
 
 export type UserMap = Map<string, User>;
 export type UserTimestampMap = Map<string, number>;
@@ -64,7 +76,11 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
         // anytime a message is created, this will fire
         const monitor_messages = (message: Message) => {
             // skip processing if the message received is not for our target guild or for our target channels or has explictly stated to not be included
-            if (!message.member || message.guildId !== target_guild.id || users_dont_want.has(message.author.id)) {
+            if (
+                !message.member ||
+                message.guildId !== target_guild.id ||
+                users_dont_want.get(message.guildId)?.has(message.author.id)
+            ) {
                 return;
             }
 
@@ -137,8 +153,8 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
                 const timestamp = guild_interactions.get(discord_id) || 0;
                 const has_decayed = now_timestamp - timestamp > decay_time_seconds;
                 const has_role = member.roles.cache.some((role) => role.id === decayed_role.id);
-
-                if (has_role && has_decayed) {
+                const not_wanted = users_dont_want.get(target_guild.id)?.has(discord_id);
+                if (has_role && (has_decayed || not_wanted)) {
                     try {
                         await member.roles.remove(decayed_role);
                         console.log(
@@ -156,8 +172,95 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
             }
         };
 
+        const role_added = (guild: string, user: string, role: Role | APIRole) => {
+            if (target_guild.id === guild && role.name.toLowerCase() === target_role) {
+                users_last_interacted.get(guild)?.set(user, Date.now() / 1000);
+            }
+        };
+
+        const role_allowed = (guild: string, user: string, role: Role | APIRole) => {
+            if (target_guild.id === guild && role.name.toLowerCase() === target_role) {
+                users_dont_want.get(guild)?.delete(user);
+            }
+        };
+
+        const role_deny = async (guild: string, user: string, role: Role | APIRole) => {
+            if (target_guild.id === guild && role.name.toLowerCase() === target_role) {
+                const guild_member = target_guild.members.cache.find((v) => v.id === user);
+                if (guild_member) {
+                    users_dont_want.get(guild)?.set(user, guild_member.user);
+
+                    const role = find_role();
+                    if (role) {
+                        try {
+                            await target_guild.members.removeRole({
+                                user: user,
+                                role: role.id,
+                            });
+                            console.log(
+                                'User had role',
+                                role.name,
+                                ' in ',
+                                target_guild.name,
+                                ' but is set to auto deny. Role has been removed',
+                            );
+                        } catch (err) {
+                            console.error(
+                                'Error removing role from user automatically',
+                                role.name,
+                                ' in ',
+                                target_guild.name,
+                                'error is',
+                                err,
+                            );
+                        }
+                    }
+                }
+            }
+        };
+
+        const member_updated = async (
+            old_member: GuildMember | PartialGuildMember,
+            new_member: GuildMember | PartialGuildMember,
+        ) => {
+            const role = find_role();
+            if (
+                role &&
+                new_member.roles.cache.has(role.id) &&
+                users_dont_want.get(new_member.guild.id)?.has(new_member.id)
+            ) {
+                try {
+                    await new_member.guild.members.removeRole({
+                        user: new_member.id,
+                        role: role.id,
+                    });
+                    console.log(
+                        'User had role',
+                        role.name,
+                        ' in ',
+                        new_member.guild.name,
+                        ' but is set to auto deny. Role has been removed',
+                    );
+                } catch (err) {
+                    console.error(
+                        'Error removing role from user automatically',
+                        role.name,
+                        ' in ',
+                        new_member.guild.name,
+                        'error is',
+                        err,
+                    );
+                }
+            }
+        };
+
         // subscribe to events
         client.on(Events.MessageCreate, monitor_messages);
+        client.on(Events.GuildMemberUpdate, member_updated);
+
+        client.on('role_added', role_added);
+        client.on('role_allow', role_allowed);
+        client.on('role_deny', role_deny);
 
         const decay_interval = setInterval(() => {
             console.info('Checking', target_guild.name, 'for  any decay');
@@ -167,6 +270,11 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
         // cleanup
         return () => {
             client.off(Events.MessageCreate, monitor_messages);
+            client.off(Events.GuildMemberUpdate, member_updated);
+            client.off('role_added', role_added);
+            client.off('role_allow', role_allowed);
+            client.off('role_deny', role_deny);
+
             clearInterval(decay_interval);
         };
     };
