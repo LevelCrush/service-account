@@ -4,6 +4,7 @@ import {
     InteractionResponse,
     Message,
     MessageFlags,
+    ApplicationCommandOptionChoiceData,
 } from 'discord.js';
 import { Command } from './base_command';
 import type { APIResponse } from '@levelcrush';
@@ -26,37 +27,65 @@ export const RoleCommand = {
             subcommand
                 .setName('add')
                 .setDescription('Add a role')
-                .addRoleOption((option) =>
-                    option.setName('role').setDescription('The role you want to give yourself').setRequired(true),
+                .addStringOption((option) =>
+                    option
+                        .setName('role')
+                        .setDescription('The role you want to give yourself')
+                        .setRequired(true)
+                        .setAutocomplete(true),
                 ),
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('remove')
                 .setDescription('Remove role from yourself')
-                .addRoleOption((option) =>
-                    option.setName('role').setDescription('The role you want to remove').setRequired(true),
+                .addStringOption((option) =>
+                    option
+                        .setName('role')
+                        .setDescription('The role you want to remove')
+                        .setRequired(true)
+                        .setAutocomplete(true),
                 ),
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('deny')
                 .setDescription("Don't allow a role to be assigned to you")
-                .addRoleOption((option) =>
-                    option.setName('role').setDescription('The role you want to never receive').setRequired(true),
+                .addStringOption((option) =>
+                    option
+                        .setName('role')
+                        .setDescription('The role you want to never receive')
+                        .setAutocomplete(true)
+                        .setRequired(true),
                 ),
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('allow')
                 .setDescription('Allow a role the potential to be assigned to you')
-                .addRoleOption((option) =>
+                .addStringOption((option) =>
                     option
                         .setName('role')
                         .setDescription('The role you want the potential to receive')
+                        .setAutocomplete(true)
                         .setRequired(true),
                 ),
         ),
+
+    autocomplete: async (interaction) => {
+        const focused = interaction.options.getFocused();
+
+        const options = (process.env['ROLE_MANAGE_ALLOW'] || '').split(',');
+        const filtered = options.filter((option) =>
+            option.trim().toLowerCase().startsWith(focused.toLowerCase().trim()),
+        );
+
+        const respond_width = filtered.map((option) => {
+            return { name: option.trim(), value: option.trim() };
+        }) as ApplicationCommandOptionChoiceData[];
+
+        await interaction.respond(respond_width);
+    },
     /*  Execute command logic
      * @param interaction
      */
@@ -67,7 +96,18 @@ export const RoleCommand = {
             ephemeral: true,
         });
 
-        const role = interaction.options.getRole('role', true);
+        const role_name = interaction.options.getString('role', true);
+        console.log(role_name);
+        const role = interaction.guild?.roles.cache.find(
+            (v) => v.name.trim().toLowerCase() === role_name.toLowerCase().trim(),
+        );
+        if (!role) {
+            await interaction.followUp({
+                content: 'The role you choose. Could not be found',
+                ephemeral: true,
+            });
+            return;
+        }
 
         if (subcommand === 'deny') {
             await role_deny(interaction.guildId || '0', interaction.user.id, role.name);
