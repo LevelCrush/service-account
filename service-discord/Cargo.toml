@@ -1,0 +1,22 @@
+[package]
+name = "service-discord"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+levelcrush = { path = "../lib-levelcrush-rs", features=["server","cors", "database"], default_features = false }
+
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = { version = "1.0.93" }
+serde_urlencoded = { version = "0.7.1" }
+sqlx = { version = "0.6.2", features = ["mysql", "bigdecimal", "runtime-tokio-rustls", "macros","chrono"], default_features = false }
+tower-http = { version = "0.4.0", features = ["full"] }
+reqwest = { version = "0.11.14", features = ["json", "rustls-tls"] , default_features = false }
+rand = { version = "0.8.5", features = ["min_const_gen"] }
+urlencoding = { version = "2.1.2" }
+md5 = { version = "0.7.0" }
+base64 = { version = "0.21.0" }
+ts-rs = { version = "6.2.1", features = ["serde-compat", "chrono-impl", "bigdecimal-impl"], default_features = false }
+clap = { version = "4.2.7", features = ["derive"] }

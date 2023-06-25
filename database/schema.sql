@@ -48,7 +48,7 @@ CREATE TABLE `account_platform_data` (
   KEY `account_platform_data_platform_index` (`platform`),
   KEY `account_platform_data_value_index` (`value`),
   KEY `account_platform_data_value_bigint_index` (`value_bigint`)
-) ENGINE=InnoDB AUTO_INCREMENT=131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,7 +73,7 @@ CREATE TABLE `account_platforms` (
   KEY `account_platforms_platform_index` (`platform`),
   KEY `account_platforms_platform_platform_user_index` (`platform`,`platform_user`),
   KEY `account_platforms_platform_user_index` (`platform_user`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -196,7 +196,7 @@ CREATE TABLE `activities` (
   KEY `activities_activity_type_index` (`activity_type`),
   KEY `activities_index_index` (`index`),
   KEY `activities_name_index` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2355 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4557 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -245,7 +245,7 @@ CREATE TABLE `clan_members` (
   KEY `clan_members_group_id_membership_id_index` (`group_id`,`membership_id`),
   KEY `clan_members_group_role_index2` (`group_role`),
   KEY `clan_members_platform_index` (`platform`)
-) ENGINE=InnoDB AUTO_INCREMENT=361 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=365 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -272,7 +272,7 @@ CREATE TABLE `clans` (
   UNIQUE KEY `clans_pk` (`group_id`),
   UNIQUE KEY `clans_pk2` (`slug`,`group_id`),
   KEY `clans_is_network_index` (`is_network`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,7 +335,7 @@ CREATE TABLE `instance_members` (
   KEY `instance_members_completed_index` (`completed`),
   KEY `instance_members_completion_reason_index` (`completion_reason`),
   KEY `instance_members_platform_index` (`platform`)
-) ENGINE=InnoDB AUTO_INCREMENT=3185341 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3396893 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -367,7 +367,7 @@ CREATE TABLE `instances` (
   KEY `instances_started_from_beginning_index` (`started_from_beginning`),
   KEY `instances_completed_index` (`completed`),
   KEY `instances_completion_reasons_index` (`completion_reasons`)
-) ENGINE=InnoDB AUTO_INCREMENT=553652 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=584016 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -403,7 +403,7 @@ CREATE TABLE `member_activities` (
   KEY `member_activities_instance_id_index` (`instance_id`),
   KEY `member_activities_instance_id_character_id_index` (`instance_id`,`character_id`),
   KEY `member_activities_membership_id_instance_id_index` (`membership_id`,`instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=638260 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=670843 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -435,7 +435,7 @@ CREATE TABLE `member_activity_stats` (
   KEY `member_activity_stats_name_instance_id_membership_id_index` (`name`,`instance_id`,`membership_id`),
   KEY `member_activity_stats_value_display_index` (`value_display`),
   KEY `member_activity_stats_value_index` (`value`)
-) ENGINE=InnoDB AUTO_INCREMENT=12401643 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13041921 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -493,7 +493,7 @@ CREATE TABLE `member_characters` (
   KEY `member_characters_membership_id_index` (`membership_id`),
   KEY `member_characters_platform_index` (`platform`),
   KEY `member_characters_emblem_hash_index` (`emblem_hash`)
-) ENGINE=InnoDB AUTO_INCREMENT=793537 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=793774 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -518,7 +518,7 @@ CREATE TABLE `member_snapshots` (
   KEY `member_snapshots_snapshot_name_index` (`snapshot_name`),
   KEY `member_snapshots_membership_id_snapshot_name_index` (`membership_id`,`snapshot_name`),
   KEY `member_snapshots_version_index` (`version`)
-) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2546 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -566,7 +566,7 @@ CREATE TABLE `member_triumphs` (
   KEY `member_triumphs_membership_id_index` (`membership_id`),
   KEY `member_triumphs_state_index` (`state`),
   KEY `member_triumphs_times_completed_index` (`times_completed`)
-) ENGINE=InnoDB AUTO_INCREMENT=21643609 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21941689 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -594,7 +594,7 @@ CREATE TABLE `members` (
   KEY `members_display_name_index` (`display_name`),
   KEY `members_platform_index` (`platform`),
   KEY `members_last_played_at_index` (`last_played_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=275895 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=275975 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -676,6 +676,96 @@ CREATE TABLE `triumphs` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Current Database: `levelcrush_discord`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `levelcrush_discord` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `levelcrush_discord`;
+
+--
+-- Table structure for table `channel_logs`
+--
+
+DROP TABLE IF EXISTS `channel_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `channel_logs` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `event_type` varchar(255) NOT NULL,
+  `guild_id` bigint unsigned NOT NULL,
+  `category_id` bigint unsigned NOT NULL,
+  `category_name` varchar(255) NOT NULL,
+  `channel_id` bigint unsigned NOT NULL,
+  `channel_name` varchar(255) NOT NULL,
+  `message_id` bigint unsigned NOT NULL,
+  `message_timestamp` bigint unsigned NOT NULL,
+  `member_id` bigint unsigned NOT NULL,
+  `data` text NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `channel_logs_category_id_index` (`category_id`),
+  KEY `channel_logs_channel_id_index` (`channel_id`),
+  KEY `channel_logs_guild_id_index` (`guild_id`),
+  KEY `channel_logs_member_id_index` (`member_id`),
+  KEY `channel_logs_event_type_index` (`event_type`),
+  KEY `channel_logs_message_id_index` (`message_id`),
+  KEY `channel_logs_channel_name_index` (`channel_name`),
+  KEY `channel_logs_message_timestamp_index` (`message_timestamp`),
+  KEY `channel_logs_category_name_index` (`category_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `member`
+--
+
+DROP TABLE IF EXISTS `member`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `member` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `discord_id` bigint unsigned NOT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  `display_name` varchar(255) DEFAULT NULL,
+  `nickname` varchar(255) DEFAULT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `member_key_discord_id` (`discord_id`),
+  KEY `member_display_name_index` (`display_name`),
+  KEY `member_nickname_index` (`nickname`),
+  KEY `member_username_index` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `role_denies`
+--
+
+DROP TABLE IF EXISTS `role_denies`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `role_denies` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `guild_id` bigint unsigned NOT NULL,
+  `role_name` varchar(255) NOT NULL,
+  `member_id` bigint unsigned NOT NULL,
+  `created_at` bigint unsigned NOT NULL,
+  `updated_at` bigint unsigned NOT NULL,
+  `deleted_at` bigint unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `role_denies_unique_guild_member_role` (`guild_id`,`member_id`,`role_name`),
+  KEY `role_denies_guild_id_index` (`guild_id`),
+  KEY `role_denies_member_id_index` (`member_id`),
+  KEY `role_denies_role_name_index` (`role_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Current Database: `levelcrush_feeds`
 --
 
@@ -744,4 +834,4 @@ USE `levelcrush_settings`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-21  4:29:30
+-- Dump completed on 2023-06-25  5:02:02

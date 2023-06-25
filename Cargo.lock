@@ -1924,6 +1924,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "service-discord"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.2",
+ "clap",
+ "levelcrush",
+ "md5",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sqlx",
+ "tower-http",
+ "ts-rs",
+ "urlencoding",
+]
+
+[[package]]
 name = "service-feed"
 version = "0.1.0"
 dependencies = [
