@@ -14,7 +14,7 @@ export async function log_channel(type: ChannelLogType, message: Message | Parti
 
     // console.log('Timestamp: ', message.createdTimestamp, Math.ceil(message.createdTimestamp / 1000));
     const payload = {
-        guild_id: message.guildId,
+        guild_id: message.guildId !== null ? message.guildId : '0',
         category_id: category ? category.id : '0',
         category_name: category !== null ? category.name : '',
         channel_id: message.channelId,
@@ -40,6 +40,7 @@ export async function log_channel(type: ChannelLogType, message: Message | Parti
         if (request.ok) {
             console.log('Done logging message', message.id, 'from guild', message.guildId);
         } else {
+            console.log(payload);
             console.log('Failed to log message', request);
         }
     } catch (err) {

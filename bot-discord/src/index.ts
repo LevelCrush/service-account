@@ -4,7 +4,7 @@ import * as discord from './discord';
 import { CategoryChannel, CategoryChildChannel, ChannelType, Events, User, channelLink } from 'discord.js';
 import RoleDecay, { RoleDecayManager, RoleMonitorCleanup } from './role_decay';
 import { ChannelLogger, ChannelLoggerCleanup } from './channel_logger';
-import { category_active_users } from './api/category';
+import { category_active_users, channel_active_users } from './api/query';
 
 // import env settings into the process env
 dotenv.config();
@@ -51,9 +51,18 @@ async function bot() {
                 for (const cat of target_category) {
                     const category_users = await category_active_users(guild.id, cat, timestamp);
                     for (const cat_user of category_users) {
-                        last_interaction_map.set(cat_user.member_id, parseFloat(cat_user.message_timestamp));
+                        last_interaction_map.set(cat_user.member_id, parseInt(cat_user.message_timestamp));
                     }
                 }
+
+                console.log('Getting category members for guild', guild.name, 'at channels', target_category);
+                for (const chan of target_channels) {
+                    const chan_users = await channel_active_users(guild.id, chan, timestamp);
+                    for (const chan_user of chan_users) {
+                        last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
+                    }
+                }
+
                 console.log(last_interaction_map);
 
                 decay_manager.set_dont_want(guild, new Map()); // for now empty

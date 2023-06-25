@@ -106,12 +106,12 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
             }
 
             if (users_last_interacted.has(message.guildId)) {
-                users_last_interacted.get(message.guildId)?.set(message.author.id, Date.now() * 1000);
+                users_last_interacted.get(message.guildId)?.set(message.author.id, Date.now() / 1000);
             }
         };
 
         const check_for_decay = async () => {
-            const now_timestamp = Date.now() * 1000;
+            const now_timestamp = Date.now() / 1000;
             const guild_interactions = users_last_interacted.get(target_guild.id);
             const decayed_role = find_role();
 
