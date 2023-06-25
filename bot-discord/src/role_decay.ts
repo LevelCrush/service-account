@@ -79,7 +79,8 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
             if (
                 !message.member ||
                 message.guildId !== target_guild.id ||
-                users_dont_want.get(message.guildId)?.has(message.author.id)
+                users_dont_want.get(message.guildId)?.has(message.author.id) ||
+                message.author.bot
             ) {
                 return;
             }

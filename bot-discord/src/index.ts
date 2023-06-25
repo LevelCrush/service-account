@@ -5,6 +5,7 @@ import { CategoryChannel, CategoryChildChannel, ChannelType, Events, User, chann
 import RoleDecay, { RoleDecayManager, RoleMonitorCleanup } from './role_decay';
 import { ChannelLogger, ChannelLoggerCleanup } from './channel_logger';
 import { category_active_users, channel_active_users } from './api/query';
+import { role_get_denies } from './api/settings';
 
 // import env settings into the process env
 dotenv.config();
@@ -62,10 +63,21 @@ async function bot() {
                         last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
                     }
                 }
-
                 console.log(last_interaction_map);
 
-                decay_manager.set_dont_want(guild, new Map()); // for now empty
+                console.log('Getting dont want map');
+                const dont_wants = await role_get_denies(guild.id, target_role);
+                const dont_want_map = new Map<string, User>();
+                for (const discord_id of dont_wants) {
+                    const guild_member = guild.members.cache.find((r) => r.id === discord_id);
+                    if (guild_member) {
+                        dont_want_map.set(discord_id, guild_member.user);
+                    }
+                }
+
+                console.log(dont_want_map);
+
+                decay_manager.set_dont_want(guild, dont_want_map); // for now empty
                 decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
                 guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
                 guild_logs.set(guild.id, log_manager.monitor(client, guild));
