@@ -41,7 +41,7 @@ async function bot() {
         const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
         const log_manager = ChannelLogger();
         if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
-            const guilds = await client.guilds.cache;
+            const guilds = client.guilds.cache;
             for (const [guild_id, guild] of guilds) {
                 const unix_timestamp = Math.ceil(Date.now() / 1000);
                 const timestamp = unix_timestamp - (target_decay_time + 1);
