@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DestinyMemberReport,
   DestinyMemberReportResponse,
@@ -455,7 +455,8 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
   const [alreadyLoadedData, setAlreadyLoadedData] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
+  // const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
+  const fetchTimerInterval = useRef(0);
 
   const fetchReport = async (bungie_name: string, report_type: string) => {
     const modeString = (props.modes || []).join(',');
@@ -476,39 +477,38 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
       typeof data.response === 'number' ||
       typeof data.response === 'bigint'
     ) {
-      setFetchTimerInterval(
-        window.setTimeout(() => {
-          fetchReport(bungie_name, report_type);
-        }, 1 * 5000)
-      ); // check on the report every 1 seconds
+      fetchTimerInterval.current = window.setTimeout(() => {
+        fetchReport(bungie_name, report_type);
+      }, 1 * 5000);
+
       if (props.onLoadingData) {
         props.onLoadingData();
       }
     } else {
       // stop timer
-      if (fetchTimerInterval) {
+      if (fetchTimerInterval.current) {
         console.log('Data received. Stopping current timer');
-        window.clearTimeout(fetchTimerInterval);
-        setFetchTimerInterval(0);
+        window.clearTimeout(fetchTimerInterval.current);
+        fetchTimerInterval.current = 0;
       }
-    }
 
-    // set membger report response
-    if (!alreadyLoadedData) {
-      // if we have never loaded any data into our report, update our response
+      // set membger report response
+      if (!alreadyLoadedData) {
+        // if we have never loaded any data into our report, update our response
 
-      setMemberReport(data.response);
-    } else if (typeof data.response === 'object') {
-      // only update our member report when we have the report in our responsea.response.search.modes == props.modes?.join(',')
+        setMemberReport(data.response);
+      } else if (typeof data.response === 'object') {
+        // only update our member report when we have the report in our responsea.response.search.modes == props.modes?.join(',')
 
-      setIsLoadingData(false);
-      setMemberReport(data.response);
-    } else {
-      setIsLoadingData(true);
-    }
+        setIsLoadingData(false);
+        setMemberReport(data.response);
+      } else {
+        setIsLoadingData(true);
+      }
 
-    if (!alreadyLoadedData && typeof data.response === 'object') {
-      setAlreadyLoadedData(true);
+      if (!alreadyLoadedData && typeof data.response === 'object') {
+        setAlreadyLoadedData(true);
+      }
     }
   };
 
@@ -543,10 +543,10 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
     return () => {
       // cleanup
-      if (fetchTimerInterval) {
+      if (fetchTimerInterval.current) {
         console.log('Stopping current timeout', fetchTimerInterval);
-        window.clearTimeout(fetchTimerInterval);
-        setFetchTimerInterval(0);
+        window.clearTimeout(fetchTimerInterval.current);
+        fetchTimerInterval.current;
       }
     };
   }, [props.bungie_name, props.modes, props.season]);

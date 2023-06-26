@@ -16,7 +16,7 @@ import {
 import DestinyMemberReportComponent from '@website/components/destiny_member_report';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { DestinyMemberInformation } from '@website/core/api_responses';
 import ENV from '@website/core/env';
 import {
@@ -35,7 +35,7 @@ export interface ReportPageSeasonProps {
   roster: DestinyMemberInformation[];
 }
 
-export const revalidate = 600;
+//export const revalidate = 600;
 
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
@@ -59,29 +59,38 @@ export const getServerSideProps: GetServerSideProps<
   };
 };
 
+function generate_url(bungie_name: string, season: string, mode: string) {
+  return (
+    '/admin/report/' +
+    encodeURIComponent(bungie_name) +
+    (season === 'lifetime'
+      ? '/lifetime'
+      : '/season/' + encodeURIComponent(season)) +
+    '/modes/' +
+    encodeURIComponent(mode)
+  );
+}
+
 export const ReportPage = (props: ReportPageSeasonProps) => {
   const [targetUser, setUser] = useState(props.member);
   const [targetSnapshot, setSnapshot] = useState(props.target_season);
   const [controlsDisabled, setControlsDisabled] = useState(true);
+  const [overviewUrl, setOverviewUrl] = useState(
+    generate_url(props.member, props.target_season, props.target_mode)
+  );
 
   const [targetMode, setMode] = useState(props.target_mode);
   const router = useRouter();
 
-  function generate_url(bungie_name: string, season: string, mode: string) {
-    return (
-      '/admin/report/' +
-      encodeURIComponent(bungie_name) +
-      (season === 'lifetime'
-        ? '/lifetime'
-        : '/season/' + encodeURIComponent(season)) +
-      '/modes/' +
-      encodeURIComponent(mode)
-    );
-  }
   useEffect(() => {
     setControlsDisabled(true);
-    router.push(generate_url(targetUser, targetSnapshot, targetMode));
+    setOverviewUrl(generate_url(targetUser, targetSnapshot, targetMode));
   }, [targetMode, targetSnapshot, targetUser]);
+
+  useLayoutEffect(() => {
+    console.log('New url requested');
+    router.push(overviewUrl);
+  }, [overviewUrl]);
 
   return (
     <OffCanvas>

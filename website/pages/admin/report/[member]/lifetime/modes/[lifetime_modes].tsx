@@ -20,7 +20,6 @@ export const getServerSideProps: GetServerSideProps<
     getDestinyModeGroups(ENV.hosts.destiny, 'dashboard'),
   ]);
 
-  console.log('Modes here', context.query.lifetime_modes);
   return {
     props: {
       seasons: seasons,
