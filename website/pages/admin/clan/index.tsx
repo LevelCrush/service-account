@@ -60,27 +60,11 @@ export const getServerSideProps: GetServerSideProps<
   };
 };
 
-function generate_url(bungie_name: string, season: string, mode: string) {
-  return (
-    '/admin/report/' +
-    encodeURIComponent(bungie_name) +
-    (season === 'lifetime'
-      ? '/lifetime'
-      : '/season/' + encodeURIComponent(season)) +
-    '/modes/' +
-    encodeURIComponent(mode)
-  );
-}
-
 export const ClanReportPage = (props: ReportPageSeasonProps) => {
   const [targetUser, setUser] = useState(props.clan);
   const [targetSnapshot, setSnapshot] = useState(props.target_season);
   const [targetMode, setMode] = useState(props.target_mode);
   const router = useRouter();
-
-  useEffect(() => {
-    router.push(generate_url(targetUser, targetSnapshot, targetMode));
-  }, [targetMode, targetSnapshot, targetUser]);
 
   return (
     <OffCanvas>
@@ -158,10 +142,11 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
             <Divider />
             <DestinyClanReportComponent
               clan={props.clan}
+              roster={props.roster}
               season={
-                props.target_season === 'lifetime'
+                targetSnapshot === 'lifetime'
                   ? 'lifetime'
-                  : parseInt(props.target_season)
+                  : parseInt(targetSnapshot)
               }
               modes={targetMode === 'all' ? [] : targetMode.split(',')}
             />
