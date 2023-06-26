@@ -501,7 +501,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   const setupFetchInterval = (bungie_name: string, report_type: string) =>
     (fetchTimerInterval.current = window.setTimeout(() => {
       fetchReport(bungie_name, report_type);
-    }, 1 * 5000));
+    }, 5 * 1000));
 
   /**
    * Fetch the report of a user and constantly check in if the report is still being generated
@@ -538,6 +538,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         setIsLoadingData(false);
         setAlreadyLoadedData(true);
         setMemberReport(data.response);
+        break;
       default:
         console.log('An unknown case has occurred.', reportOutputType);
     }

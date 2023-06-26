@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   DestinyMemberReport,
   DestinyMemberReportResponse,
+  DestinyMemberResponse,
   DestinyMemberStats,
 } from '@website/core/api_responses';
 
@@ -33,6 +34,7 @@ import Hyperlink from '@website/components/elements/hyperlink';
 import { MemberResponse, ReportOutput } from '@levelcrush/service-destiny';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 
 export interface ClanReportProps {
   clan: string;
@@ -70,6 +72,11 @@ function generate_member_url(
 const MemberListCard = (props: MemberListProps) => {
   const badges = {} as { [member: string]: { name: string; style: string }[] };
   for (const member of props.members) {
+    console.log(
+      'Is Done',
+      props.reportStatuses[member.display_name],
+      member.display_name
+    );
     badges[member.membership_id] = [];
     if (member.clan) {
       switch (member.clan.role) {
@@ -111,7 +118,7 @@ const MemberListCard = (props: MemberListProps) => {
               className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
               title={member.display_name}
             >
-              {props.reportStatuses[member.membership_id] ? (
+              {props.reportStatuses[member.display_name] ? (
                 <></>
               ) : (
                 <FontAwesomeIcon className="mr-4" icon={faSpinner} spin />
@@ -142,9 +149,194 @@ const MemberListCard = (props: MemberListProps) => {
   );
 };
 
+type FetchReportResult = {
+  member: string;
+  data: DestinyMemberReportResponse | null;
+};
+
+type ReportMap = { [member: string]: DestinyMemberReport };
+
+//https://stackoverflow.com/questions/46240647/how-to-force-a-functional-react-component-to-render/53837442#53837442
+//create your forceUpdate hook
+function useForceUpdate() {
+  const [value, setValue] = useState(0); // integer state
+  return () => setValue((value) => value + 1); // update state to force render
+  // A function that increment 👆🏻 the previous state like here
+  // is better than directly setting `setValue(value + 1)`
+}
+
 export const DestinyClanReportComponent = (props: ClanReportProps) => {
+  const forceUpdate = useForceUpdate();
+
   const modes = (props.modes || []).join(',');
-  const reportStatuses = {} as MemberListProps['reportStatuses'];
+  const [reportStatuses, setReportStatuses] = useState(
+    {} as MemberListProps['reportStatuses']
+  );
+  const [reportMapData, setReportMapData] = useState({} as ReportMap);
+  const fetchTimers = useRef({} as { [id: string]: number });
+
+  const getReportType = (memberReport: ReportOutput | null) => {
+    switch (typeof memberReport) {
+      case 'bigint':
+      case 'number':
+        return 'loading';
+      case 'object':
+        return 'report';
+      default:
+        return 'unknown';
+    }
+  };
+
+  const doForceUpdate = () => {
+    setTimeout(() => forceUpdate(), 250);
+  };
+
+  /**
+   * Fetch the report of a user and constantly check in if the report is still being generated
+   * @param bungie_name
+   * @param report_type
+   */
+  const fetchReport = async (bungie_name: string) => {
+    const modeString = (props.modes || []).join(',');
+    const reportType =
+      props.season === 'lifetime'
+        ? 'lifetime'
+        : 'season/' + encodeURIComponent(props.season);
+
+    const apiResponse = await fetch(
+      ENV.hosts.destiny +
+        '/member/' +
+        encodeURIComponent(bungie_name) +
+        '/report/' +
+        reportType +
+        (modeString.length > 0
+          ? '?modes=' + encodeURIComponent(modeString)
+          : '')
+    );
+
+    if (apiResponse.ok) {
+      const data = (await apiResponse.json()) as DestinyMemberReportResponse;
+      return { member: bungie_name, data: data } as FetchReportResult;
+    } else {
+      return { member: bungie_name, data: null } as FetchReportResult;
+    }
+  };
+
+  const createFetchTimer = (bungie_name: string) => {
+    const timer = window.setTimeout(async () => {
+      const fetchResult = await fetchReport(bungie_name);
+      if (fetchResult.data) {
+        const data = fetchResult.data.response;
+        const reportType = getReportType(data);
+        switch (reportType) {
+          case 'loading':
+            createFetchTimer(fetchResult.member);
+            break;
+          case 'report':
+            reportMapData[fetchResult.member] = data as DestinyMemberReport;
+            reportStatuses[fetchResult.member] = true;
+            setReportMapData(reportMapData);
+            setReportStatuses(reportStatuses);
+            doForceUpdate();
+            break;
+          case 'unknown':
+            console.log('Unknown result:', data);
+            break;
+        }
+      }
+    }, 10 * 1000);
+    fetchTimers.current[bungie_name] = timer;
+  };
+
+  const processInitialReports = (
+    reports: PromiseFulfilledResult<FetchReportResult>[]
+  ) => {
+    const needTimers = [] as string[];
+    const reportsDone = {} as { [member: string]: DestinyMemberReport };
+
+    for (const reportPromise of reports) {
+      const report = reportPromise.value;
+      if (report.data === null) {
+        continue;
+      }
+
+      const data = report.data.response;
+      const reportType = getReportType(data);
+
+      switch (reportType) {
+        case 'loading':
+          needTimers.push(report.member);
+          break;
+        case 'report':
+          reportsDone[report.member] = data as DestinyMemberReport;
+          break;
+        case 'unknown':
+          console.log('Unknown case', data);
+          break;
+      }
+    }
+
+    return {
+      needTimers,
+      reportsDone,
+    };
+  };
+
+  const startInitialReportFetch = async () => {
+    const promises = [] as Promise<FetchReportResult>[];
+    for (const member of props.roster) {
+      promises.push(fetchReport(member.display_name));
+    }
+    console.log('Executing all request');
+    const results = await Promise.allSettled(promises);
+    const success_results = results.filter((result) => {
+      return result.status === 'fulfilled';
+    });
+
+    console.log(
+      'Total Responses: ',
+      results.length,
+      'Total Success',
+      success_results.length
+    );
+    console.log('Processing only the successful responses');
+    const reportResults = processInitialReports(
+      success_results as PromiseFulfilledResult<FetchReportResult>[]
+    );
+
+    console.log('Merging completed reports', reportResults.reportsDone);
+    for (const member in reportResults.reportsDone) {
+      reportMapData[member] = reportResults.reportsDone[member];
+      reportStatuses[member] = true;
+    }
+
+    console.log(
+      'Setting up fetch timers for the rest',
+      reportResults.needTimers
+    );
+    for (const member of reportResults.needTimers) {
+      createFetchTimer(member);
+    }
+
+    setReportMapData(reportMapData);
+    setReportStatuses(reportStatuses);
+
+    doForceUpdate();
+  };
+
+  useEffect(() => {
+    console.log('Starting initial report fetch');
+    startInitialReportFetch();
+
+    return () => {
+      for (const id in fetchTimers.current) {
+        if (fetchTimers.current[id]) {
+          window.clearTimeout(fetchTimers.current[id]);
+          fetchTimers.current[id] = 0;
+        }
+      }
+    };
+  }, []);
 
   // what badges to display
   const badgeClanColors = {
