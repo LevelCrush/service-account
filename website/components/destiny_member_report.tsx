@@ -494,7 +494,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         '/member/' +
         encodeURIComponent(bungie_name) +
         '/report/' +
-        report_type +
+        encodeURIComponent(report_type) +
         (modeString.length > 0
           ? '?modes=' + encodeURIComponent(modeString)
           : '')
