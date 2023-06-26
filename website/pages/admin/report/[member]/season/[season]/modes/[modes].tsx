@@ -74,7 +74,6 @@ function generate_url(bungie_name: string, season: string, mode: string) {
 export const ReportPage = (props: ReportPageSeasonProps) => {
   const [targetUser, setUser] = useState(props.member);
   const [targetSnapshot, setSnapshot] = useState(props.target_season);
-
   const [targetMode, setMode] = useState(props.target_mode);
   const router = useRouter();
 

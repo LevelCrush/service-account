@@ -489,6 +489,11 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     }
   };
 
+  const invokeReportLoaded = (memberReport: DestinyMemberReport) => {
+    if (props.onReportLoaded) {
+      props.onReportLoaded(memberReport as DestinyMemberReport);
+    }
+  };
   /**
    * Fetch the report of a user and constantly check in if the report is still being generated
    * @param bungie_name
@@ -530,23 +535,6 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     }
   };
 
-  useEffect(() => {
-    if (
-      memberReport !== null &&
-      typeof memberReport === 'number' &&
-      typeof memberReport === 'bigint' &&
-      props.onLoadingData
-    ) {
-      console.log('Loading data!');
-      props.onLoadingData();
-    } else if (memberReport !== null && typeof memberReport === 'object') {
-      setAlreadyLoadedData(true);
-      if (props.onReportLoaded) {
-        props.onReportLoaded(memberReport as DestinyMemberReport);
-      }
-    }
-  }, [memberReport]);
-
   // fetch the member report on load
   useEffect(() => {
     const report_type =
@@ -565,8 +553,9 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   }, [props.bungie_name, props.modes, props.season]);
 
   if (memberReport) {
-    switch (typeof memberReport) {
-      case 'object':
+    const report_output = getReportType(memberReport);
+    switch (report_output) {
+      case 'report':
         // this conversion is fine to do because we know we are already working with an object type
         const data = memberReport as unknown as DestinyMemberReport;
         return (
@@ -597,7 +586,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
               </span>
             </p>
             <Divider />
-            {renderOverall(memberReport, props.modes || [])}
+            {renderOverall(data, props.modes || [])}
           </div>
         );
       default:
