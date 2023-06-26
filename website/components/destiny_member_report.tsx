@@ -35,8 +35,6 @@ export interface MemberReportProps {
   bungie_name: string;
   season: 'lifetime' | number;
   modes?: string[];
-  onReportLoaded?: (data: DestinyMemberReport) => void;
-  onLoadingData?: () => void;
 }
 
 interface TitleCardProps extends CardProps {
@@ -483,17 +481,6 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
       fetchReport(bungie_name, report_type);
     }, 1 * 5000));
 
-  const invokeLoadingData = () => {
-    if (props.onLoadingData) {
-      props.onLoadingData();
-    }
-  };
-
-  const invokeReportLoaded = (memberReport: DestinyMemberReport) => {
-    if (props.onReportLoaded) {
-      props.onReportLoaded(memberReport as DestinyMemberReport);
-    }
-  };
   /**
    * Fetch the report of a user and constantly check in if the report is still being generated
    * @param bungie_name
@@ -519,7 +506,6 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
       case 'loading':
         setupFetchInterval(bungie_name, report_type);
         setIsLoadingData(true);
-        invokeLoadingData();
         if (!alreadyLoadedData) {
           // if we have not yet loaded in any data, go ahead and send this through to move to a loading state vs initial querying state
           setMemberReport(data.response);
