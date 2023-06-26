@@ -27,9 +27,12 @@ import {
   Tab,
   TabPanels,
   BarChart,
+  ProgressBar,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
 import { MemberResponse, ReportOutput } from '@levelcrush/service-destiny';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export interface ClanReportProps {
   clan: string;
@@ -40,7 +43,7 @@ export interface ClanReportProps {
 
 interface MemberListProps extends CardProps {
   members: MemberResponse[];
-  report_status: Map<string, boolean>;
+  reportStatuses: { [membership_id: string]: boolean };
   season: string;
   mode: string;
   listType: string;
@@ -105,9 +108,14 @@ const MemberListCard = (props: MemberListProps) => {
                 props.mode
               )}
               target="_blank"
-              className="whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
+              className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
               title={member.display_name}
             >
+              {props.reportStatuses[member.membership_id] ? (
+                <></>
+              ) : (
+                <FontAwesomeIcon className="mr-4" icon={faSpinner} spin />
+              )}
               {member.display_name}
             </Hyperlink>
             {typeof badges[member.membership_id] !== 'undefined' ? (
@@ -136,10 +144,9 @@ const MemberListCard = (props: MemberListProps) => {
 
 export const DestinyClanReportComponent = (props: ClanReportProps) => {
   const modes = (props.modes || []).join(',');
-  const reportStatuses = new Map<string, boolean>();
+  const reportStatuses = {} as MemberListProps['reportStatuses'];
 
   // what badges to display
-  const badges = {} as { [name: string]: string };
   const badgeClanColors = {
     'Level Crush': 'bg-[#50AFE0] text-black',
     'Level Stomp': 'bg-[#44A8BD] text-black',
@@ -171,7 +178,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         </Col>
         <MemberListCard
           members={props.roster}
-          report_status={reportStatuses}
+          reportStatuses={reportStatuses}
           season={props.season.toString()}
           mode={modes || 'all'}
           badgeClanColors={badgeClanColors}
