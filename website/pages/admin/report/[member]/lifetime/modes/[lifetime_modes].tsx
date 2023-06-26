@@ -10,6 +10,8 @@ import {
   getNetworkRoster,
 } from '@levelcrush/service-destiny';
 
+export const revalidate = 600;
+
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
 > = async (context) => {

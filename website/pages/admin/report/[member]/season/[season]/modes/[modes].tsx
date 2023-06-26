@@ -35,7 +35,7 @@ export interface ReportPageSeasonProps {
   roster: DestinyMemberInformation[];
 }
 
-//export const revalidate = 600;
+export const revalidate = 600;
 
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
