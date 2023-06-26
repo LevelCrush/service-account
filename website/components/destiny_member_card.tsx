@@ -270,7 +270,9 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                 className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
                 intention="attention"
                 href={
-                  '/admin/report/' + encodeURIComponent(memberInfo.display_name)
+                  '/admin/member/' +
+                  encodeURIComponent(memberInfo.display_name) +
+                  '/lifetime/modes/all'
                 }
               >
                 Overview

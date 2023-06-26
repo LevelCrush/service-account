@@ -99,7 +99,7 @@ interface FireteamCardProps extends CardProps {
 
 function generate_url(bungie_name: string, season: string, mode: string) {
   return (
-    '/admin/report/' +
+    '/admin/member/' +
     encodeURIComponent(bungie_name) +
     (season === 'lifetime'
       ? '/lifetime'
