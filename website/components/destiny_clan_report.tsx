@@ -237,6 +237,8 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             reportStatuses[fetchResult.member] = true;
             setReportMapData(reportMapData);
             setReportStatuses(reportStatuses);
+
+            // bad, but for now it works to get the job done
             doForceUpdate();
             break;
           case 'unknown':
@@ -321,6 +323,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     setReportMapData(reportMapData);
     setReportStatuses(reportStatuses);
 
+    // bad, but for now it works to get the job done
     doForceUpdate();
   };
 
@@ -364,9 +367,34 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       <Divider />
       <Grid numItemsLg={4} className="mt-4 gap-4">
         <Col numColSpanLg={3}>
-          <Card>
-            <Text>Placeholder</Text>
-          </Card>
+          <Title>Activity Periods</Title>
+          <TabGroup>
+            <TabList>
+              <Tab>By Day</Tab>
+              <Tab>Overtime</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel>
+                <BarChart
+                  data={[]}
+                  categories={['Activities']}
+                  index={'name'}
+                  showAnimation={true}
+                  showLegend={false}
+                ></BarChart>
+              </TabPanel>
+              <TabPanel>
+                <LineChart
+                  startEndOnly={true}
+                  data={[]}
+                  categories={['Activities']}
+                  index={'name'}
+                  showAnimation={true}
+                  showLegend={false}
+                ></LineChart>
+              </TabPanel>
+            </TabPanels>
+          </TabGroup>
         </Col>
         <MemberListCard
           members={props.roster}
