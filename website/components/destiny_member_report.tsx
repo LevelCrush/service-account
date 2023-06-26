@@ -29,6 +29,7 @@ import {
   BarChart,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
+import { ReportOutput } from '@levelcrush/service-destiny';
 
 export interface MemberReportProps {
   bungie_name: string;
@@ -458,8 +459,44 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   // const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
   const fetchTimerInterval = useRef(0);
 
+  const clearFetchTimer = () => {
+    if (fetchTimerInterval.current) {
+      window.clearTimeout(fetchTimerInterval.current);
+      fetchTimerInterval.current = 0;
+    }
+  };
+
+  const getReportType = (memberReport: ReportOutput | null) => {
+    switch (typeof memberReport) {
+      case 'bigint':
+      case 'number':
+        return 'loading';
+      case 'object':
+        return 'report';
+      default:
+        return 'unknown';
+    }
+  };
+
+  const setupFetchInterval = (bungie_name: string, report_type: string) =>
+    (fetchTimerInterval.current = window.setTimeout(() => {
+      fetchReport(bungie_name, report_type);
+    }, 1 * 5000));
+
+  const invokeLoadingData = () => {
+    if (props.onLoadingData) {
+      props.onLoadingData();
+    }
+  };
+
+  /**
+   * Fetch the report of a user and constantly check in if the report is still being generated
+   * @param bungie_name
+   * @param report_type
+   */
   const fetchReport = async (bungie_name: string, report_type: string) => {
     const modeString = (props.modes || []).join(',');
+
     const apiResponse = await fetch(
       ENV.hosts.destiny +
         '/member/' +
@@ -472,43 +509,24 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     );
 
     const data = (await apiResponse.json()) as DestinyMemberReportResponse;
-
-    if (
-      typeof data.response === 'number' ||
-      typeof data.response === 'bigint'
-    ) {
-      fetchTimerInterval.current = window.setTimeout(() => {
-        fetchReport(bungie_name, report_type);
-      }, 1 * 5000);
-
-      if (props.onLoadingData) {
-        props.onLoadingData();
-      }
-    } else {
-      // stop timer
-      if (fetchTimerInterval.current) {
-        console.log('Data received. Stopping current timer');
-        window.clearTimeout(fetchTimerInterval.current);
-        fetchTimerInterval.current = 0;
-      }
-
-      // set membger report response
-      if (!alreadyLoadedData) {
-        // if we have never loaded any data into our report, update our response
-
-        setMemberReport(data.response);
-      } else if (typeof data.response === 'object') {
-        // only update our member report when we have the report in our responsea.response.search.modes == props.modes?.join(',')
-
-        setIsLoadingData(false);
-        setMemberReport(data.response);
-      } else {
+    const reportOutputType = getReportType(data.response);
+    switch (reportOutputType) {
+      case 'loading':
+        setupFetchInterval(bungie_name, report_type);
         setIsLoadingData(true);
-      }
-
-      if (!alreadyLoadedData && typeof data.response === 'object') {
+        invokeLoadingData();
+        if (!alreadyLoadedData) {
+          // if we have not yet loaded in any data, go ahead and send this through to move to a loading state vs initial querying state
+          setMemberReport(data.response);
+        }
+        break;
+      case 'report':
+        clearFetchTimer();
+        setIsLoadingData(false);
         setAlreadyLoadedData(true);
-      }
+        setMemberReport(data.response);
+      default:
+        console.log('An unknown case has occurred.', reportOutputType);
     }
   };
 
@@ -536,18 +554,13 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
     if (props.bungie_name && props.bungie_name.trim().length > 0) {
       // fetch the member report
-      fetchReport(props.bungie_name, report_type).finally(() =>
-        console.log('Member report fetched for: ', props.bungie_name)
-      );
+      // fire the on loading data before we start our fetch request
+      fetchReport(props.bungie_name, report_type);
     }
 
     return () => {
       // cleanup
-      if (fetchTimerInterval.current) {
-        console.log('Stopping current timeout', fetchTimerInterval);
-        window.clearTimeout(fetchTimerInterval.current);
-        fetchTimerInterval.current;
-      }
+      clearFetchTimer();
     };
   }, [props.bungie_name, props.modes, props.season]);
 
