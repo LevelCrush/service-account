@@ -92,7 +92,21 @@ const TitleCard = (prop: TitleCardProps) => {
 
 interface FireteamCardProps extends CardProps {
   members: DestinyMemberReport['frequent_clan_members'];
+  season: string;
+  mode: string;
   fireteamType: string;
+}
+
+function generate_url(bungie_name: string, season: string, mode: string) {
+  return (
+    '/admin/report/' +
+    encodeURIComponent(bungie_name) +
+    (season === 'lifetime'
+      ? '/lifetime'
+      : '/season/' + encodeURIComponent(season)) +
+    '/modes/' +
+    encodeURIComponent(mode)
+  );
 }
 
 const FireteamCard = (props: FireteamCardProps) => {
@@ -105,7 +119,7 @@ const FireteamCard = (props: FireteamCardProps) => {
             key={props.fireteamType + '_fireteam_member_' + memberIndex}
           >
             <Hyperlink
-              href={'/admin/report/' + encodeURIComponent(member.display_name)}
+              href={generate_url(member.display_name, props.season, props.mode)}
               className="whitespace-nowrap text-ellipsis overflow-hidden max-w-[10rem] inline-block"
               title={member.display_name}
             >
@@ -239,7 +253,11 @@ function createActivityPeriods(memberReport: DestinyMemberReport) {
   return buckets;
 }
 
-function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
+function renderOverall(
+  memberReport: DestinyMemberReport,
+  modes: string[],
+  props: MemberReportProps
+) {
   const overallKills = combineStats(memberReport, 'kills');
   const overallDeaths = combineStats(memberReport, 'deaths');
   const overallAssists = combineStats(memberReport, 'assists');
@@ -436,11 +454,15 @@ function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
         <TitleCard titles={memberReport.titles} />
         <FireteamCard
           members={memberReport.frequent_clan_members}
+          mode={modes.join(',') || 'all'}
+          season={props.season.toString()}
           fireteamType="Network Fireteam"
         />
         <FireteamCard
           members={memberReport.frequent_non_clan_members}
           fireteamType="Not Network Fireteam"
+          mode={modes.join(',') || 'all'}
+          season={props.season.toString()}
         />
       </Grid>
     </div>
@@ -494,7 +516,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
         '/member/' +
         encodeURIComponent(bungie_name) +
         '/report/' +
-        encodeURIComponent(report_type) +
+        report_type +
         (modeString.length > 0
           ? '?modes=' + encodeURIComponent(modeString)
           : '')
@@ -523,13 +545,15 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
   // fetch the member report on load
   useEffect(() => {
-    const report_type =
-      props.season === 'lifetime' ? 'lifetime' : 'season/' + props.season;
+    const reportType =
+      props.season === 'lifetime'
+        ? 'lifetime'
+        : 'season/' + encodeURIComponent(props.season);
 
     if (props.bungie_name && props.bungie_name.trim().length > 0) {
       // fetch the member report
       // fire the on loading data before we start our fetch request
-      fetchReport(props.bungie_name, report_type);
+      fetchReport(props.bungie_name, reportType);
     }
 
     return () => {
@@ -572,7 +596,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
               </span>
             </p>
             <Divider />
-            {renderOverall(data, props.modes || [])}
+            {renderOverall(data, props.modes || [], props)}
           </div>
         );
       default:
