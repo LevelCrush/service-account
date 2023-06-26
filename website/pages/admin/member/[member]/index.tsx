@@ -6,9 +6,9 @@ export const getServerSideProps: GetServerSideProps<
   return {
     redirect: {
       destination:
-        '/admin/report/' +
+        '/admin/member/' +
         encodeURIComponent(context.query.member as string) +
-        '/lifetime',
+        '/lifetime/all',
       permanent: false,
     },
   };

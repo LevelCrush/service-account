@@ -16,7 +16,7 @@ import {
 import DestinyMemberReportComponent from '@website/components/destiny_member_report';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DestinyMemberInformation } from '@website/core/api_responses';
 import ENV from '@website/core/env';
 import {
