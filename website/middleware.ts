@@ -11,10 +11,10 @@ export const middleware = async (req: NextRequest) => {
 
   // do anything with session here:
   const { challenge } = session;
+  const timestamp = Date.now() / 1000;
   let allowInAdmin = false;
-  console.log('Checking for sessions session', session);
   if (challenge) {
-    console.log('Performing session challenge...', challenge);
+    console.log('Performing session challenge...', challenge, timestamp);
     const challenge_request = await fetch(
       ENV.hosts.accounts + '/profile/challenge',
       {
@@ -37,13 +37,13 @@ export const middleware = async (req: NextRequest) => {
         challenge_response.response &&
         challenge_response.response.is_admin === true
       ) {
-        console.log('Challenge succeeded! Is Admin: ', challenge);
+        console.log('Challenge succeeded! Is Admin: ', challenge, timestamp);
         allowInAdmin = true;
       } else {
-        console.log('Challenge failed. Not admin: ', challenge);
+        console.warn('Challenge failed. Not admin: ', challenge, timestamp);
       }
     } else {
-      console.log('Challenge could not be reached!');
+      console.warn('Challenge could not be reached!', timestamp);
     }
   }
 
