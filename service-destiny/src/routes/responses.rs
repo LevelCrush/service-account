@@ -69,8 +69,7 @@ pub struct MemberResponse {
 
     /// this is the membership id that is primarily used by the bungie account
     /// because of cross save, this is not the "true" bungie account id
-    #[ts(type = "number")]
-    pub membership_id: MembershipId,
+    pub membership_id: String,
 
     /// the platform type of the membership. Included because other calls to the bungie api require it
     pub membership_platform: MembershipType,
@@ -111,7 +110,7 @@ impl MemberResponse {
         MemberResponse {
             display_name: result.display_name_global,
             display_name_platform: result.display_name,
-            membership_id: result.membership_id,
+            membership_id: result.membership_id.to_string(),
             membership_platform: result.platform,
             raid_report: app::member::generate_raid_report_url(result.membership_id, result.platform),
             clan,

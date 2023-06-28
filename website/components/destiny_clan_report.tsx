@@ -72,11 +72,6 @@ function generate_member_url(
 const MemberListCard = (props: MemberListProps) => {
   const badges = {} as { [member: string]: { name: string; style: string }[] };
   for (const member of props.members) {
-    console.log(
-      'Is Done',
-      props.reportStatuses[member.display_name],
-      member.display_name
-    );
     badges[member.membership_id] = [];
     if (member.clan) {
       switch (member.clan.role) {
@@ -118,7 +113,7 @@ const MemberListCard = (props: MemberListProps) => {
               className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
               title={member.display_name}
             >
-              {props.reportStatuses[member.display_name] ? (
+              {props.reportStatuses[member.membership_id] ? (
                 <></>
               ) : (
                 <FontAwesomeIcon className="mr-4" icon={faSpinner} spin />
@@ -163,6 +158,86 @@ function useForceUpdate() {
   return () => setValue((value) => value + 1); // update state to force render
   // A function that increment 👆🏻 the previous state like here
   // is better than directly setting `setValue(value + 1)`
+}
+
+interface InstanceData {
+  instance_id: number;
+  occurred_at: number;
+}
+
+function createActivityPeriods(memberReports: DestinyMemberReport[]) {
+  const clan_keys = [] as string[];
+  const member_clan_keys = {} as { [member: string]: string };
+  const buckets = {} as {
+    [clan: string]: { [bucket: string]: InstanceData[] };
+  };
+  // scan and determine how many clans we need to worry about
+  for (const memberReport of memberReports) {
+    const clan = memberReport.member.clan;
+    const clan_key = clan ? clan.name : 'N/A';
+    member_clan_keys[memberReport.member.display_name] = clan_key;
+    clan_keys.push(clan_key);
+
+    if (!clan) {
+      console.error(
+        'No clan found!',
+        memberReport.display_name_global,
+        memberReport.membership_id,
+        BigInt(memberReport.membership_id),
+        BigInt(memberReport.membership_id).toString(),
+        memberReport.membership_id.toString(),
+        memberReport
+      );
+    }
+
+    if (typeof buckets[clan_key] === 'undefined') {
+      buckets[clan_key] = {};
+    }
+  }
+
+  // now go through and build the activity periods
+  for (const memberReport of memberReports) {
+    const clan = memberReport.member.clan;
+    const clan_key = clan ? clan.name : 'N/A';
+    const instance_timestamps = memberReport.activity_timestamps;
+
+    // bucket by mm-dd-yyyy
+    for (const instance_id in instance_timestamps) {
+      const timestamp = instance_timestamps[instance_id];
+
+      // generate bucket keys
+      const datetime = new Date(timestamp * 1000);
+      const dateMonthDay = datetime.getDate();
+      const dateDay = datetime.getDay();
+      const dateMonth = datetime.getMonth();
+      const dateYear = datetime.getFullYear();
+
+      const instance_record = {
+        instance_id: parseInt(instance_id),
+        occurred_at: timestamp,
+      } as InstanceData;
+
+      if (typeof buckets[clan_key][dateDay] === 'undefined') {
+        buckets[clan_key][dateDay] = [];
+      }
+
+      const bucketKey =
+        dateYear +
+        '-' +
+        (dateMonth + 1).toString().padStart(2, '0') +
+        '-' +
+        (dateMonthDay + '').padStart(2, '0');
+
+      if (typeof buckets[clan_key][bucketKey]) {
+        buckets[clan_key][bucketKey] = [];
+      }
+
+      buckets[clan_key][dateDay].push(instance_record);
+      buckets[clan_key][bucketKey].push(instance_record);
+    }
+  }
+
+  return buckets;
 }
 
 export const DestinyClanReportComponent = (props: ClanReportProps) => {
@@ -287,7 +362,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   const startInitialReportFetch = async () => {
     const promises = [] as Promise<FetchReportResult>[];
     for (const member of props.roster) {
-      promises.push(fetchReport(member.display_name));
+      promises.push(fetchReport(member.membership_id));
     }
     console.log('Executing all request');
     const results = await Promise.allSettled(promises);
@@ -341,6 +416,61 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     };
   }, []);
 
+  const activityColors = [
+    'yellow',
+    'blue',
+    'emerald',
+  ] as CardProps['decorationColor'][];
+
+  // create time buckets
+  const activityTimeBuckets = reportMapData
+    ? createActivityPeriods(Object.values(reportMapData))
+    : {};
+
+  const weekdaysTimePeriods = [
+    {
+      name: 'Monday',
+      day: '1',
+    },
+    {
+      name: 'Tuesday',
+      day: '2',
+    },
+    {
+      name: 'Wednesday',
+      day: '3',
+    },
+    {
+      name: 'Thursday',
+      day: '4',
+    },
+    {
+      name: 'Friday',
+      day: '5',
+    },
+    {
+      name: 'Saturday',
+      day: '6',
+    },
+    {
+      name: 'Sunday',
+      day: '0',
+    },
+  ] as {
+    name: string;
+    day: string;
+    [clan: string]: string | number;
+  }[];
+  for (const clan in activityTimeBuckets) {
+    for (let i = 0; i < weekdaysTimePeriods.length; i++) {
+      const dayKey = weekdaysTimePeriods[i].day;
+      weekdaysTimePeriods[i][clan] =
+        typeof activityTimeBuckets[clan][dayKey] !== 'undefined'
+          ? activityTimeBuckets[clan][dayKey].length
+          : 0;
+    }
+  }
+
   // what badges to display
   const badgeClanColors = {
     'Level Crush': 'bg-[#50AFE0] text-black',
@@ -376,8 +506,8 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             <TabPanels>
               <TabPanel>
                 <BarChart
-                  data={[]}
-                  categories={['Activities']}
+                  data={weekdaysTimePeriods}
+                  categories={Object.keys(activityTimeBuckets)}
                   index={'name'}
                   showAnimation={true}
                   showLegend={false}
