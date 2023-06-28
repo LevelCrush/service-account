@@ -171,6 +171,9 @@ function createActivityPeriods(memberReports: DestinyMemberReport[]) {
   const buckets = {} as {
     [clan: string]: { [bucket: string]: InstanceData[] };
   };
+  const alreadyScannedInstances = {} as {
+    [clan: string]: { [instance_id: string]: boolean };
+  };
   // scan and determine how many clans we need to worry about
   for (const memberReport of memberReports) {
     const clan = memberReport.member.clan;
@@ -205,35 +208,45 @@ function createActivityPeriods(memberReports: DestinyMemberReport[]) {
     for (const instance_id in instance_timestamps) {
       const timestamp = instance_timestamps[instance_id];
 
-      // generate bucket keys
-      const datetime = new Date(timestamp * 1000);
-      const dateMonthDay = datetime.getDate();
-      const dateDay = datetime.getDay();
-      const dateMonth = datetime.getMonth();
-      const dateYear = datetime.getFullYear();
-
-      const instance_record = {
-        instance_id: parseInt(instance_id),
-        occurred_at: timestamp,
-      } as InstanceData;
-
-      if (typeof buckets[clan_key][dateDay] === 'undefined') {
-        buckets[clan_key][dateDay] = [];
+      if (typeof alreadyScannedInstances[clan_key] === 'undefined') {
+        alreadyScannedInstances[clan_key] = {};
       }
 
-      const bucketKey =
-        dateYear +
-        '-' +
-        (dateMonth + 1).toString().padStart(2, '0') +
-        '-' +
-        (dateMonthDay + '').padStart(2, '0');
+      if (
+        typeof alreadyScannedInstances[clan_key][instance_id] === 'undefined'
+      ) {
+        alreadyScannedInstances[clan_key][instance_id] = true;
 
-      if (typeof buckets[clan_key][bucketKey]) {
-        buckets[clan_key][bucketKey] = [];
+        // generate bucket keys
+        const datetime = new Date(timestamp * 1000);
+        const dateMonthDay = datetime.getDate();
+        const dateDay = datetime.getDay();
+        const dateMonth = datetime.getMonth();
+        const dateYear = datetime.getFullYear();
+
+        const instance_record = {
+          instance_id: parseInt(instance_id),
+          occurred_at: timestamp,
+        } as InstanceData;
+
+        if (typeof buckets[clan_key][dateDay] === 'undefined') {
+          buckets[clan_key][dateDay] = [];
+        }
+
+        const bucketKey =
+          dateYear +
+          '-' +
+          (dateMonth + 1).toString().padStart(2, '0') +
+          '-' +
+          (dateMonthDay + '').padStart(2, '0');
+
+        if (typeof buckets[clan_key][bucketKey]) {
+          buckets[clan_key][bucketKey] = [];
+        }
+
+        buckets[clan_key][dateDay].push(instance_record);
+        buckets[clan_key][bucketKey].push(instance_record);
       }
-
-      buckets[clan_key][dateDay].push(instance_record);
-      buckets[clan_key][bucketKey].push(instance_record);
     }
   }
 
@@ -514,7 +527,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                   categories={Object.keys(activityTimeBuckets)}
                   index={'name'}
                   showAnimation={true}
-                  showLegend={false}
+                  showLegend={true}
                 ></BarChart>
               </TabPanel>
               <TabPanel>
