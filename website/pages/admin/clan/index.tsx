@@ -103,7 +103,7 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
               <Col numColSpanLg={2} numColSpanMd={6}>
                 <Title>Snapshot</Title>
                 <Select
-                  defaultValue={props.target_season}
+                  defaultValue={targetSnapshot}
                   className="mt-2"
                   onValueChange={(v) => setSnapshot(v)}
                 >
@@ -125,7 +125,7 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
                 <Title>Modes</Title>
                 <Select
                   className="mt-2"
-                  defaultValue={props.target_mode}
+                  defaultValue={targetMode}
                   onValueChange={(v) => setMode(v)}
                 >
                   {props.modes.map((mode, modeIndex) => (

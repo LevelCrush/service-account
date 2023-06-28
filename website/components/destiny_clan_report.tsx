@@ -403,8 +403,12 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   };
 
   useEffect(() => {
+    setReportStatuses({});
+    setReportMapData({});
     console.log('Starting initial report fetch');
     startInitialReportFetch();
+
+    doForceUpdate();
 
     return () => {
       for (const id in fetchTimers.current) {
@@ -414,7 +418,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         }
       }
     };
-  }, []);
+  }, [props.season, props.clan, props.modes]);
 
   const activityColors = [
     'yellow',
