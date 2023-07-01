@@ -29,6 +29,7 @@ import {
   TabPanels,
   BarChart,
   ProgressBar,
+  AreaChart,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
 import { MemberResponse, ReportOutput } from '@levelcrush/service-destiny';
@@ -240,7 +241,7 @@ function createActivityPeriods(memberReports: DestinyMemberReport[]) {
           '-' +
           (dateMonthDay + '').padStart(2, '0');
 
-        if (typeof buckets[clan_key][bucketKey]) {
+        if (typeof buckets[clan_key][bucketKey] === 'undefined') {
           buckets[clan_key][bucketKey] = [];
         }
 
@@ -444,6 +445,12 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     ? createActivityPeriods(Object.values(reportMapData))
     : {};
 
+  // activity overtime
+  const ignoreBuckets = ['0', '1', '2', '3', '4', '5', '6'];
+  const dailyActivityClanMap = {} as {
+    [clan: string]: { name: string; day: string; activities: number }[];
+  };
+
   const weekdaysTimePeriods = [
     {
       name: 'Monday',
@@ -478,7 +485,10 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     day: string;
     [clan: string]: string | number;
   }[];
+
+  const clans = [] as string[];
   for (const clan in activityTimeBuckets) {
+    clans.push(clan);
     for (let i = 0; i < weekdaysTimePeriods.length; i++) {
       const dayKey = weekdaysTimePeriods[i].day;
       weekdaysTimePeriods[i][clan] =
@@ -487,6 +497,71 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           : 0;
     }
   }
+
+  for (const clan in activityTimeBuckets) {
+    dailyActivityClanMap[clan] = [];
+    for (const day in activityTimeBuckets[clan]) {
+      if (!ignoreBuckets.includes(day)) {
+        const date = new Date(day);
+        const name =
+          (date.getMonth() + 1).toString().padStart(2, '0') +
+          '-' +
+          (date.getDate() + '').padStart(2, '0') +
+          '-' +
+          date.getFullYear();
+        dailyActivityClanMap[clan].push({
+          name: name,
+          day: day,
+          activities: activityTimeBuckets[clan][day].length,
+        });
+      }
+    }
+  }
+
+  const dailyActivityIndexMap = {} as {
+    [day: string]: number;
+  };
+
+  const dailyActivities = [] as {
+    day: string;
+    name: string;
+    [clan: string]: number | string;
+  }[];
+
+  for (const clan in dailyActivityClanMap) {
+    for (let i = 0; i < dailyActivityClanMap[clan].length; i++) {
+      const dailyActivity = dailyActivityClanMap[clan][i];
+      //if(typeof dailyActivityIndexMap[dailyActivity.]
+      const day = dailyActivity.day;
+
+      // create a new daily activities entry and store the idnex
+      if (typeof dailyActivityIndexMap[day] === 'undefined') {
+        // new
+        const index = dailyActivities.length;
+        dailyActivityIndexMap[day] = index;
+
+        const details = {
+          day: day,
+          name: dailyActivity.name,
+        } as { day: string; name: string; [clan: string]: number | string };
+
+        for (const clanName of clans) {
+          details[clanName] = 0;
+        }
+
+        dailyActivities.push(details);
+      }
+
+      const index = dailyActivityIndexMap[day];
+      dailyActivities[index][clan] = dailyActivity.activities;
+    }
+  }
+
+  dailyActivities.sort((a, b) => {
+    const timestamp_a = new Date(a.day).getTime() * 1000;
+    const timestamp_b = new Date(b.day).getTime() * 1000;
+    return timestamp_a - timestamp_b;
+  });
 
   // what badges to display
   const badgeClanColors = {
@@ -523,6 +598,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             <TabPanels>
               <TabPanel>
                 <BarChart
+                  className="h-[23.25rem]"
                   data={weekdaysTimePeriods}
                   categories={Object.keys(activityTimeBuckets)}
                   index={'name'}
@@ -531,14 +607,15 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                 ></BarChart>
               </TabPanel>
               <TabPanel>
-                <LineChart
+                <AreaChart
+                  className="h-[23.25rem]"
                   startEndOnly={true}
-                  data={[]}
-                  categories={['Activities']}
+                  data={dailyActivities}
+                  categories={Object.keys(activityTimeBuckets)}
                   index={'name'}
                   showAnimation={true}
-                  showLegend={false}
-                ></LineChart>
+                  showLegend={true}
+                ></AreaChart>
               </TabPanel>
             </TabPanels>
           </TabGroup>
