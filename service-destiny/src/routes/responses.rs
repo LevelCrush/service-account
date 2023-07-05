@@ -14,7 +14,7 @@ use ts_rs::TS;
 #[derive(serde::Serialize, TS, Default, Debug, Clone)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct ClanInformation {
-    pub group_id: GroupId,
+    pub group_id: String,
     pub name: String,
     pub call_sign: String,
     pub is_network: bool,
@@ -35,7 +35,7 @@ pub struct ClanInformation {
 impl ClanInformation {
     pub fn from_db(record: ClanInfoResult) -> ClanInformation {
         ClanInformation {
-            group_id: record.group_id,
+            group_id: record.group_id.to_string(),
             name: record.name,
             call_sign: record.call_sign,
             is_network: record.is_network == 1,
@@ -91,7 +91,7 @@ impl MemberResponse {
         let clan = if result.clan_group_id > 0 {
             Some(MemberClanInformation {
                 info: ClanInformation {
-                    group_id: result.clan_group_id,
+                    group_id: result.clan_group_id.to_string(),
                     name: result.clan_name,
                     call_sign: result.clan_call_sign,
                     is_network: result.clan_is_network == 1,

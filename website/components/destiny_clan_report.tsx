@@ -36,6 +36,7 @@ import { MemberResponse, ReportOutput } from '@levelcrush/service-destiny';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import { APIResponse } from '@levelcrush';
 
 export interface ClanReportProps {
   clan: string;
@@ -277,7 +278,36 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   };
 
   const doForceUpdate = () => {
-    setTimeout(() => forceUpdate(), 250);
+    //setTimeout(() => forceUpdate(), 250);
+  };
+
+  const fetchReportV2 = async (clan: string) => {
+    const modeString = (props.modes || []).join(',');
+    const reportType =
+      props.season === 'lifetime'
+        ? 'lifetime'
+        : 'season/' + encodeURIComponent(props.season);
+
+    const clanPath =
+      clan === 'network' ? 'network' : 'clan/' + encodeURIComponent(clan);
+    const apiResponse = await fetch(
+      ENV.hosts.destiny +
+        '/' +
+        clanPath +
+        '/report/' +
+        reportType +
+        (modeString.length > 0
+          ? '?modes=' + encodeURIComponent(modeString)
+          : '')
+    );
+    if (apiResponse.ok) {
+      const data = (await apiResponse.json()) as APIResponse<{
+        [membership_id: string]: ReportOutput;
+      }>;
+      return data;
+    } else {
+      return null;
+    }
   };
 
   /**
@@ -335,7 +365,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             break;
         }
       }
-    }, 10 * 1000);
+    }, 1 * 1000);
     fetchTimers.current[bungie_name] = timer;
   };
 
@@ -373,13 +403,76 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     };
   };
 
+  const fetchClanReport = async () => {
+    const result = await fetchReportV2(props.clan);
+    const needTimers = [] as string[];
+    const reportsDone = {} as { [member: string]: DestinyMemberReport };
+    if (result && result.response) {
+      for (const member in result.response) {
+        const data = result.response[member];
+        const reportType = getReportType(data);
+
+        switch (reportType) {
+          case 'loading':
+            needTimers.push(member);
+            break;
+          case 'report':
+            reportsDone[member] = data as DestinyMemberReport;
+            break;
+          case 'unknown':
+            console.log('Unknown case', data);
+            break;
+        }
+      }
+    } else {
+      console.error('Unable to fetch clan report', props.clan);
+    }
+
+    console.log('Merging completed reports', reportsDone);
+    for (const member in reportsDone) {
+      reportMapData[member] = reportsDone[member];
+      reportStatuses[member] = true;
+    }
+
+    if (needTimers.length > 0) {
+      console.warn(
+        'Not all member reports are done. Attempting to refetch shortly',
+        needTimers.length
+      );
+      setTimeout(() => {
+        fetchClanReport();
+      }, 5 * 1000);
+    }
+
+    setReportMapData(reportMapData);
+    setReportStatuses(reportStatuses);
+
+    doForceUpdate();
+  };
+
   const startInitialReportFetch = async () => {
     const promises = [] as Promise<FetchReportResult>[];
-    for (const member of props.roster) {
-      promises.push(fetchReport(member.membership_id));
+    const chunkSize = 10;
+    let results = [] as PromiseSettledResult<FetchReportResult>[];
+    for (let i = 0; i < props.roster.length; i += chunkSize) {
+      const chunk = props.roster.slice(i, i + chunkSize);
+      const chunkPromises = [] as Promise<FetchReportResult>[];
+      for (const member of chunk) {
+        chunkPromises.push(fetchReport(member.membership_id));
+      }
+      console.log('Executing chunked  request');
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      results = results.concat(chunkResults);
+
+      // stall for x seconds
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(true);
+        }, 1 * 1000);
+      });
     }
-    console.log('Executing all request');
-    const results = await Promise.allSettled(promises);
+
+    //    const results = await Promise.allSettled(promises);
     const success_results = results.filter((result) => {
       return result.status === 'fulfilled';
     });
@@ -416,15 +509,23 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     doForceUpdate();
   };
 
+  const mounted = useRef(false);
   useEffect(() => {
-    setReportStatuses({});
-    setReportMapData({});
-    console.log('Starting initial report fetch');
-    startInitialReportFetch();
+    if (!mounted.current) {
+      mounted.current = true;
+      setReportStatuses({});
+      setReportMapData({});
+      console.log('Starting initial report fetch');
 
-    doForceUpdate();
+      fetchClanReport();
+
+      doForceUpdate();
+    }
 
     return () => {
+      mounted.current = false;
+      setReportStatuses({});
+      setReportMapData({});
       for (const id in fetchTimers.current) {
         if (fetchTimers.current[id]) {
           window.clearTimeout(fetchTimers.current[id]);

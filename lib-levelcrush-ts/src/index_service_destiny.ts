@@ -2,6 +2,7 @@ import type { APIResponse } from "./index_server";
 import type { MemberResponse } from "./service-destiny/MemberResponse";
 import type { SettingModeRecord } from "./service-destiny/SettingModeRecord";
 import type { DestinySeason } from "./service-destiny/DestinySeason";
+import { ClanInformation } from "./index_service_destiny";
 
 export * from "./service-destiny/ClanInformation";
 export * from "./service-destiny/ClanResponse";
@@ -99,4 +100,15 @@ export async function getDestinyModeGroups(
   );
 
   return modes;
+}
+
+export async function getNetworkClans(host: string) {
+  const request = await fetch(host + "/network/info");
+  let clans = [] as ClanInformation[];
+  if (request.ok) {
+    const json = (await request.json()) as APIResponse<ClanInformation[]>;
+    clans = json.response !== null ? json.response : [];
+  }
+
+  return clans;
 }

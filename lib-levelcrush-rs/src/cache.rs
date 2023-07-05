@@ -135,6 +135,12 @@ where
         }
     }
 
+    /// how many items are there in the memory cache
+    pub async fn len(&self) -> usize {
+        let reader = self.data.read().await;
+        reader.len()
+    }
+
     /// iterates through the memory cache and decides based on cache duration which entries to remove
     pub async fn prune(&mut self) {
         let expired = {
