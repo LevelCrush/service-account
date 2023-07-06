@@ -45,7 +45,7 @@ export interface ClanReportProps {
   modes?: string[];
 }
 
-interface MemberListProps extends CardProps {
+interface MemberRosterListProps extends CardProps {
   members: MemberResponse[];
   reportStatuses: { [membership_id: string]: boolean };
   season: string;
@@ -53,6 +53,14 @@ interface MemberListProps extends CardProps {
   listType: string;
   badgeRoleColors: { [role: string]: string };
   badgeClanColors: { [clan: string]: string };
+}
+
+interface MemberListProps extends CardProps {
+  members: DestinyMemberReport[];
+  listType: string;
+  season: string;
+  mode: string;
+  metric: keyof DestinyMemberReport;
 }
 
 function generate_member_url(
@@ -71,7 +79,34 @@ function generate_member_url(
   );
 }
 
-const MemberListCard = (props: MemberListProps) => {
+const MemberListCard = (props: MemberListProps) => (
+  <Card className=" ">
+    <Title>{props.listType}</Title>
+    <List className="h-[23.25rem] overflow-y-auto">
+      {props.members.map((data, memberIndex) => (
+        <ListItem key={props.listType + '_member_list_' + memberIndex}>
+          <Hyperlink
+            href={generate_member_url(
+              data.display_name_global,
+              props.season,
+              props.mode
+            )}
+            target="_blank"
+            className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
+            title={data.member.display_name}
+          >
+            {(memberIndex + 1).toString().padStart(2, '0') +
+              '. ' +
+              data.member.display_name}
+          </Hyperlink>
+          <span className="mr-4">{(data as any)[props.metric]}</span>
+        </ListItem>
+      ))}
+    </List>
+  </Card>
+);
+
+const MemberRosterCard = (props: MemberRosterListProps) => {
   const badges = {} as { [member: string]: { name: string; style: string }[] };
   for (const member of props.members) {
     badges[member.membership_id] = [];
@@ -146,11 +181,6 @@ const MemberListCard = (props: MemberListProps) => {
   );
 };
 
-type FetchReportResult = {
-  member: string;
-  data: DestinyMemberReportResponse | null;
-};
-
 type ReportMap = { [member: string]: DestinyMemberReport };
 
 //https://stackoverflow.com/questions/46240647/how-to-force-a-functional-react-component-to-render/53837442#53837442
@@ -167,6 +197,64 @@ interface InstanceData {
   occurred_at: number;
 }
 
+function getActivityAmounts(memberReports: DestinyMemberReport[]) {
+  //
+}
+
+/**
+ * Looks through the member reports and finds the most activity by activity attempts
+ * @param memberReports
+ * @returns
+ */
+function getMostActiveMembers(memberReports: DestinyMemberReport[]) {
+  const member_activities = {} as { [membership_id: string]: number };
+  const member_reports = {} as { [membership_id: string]: DestinyMemberReport };
+  for (const member of memberReports) {
+    member_activities[member.membership_id] = member.activity_attempts;
+    member_reports[member.membership_id] = member;
+  }
+
+  const membership_ids = Object.keys(member_activities);
+  membership_ids.sort((a, b) => member_activities[b] - member_activities[a]);
+
+  const sorted_members = [] as DestinyMemberReport[];
+  for (const membership_id of membership_ids) {
+    sorted_members.push(member_reports[membership_id]);
+  }
+  return sorted_members;
+}
+
+/**
+ * Looks through the member reports and finds the most activity by activity attempts DONE WITH CLAN MEMBERS
+ * @param memberReports
+ * @returns
+ */
+function getMostClanActiveMembers(memberReports: DestinyMemberReport[]) {
+  const member_activities = {} as { [membership_id: string]: number };
+  const member_reports = {} as {
+    [membership_id: string]: DestinyMemberReport;
+  };
+  for (const member of memberReports) {
+    member_activities[member.membership_id] =
+      member.activity_attempts_with_clan;
+    member_reports[member.membership_id] = member;
+  }
+
+  const membership_ids = Object.keys(member_activities);
+  membership_ids.sort((a, b) => member_activities[b] - member_activities[a]);
+
+  const sorted_members = [] as DestinyMemberReport[];
+  for (const membership_id of membership_ids) {
+    sorted_members.push(member_reports[membership_id]);
+  }
+  return sorted_members;
+}
+
+/**
+ * Looks through the member reports and generates activity period data over time, and by day
+ * @param memberReports
+ * @returns
+ */
 function createActivityPeriods(memberReports: DestinyMemberReport[]) {
   const clan_keys = [] as string[];
   const member_clan_keys = {} as { [member: string]: string };
@@ -260,7 +348,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
 
   const modes = (props.modes || []).join(',');
   const [reportStatuses, setReportStatuses] = useState(
-    {} as MemberListProps['reportStatuses']
+    {} as MemberRosterListProps['reportStatuses']
   );
   const [reportMapData, setReportMapData] = useState({} as ReportMap);
 
@@ -374,8 +462,9 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   ] as CardProps['decorationColor'][];
 
   // create time buckets
+  const reportArrayData = Object.values(reportMapData);
   const activityTimeBuckets = reportMapData
-    ? createActivityPeriods(Object.values(reportMapData))
+    ? createActivityPeriods(reportArrayData)
     : {};
 
   // activity overtime
@@ -509,6 +598,10 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     Admin: 'bg-yellow-400 text-black',
   };
 
+  // bucket members
+  const mostActiveMembers = getMostActiveMembers(reportArrayData);
+  const mostActiveMembersWithClan = getMostClanActiveMembers(reportArrayData);
+
   return (
     <div className=" clan-report relative top-0">
       <H3 className="text-yellow-400 text-ellipsis max-w-full whitespace-nowrap overflow-hidden">
@@ -553,7 +646,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             </TabPanels>
           </TabGroup>
         </Col>
-        <MemberListCard
+        <MemberRosterCard
           members={props.roster}
           reportStatuses={reportStatuses}
           season={props.season.toString()}
@@ -562,6 +655,26 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           badgeRoleColors={badgeColors}
           listType={'Clan Roster'}
         />
+      </Grid>
+      <Divider />
+      <Grid className="gap-4 mt-4" numItemsLg={4}>
+        <MemberListCard
+          members={mostActiveMembers}
+          listType={'Most Activities'}
+          season={props.season.toString()}
+          mode={modes || 'all'}
+          metric={'activity_attempts'}
+        />
+        <MemberListCard
+          members={mostActiveMembersWithClan}
+          listType={'Most Activities With Clan'}
+          season={props.season.toString()}
+          mode={modes || 'all'}
+          metric={'activity_attempts_with_clan'}
+        />
+        <Col numColSpanLg={1}>
+          <DonutChart></DonutChart>
+        </Col>
       </Grid>
     </div>
   );
