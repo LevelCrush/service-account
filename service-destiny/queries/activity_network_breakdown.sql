@@ -27,6 +27,7 @@ target_instances_clan_member_count AS (
     FROM target_instances
     INNER JOIN instance_members ON target_instances.instance_id = instance_members.instance_id
     LEFT JOIN target_clan_members ON instance_members.membership_id = target_clan_members.membership_id
+    WHERE instance_members.completed = 1
     GROUP BY target_instances.instance_id
 ),
 target_completed_instances AS (
@@ -45,17 +46,19 @@ target_instances_with_clan AS (
     FROM target_instances
     INNER JOIN instance_members ON target_instances.instance_id = instance_members.instance_id
     INNER JOIN target_clan_members ON instance_members.membership_id = target_clan_members.membership_id AND instance_members.membership_id != target_instances.membership_id
+    WHERE instance_members.completed = 1
     GROUP BY target_instances.instance_id
 ),
 
 clan_breakdown AS (
     SELECT
+        target_clan.group_id,
         target_clan.name,
         COUNT(DISTINCT target_clan_members.membership_id)           AS total_members,
         COUNT(DISTINCT target_instances.instance_id)                AS activity_attempts,
         COUNT(DISTINCT target_completed_instances.instance_id)      AS activities_completed,
-        COUNT(DISTINCT target_instances_with_clan.instance_id)      AS activity_attempts_with_clan,
-        ROUND(AVG(target_instances_clan_member_count.clan_members)) AS avg_clan_member_amount
+        COUNT(DISTINCT target_instances_with_clan.instance_id)      AS activities_completed_with_clan,
+        COALESCE(ROUND(AVG(target_instances_clan_member_count.clan_members)),0) AS avg_clan_member_amount
     FROM target_clan
     INNER JOIN target_clan_members ON target_clan.group_id = target_clan_members.group_id
     LEFT JOIN target_instances ON target_clan_members.membership_id = target_instances.membership_id
@@ -67,11 +70,12 @@ clan_breakdown AS (
 
 
 SELECT
+    clan_breakdown.group_id,
     clan_breakdown.name,
     clan_breakdown.total_members,
     clan_breakdown.activity_attempts,
-    clan_breakdown.activity_attempts_with_clan,
-    ROUND((clan_breakdown.activity_attempts_with_clan / clan_breakdown.activity_attempts) * 100 ) AS percent_with_clan,
+    clan_breakdown.activities_completed_with_clan,
+    COALESCE(ROUND((clan_breakdown.activities_completed_with_clan / clan_breakdown.activities_completed) * 100 ),0) AS percent_with_clan,
     clan_breakdown.activities_completed,
     clan_breakdown.avg_clan_member_amount
 FROM clan_breakdown
