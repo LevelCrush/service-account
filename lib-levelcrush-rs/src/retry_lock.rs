@@ -22,6 +22,7 @@ impl RetryLock {
         }
     }
 
+    /// waits until the lock is released (or until max retries are hit)
     pub async fn wait_until_release(&mut self, key: &str) -> usize {
         let mut retries = 0;
         'retry_lock: while retries < self.max_retries {
@@ -35,10 +36,13 @@ impl RetryLock {
         retries
     }
 
+    /// checks to see if there is a lock found that matches the key
     pub async fn check(&self, key: &str) -> bool {
         self.cache.exist(key).await
     }
 
+    /// locks the key from being accessed (until max retries are reached)
+    /// returns the amount of retries before it was allowed to lock
     pub async fn lock(&mut self, key: &str) -> usize {
         //before we can lock, we must make sure that we are able to
         let retries = self.wait_until_release(key).await;
@@ -50,6 +54,7 @@ impl RetryLock {
         retries
     }
 
+    /// unlocks the key and lets the application continue processing the next block of logic
     pub async fn unlock(&mut self, key: &str) {
         self.cache.delete(key).await;
     }

@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use crate::app::report::member::MemberReport;
+use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::leaderboard::LeaderboardEntryResult;
 use crate::database::seasons::SeasonRecord;
@@ -211,6 +214,34 @@ impl DestinySeason {
             number: record.number,
             starts_at: record.starts_at,
             ends_at: record.ends_at,
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct NetworkActivityClanBreakdown {
+    pub group_id: String,
+    pub name: String,
+    pub total_members: i32,
+    pub activity_attempts: i32,
+    pub activities_completed_with_clan: i32,
+    pub activities_completed: i32,
+    pub percent_with_clan: i32,
+    pub avg_clan_member_amount: i32,
+}
+
+impl NetworkActivityClanBreakdown {
+    pub fn from_db(record: NetworkBreakdownResult) -> NetworkActivityClanBreakdown {
+        NetworkActivityClanBreakdown {
+            group_id: record.group_id.to_string(),
+            name: record.name,
+            total_members: record.total_members as i32,
+            activity_attempts: record.activity_attempts as i32,
+            activities_completed_with_clan: record.activities_completed_with_clan as i32,
+            activities_completed: record.activities_completed as i32,
+            percent_with_clan: record.percent_with_clan.to_i32().unwrap_or_default(),
+            avg_clan_member_amount: record.avg_clan_member_amount.to_i32().unwrap_or_default(),
         }
     }
 }

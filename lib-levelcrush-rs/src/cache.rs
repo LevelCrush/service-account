@@ -69,6 +69,10 @@ where
         CacheValue::with_duration(input, CacheDuration::Persistant, CacheDuration::Persistant)
     }
 
+    pub fn exact(input: T, duration: CacheDuration) -> CacheValue<T> {
+        CacheValue::with_duration(input, duration.clone(), duration)
+    }
+
     pub fn with_duration(input: T, duration: CacheDuration, duration_max: CacheDuration) -> CacheValue<T> {
         let timestamp = unix_timestamp();
         CacheValue {

@@ -1,4 +1,5 @@
 use super::report::member::MemberReport;
+use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::instance::InstanceMemberRecord;
 use crate::database::leaderboard::LeaderboardEntryResult;
@@ -7,10 +8,12 @@ use crate::database::seasons::SeasonRecord;
 use crate::database::setting::SettingModeRecord;
 use crate::database::triumph::TriumphTitleResult;
 use crate::{bungie::BungieClient, database::activity_history::ActivityHistoryRecord};
+use levelcrush::retry_lock::RetryLock;
 use levelcrush::task_manager::TaskManager;
 use levelcrush::{cache::MemoryCache, database};
 use sqlx::MySqlPool;
 use std::boxed::Box;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub enum CacheItem {
@@ -23,6 +26,7 @@ pub enum CacheItem {
     InstanceMemberArray(Vec<InstanceMemberRecord>),
     MemberReport(Box<MemberReport>),
     MemberTitles(Vec<TriumphTitleResult>),
+    NetworkBreakdown(HashMap<i64, NetworkBreakdownResult>),
 }
 
 #[derive(Clone, Debug)]
@@ -42,6 +46,7 @@ pub struct AppState {
     pub seasons: MemoryCache<Vec<SeasonRecord>>,
     pub tasks: TaskManager,          // also used by member reports
     pub priority_tasks: TaskManager, // also used by member reports
+    pub locks: RetryLock,
 }
 
 impl AppState {
@@ -72,6 +77,7 @@ impl AppState {
             task_running: MemoryCache::new(),
             tasks: TaskManager::new(max_task_workers),
             priority_tasks: TaskManager::new(priority_task_workers),
+            locks: RetryLock::default(),
         }
     }
 }
