@@ -119,6 +119,7 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
                   className="mt-2"
                   defaultValue={props.clan}
                   onValueChange={(v) => setClan(v)}
+                  disabled={true}
                 >
                   {props.clans.map((clan, clanIndex) => (
                     <SearchSelectItem

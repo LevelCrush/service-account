@@ -432,6 +432,9 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     },
   ] as ActivityPeriod[]);
 
+  const [loadingActivityData, setLoadingActivityData] = useState(true);
+  const [loadingBreakdownData, setLoadingBreakdownData] = useState(true);
+
   const [clans, setClans] = useState([] as string[]);
   const [dailyActivityIndexMap, setDailyActivityIndexMap] = useState(
     {} as ActivityIndexMap
@@ -612,6 +615,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   };
 
   const fetchActivityBreakdown = async () => {
+    setLoadingBreakdownData(true);
     const clan = props.clan;
     const modeString = (props.modes || []).join(',');
     const reportType =
@@ -640,9 +644,12 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     } else {
       setActivityBreakdown(null);
     }
+
+    setLoadingBreakdownData(false);
   };
 
   const fetchClanReport = async () => {
+    setLoadingActivityData(true);
     const result = await fetchReport(props.clan);
     const needTimers = [] as string[];
     const reportsDone = {} as { [member: string]: DestinyMemberReport };
@@ -682,6 +689,10 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       setTimeout(() => {
         fetchClanReport();
       }, 5 * 1000);
+    }
+
+    if (needTimers.length === 0) {
+      setLoadingActivityData(false);
     }
 
     setReportMapData(newReportMapData);
@@ -769,7 +780,10 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         <span className="text-sm">{modes}</span>
       </H5>
       <Divider />
-      <Grid numItemsLg={4} className="mt-4 gap-4">
+      <Grid
+        className={(loadingActivityData ? 'animate-pulse' : '') + ' mt-4 gap-4'}
+        numItemsLg={4}
+      >
         <Col numColSpanLg={3}>
           <Title>Activity Periods</Title>
           <TabGroup>
@@ -813,7 +827,10 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         />
       </Grid>
       <Divider />
-      <Grid className="gap-4 mt-4" numItemsLg={3}>
+      <Grid
+        className={(loadingActivityData ? 'animate-pulse' : '') + ' mt-4 gap-4'}
+        numItemsLg={3}
+      >
         <MemberListCard
           members={mostActiveMembers}
           listType={'Most Activities'}
@@ -836,7 +853,12 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           metric={'last_played_at'}
         />
       </Grid>
-      <Grid className="mt-8 gap-4" numItemsLg={3}>
+      <Grid
+        className={
+          (loadingBreakdownData ? 'animate-pulse' : '') + ' mt-4 gap-4'
+        }
+        numItemsLg={3}
+      >
         <Card>
           <Title>
             {props.clan === 'network'
@@ -849,7 +871,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                 index="name"
                 category="metric"
                 showAnimation={true}
-                label={sumStats.percent_with_clan + '%'}
+                label={Math.ceil(sumStats.percent_with_clan) + '%'}
                 data={
                   activityBreakdown !== null
                     ? Object.keys(activityBreakdown).map(
@@ -863,6 +885,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                       )
                     : []
                 }
+                valueFormatter={(input) => input + '%'}
               ></DonutChart>
             </Col>
             <Col numColSpanMd={3}>
