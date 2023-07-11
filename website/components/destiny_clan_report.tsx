@@ -430,12 +430,16 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     // create time buckets
     console.log('Map data changed. Updating other parts of state');
     setReportArrayData(Object.values(reportMapData));
+  }, [reportMapData]);
+
+  useEffect(() => {
+    console.log('Updated array version of the map data');
     setActivityTimeBuckets(
       reportMapData ? createActivityPeriods(reportArrayData) : {}
     );
-  }, [reportMapData]);
+  }, [reportArrayData]);
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     console.log('Generating week day time periods');
     const newWeekdaysTimePeriods = [
       {
@@ -483,7 +487,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     setClans(clans);
   }, [reportArrayData, activityTimeBuckets]);
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     console.log('Generating activity maps');
     const newDailyActivityClanMap = {} as ActivityClanMap;
     const newDailyActivityIndexMap = {} as ActivityIndexMap;
@@ -507,7 +511,6 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         }
       }
     }
-    setDailyActivityClanMap(newDailyActivityClanMap);
 
     for (const clan in newDailyActivityClanMap) {
       for (let i = 0; i < newDailyActivityClanMap[clan].length; i++) {
@@ -518,7 +521,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         // create a new daily activities entry and store the idnex
         if (typeof newDailyActivityIndexMap[day] === 'undefined') {
           // new
-          const index = dailyActivities.length;
+          const index = newDailyActivities.length;
           newDailyActivityIndexMap[day] = index;
 
           const details = {
@@ -533,7 +536,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           newDailyActivities.push(details);
         }
 
-        const index = dailyActivityIndexMap[day];
+        const index = newDailyActivityIndexMap[day];
         newDailyActivities[index][clan] = dailyActivity.activities;
       }
     }
@@ -544,6 +547,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       return timestamp_a - timestamp_b;
     });
 
+    setDailyActivityClanMap(newDailyActivityClanMap);
     setDailyActivityIndexMap(newDailyActivityIndexMap);
     setDailyActivities(newDailyActivities);
 
@@ -669,6 +673,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       }, 5 * 1000);
     }
 
+    console.log('Incoming Report Data', newReportMapData);
     setReportMapData(newReportMapData);
     setReportStatuses(newReportStatuses);
 
