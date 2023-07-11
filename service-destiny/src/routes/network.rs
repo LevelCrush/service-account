@@ -88,16 +88,9 @@ async fn network_breakdown_lifetime(
     let destiny2_launch_month_start = chrono::Utc
         .datetime_from_str("2017-09-01 00:00:00", "%Y-%m-%d %H:%M:%S")
         .unwrap_or_default();
-    let current_datetime = chrono::Utc::now();
-
     // fetch from db
-    let network_breakdown = app::clan::network_breakdown(
-        &modes,
-        destiny2_launch_month_start.timestamp() as u64,
-        current_datetime.timestamp() as u64,
-        &mut state,
-    )
-    .await;
+    let network_breakdown =
+        app::clan::network_breakdown(&modes, destiny2_launch_month_start.timestamp() as u64, 0, &mut state).await;
 
     // convert to our response type
     let network_breakdown = network_breakdown

@@ -16,8 +16,8 @@ target_instances AS (
         member_activities.instance_id
     FROM member_activities
     INNER JOIN target_clan_members ON member_activities.membership_id = target_clan_members.membership_id
-    WHERE member_activities.mode IN ({})
-    AND member_activities.occurred_at >= ? AND member_activities.occurred_at <= ?
+    WHERE member_activities.occurred_at >= ? AND member_activities.occurred_at <= ?
+    {}
     GROUP BY member_activities.membership_id, member_activities.instance_id
 ),
 target_instances_clan_member_count AS (

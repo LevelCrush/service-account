@@ -14,6 +14,7 @@ use levelcrush::{cache::MemoryCache, database};
 use sqlx::MySqlPool;
 use std::boxed::Box;
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub enum CacheItem {
@@ -77,7 +78,7 @@ impl AppState {
             task_running: MemoryCache::new(),
             tasks: TaskManager::new(max_task_workers),
             priority_tasks: TaskManager::new(priority_task_workers),
-            locks: RetryLock::default(),
+            locks: RetryLock::new(10, Duration::from_secs(60)),
         }
     }
 }

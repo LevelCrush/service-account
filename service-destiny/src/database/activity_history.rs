@@ -229,13 +229,19 @@ pub async fn network_breakdown(
     timestamp_end: u64,
     pool: &MySqlPool,
 ) -> HashMap<i64, NetworkBreakdownResult> {
+    let mut mode_filter = String::new();
     let modes_pos = vec!["?"; modes.len()].join(",");
-    let statement = project_str!("queries/activity_network_breakdown.sql", modes_pos);
+    if !modes.is_empty() {
+        mode_filter = format!("AND member_activities.mode IN ({})", modes_pos);
+    }
+
+    let statement = project_str!("queries/activity_network_breakdown.sql", mode_filter);
+
     let mut query_builder = sqlx::query_as::<_, NetworkBreakdownResult>(&statement);
+    query_builder = query_builder.bind(timestamp_start).bind(timestamp_end);
     for mode in modes.iter() {
         query_builder = query_builder.bind(mode);
     }
-    query_builder = query_builder.bind(timestamp_start).bind(timestamp_end);
 
     let query = query_builder.fetch_all(pool).await;
 
