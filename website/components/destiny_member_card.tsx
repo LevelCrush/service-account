@@ -116,7 +116,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     display_name: 'Not Found',
     display_name_platform: 'Not Found',
     known_display_names: {},
-    membership_id: 0,
+    membership_id: '0',
     membership_platform: 0,
     timestamp_last_played: 0,
     raid_report: '',

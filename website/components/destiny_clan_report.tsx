@@ -717,6 +717,9 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   const mostActiveMembers = getMostActiveMembers(reportArrayData);
   const mostActiveMembersWithClan = getMostClanActiveMembers(reportArrayData);
 
+  const categories = Object.keys(activityTimeBuckets);
+  categories.sort();
+
   return (
     <div className=" clan-report relative top-0">
       <H3 className="text-yellow-400 text-ellipsis max-w-full whitespace-nowrap overflow-hidden">
@@ -741,7 +744,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                 <BarChart
                   className="h-[23.25rem]"
                   data={weekdaysTimePeriods}
-                  categories={Object.keys(activityTimeBuckets)}
+                  categories={categories}
                   index={'name'}
                   showAnimation={true}
                   showLegend={true}
@@ -752,7 +755,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
                   className="h-[23.25rem]"
                   startEndOnly={true}
                   data={dailyActivities}
-                  categories={Object.keys(activityTimeBuckets)}
+                  categories={categories}
                   index={'name'}
                   showAnimation={true}
                   showLegend={true}
