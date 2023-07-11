@@ -1,10 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  DestinyMemberReport,
-  DestinyMemberReportResponse,
-  DestinyMemberResponse,
-  DestinyMemberStats,
-} from '@website/core/api_responses';
+import { useEffect, useState } from 'react';
+import { DestinyMemberReport } from '@website/core/api_responses';
 
 import { H3, H5 } from '@website/components/elements/headings';
 import ENV from '@website/core/env';
@@ -18,17 +13,11 @@ import {
   List,
   ListItem,
   Col,
-  DonutChart,
-  Text,
-  Legend,
-  Metric,
-  LineChart,
   TabGroup,
   TabList,
   Tab,
   TabPanels,
   BarChart,
-  ProgressBar,
   AreaChart,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
@@ -40,7 +29,6 @@ import {
 } from '@levelcrush/service-destiny';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { APIResponse } from '@levelcrush';
 
 export interface ClanReportProps {
@@ -426,7 +414,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   );
 
   // start updating other parts of our state based off this map data
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     // create time buckets
     console.log('Map data changed. Updating other parts of state');
     setReportArrayData(Object.values(reportMapData));
@@ -435,7 +423,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   useEffect(() => {
     console.log('Updated array version of the map data');
     setActivityTimeBuckets(
-      reportMapData ? createActivityPeriods(reportArrayData) : {}
+      reportArrayData ? createActivityPeriods(reportArrayData) : {}
     );
   }, [reportArrayData]);
 
@@ -566,10 +554,6 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     }
   };
 
-  const doForceUpdate = () => {
-    setTimeout(() => forceUpdate(), 1000);
-  };
-
   const fetchReport = async (clan: string) => {
     const modeString = (props.modes || []).join(',');
     const reportType =
@@ -655,7 +639,6 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       console.error('Unable to fetch clan report', props.clan);
     }
 
-    console.log('Merging completed reports', reportsDone);
     const newReportMapData = {} as ReportMap;
     const newReportStatuses = {} as ReportStatusMap;
     for (const member in reportsDone) {
@@ -673,11 +656,8 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       }, 5 * 1000);
     }
 
-    console.log('Incoming Report Data', newReportMapData);
     setReportMapData(newReportMapData);
     setReportStatuses(newReportStatuses);
-
-    //doForceUpdate();
   };
 
   useEffect(() => {
