@@ -59,27 +59,25 @@ export const getServerSideProps: GetServerSideProps<
   };
 };
 
+function generate_url(bungie_name: string, season: string, mode: string) {
+  return (
+    '/admin/member/' +
+    encodeURIComponent(bungie_name) +
+    (season === 'lifetime'
+      ? '/lifetime'
+      : '/season/' + encodeURIComponent(season)) +
+    '/modes/' +
+    encodeURIComponent(mode)
+  );
+}
+
 export const ReportPage = (props: ReportPageSeasonProps) => {
   const [targetUser, setUser] = useState(props.member);
   const [targetSnapshot, setSnapshot] = useState(props.target_season);
-  const [controlsDisabled, setControlsDisabled] = useState(true);
-
   const [targetMode, setMode] = useState(props.target_mode);
   const router = useRouter();
 
-  function generate_url(bungie_name: string, season: string, mode: string) {
-    return (
-      '/admin/report/' +
-      encodeURIComponent(bungie_name) +
-      (season === 'lifetime'
-        ? '/lifetime'
-        : '/season/' + encodeURIComponent(season)) +
-      '/modes/' +
-      encodeURIComponent(mode)
-    );
-  }
   useEffect(() => {
-    setControlsDisabled(true);
     router.push(generate_url(targetUser, targetSnapshot, targetMode));
   }, [targetMode, targetSnapshot, targetUser]);
 
@@ -106,7 +104,6 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                   className="mt-2"
                   defaultValue={props.member}
                   onValueChange={(v) => setUser(v)}
-                  disabled={controlsDisabled}
                 >
                   {props.roster.map((member, memberIndex) => (
                     <SearchSelectItem
@@ -124,7 +121,6 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                   defaultValue={props.target_season}
                   className="mt-2"
                   onValueChange={(v) => setSnapshot(v)}
-                  disabled={controlsDisabled}
                 >
                   {props.seasons.map((season) => {
                     const v = season === 0 ? 'lifetime' : season + '';
@@ -146,7 +142,6 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                   className="mt-2"
                   defaultValue={props.target_mode}
                   onValueChange={(v) => setMode(v)}
-                  disabled={controlsDisabled}
                 >
                   {props.modes.map((mode, modeIndex) => (
                     <SelectItem
@@ -168,11 +163,6 @@ export const ReportPage = (props: ReportPageSeasonProps) => {
                   : parseInt(props.target_season)
               }
               modes={targetMode === 'all' ? [] : targetMode.split(',')}
-              onReportLoaded={(data) => setControlsDisabled(false)}
-              onLoadingData={() => {
-                console.log('Loading data!');
-                setControlsDisabled(true);
-              }}
             />
           </LoginGuard>
         </Container>

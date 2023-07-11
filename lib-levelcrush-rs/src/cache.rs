@@ -69,6 +69,10 @@ where
         CacheValue::with_duration(input, CacheDuration::Persistant, CacheDuration::Persistant)
     }
 
+    pub fn exact(input: T, duration: CacheDuration) -> CacheValue<T> {
+        CacheValue::with_duration(input, duration.clone(), duration)
+    }
+
     pub fn with_duration(input: T, duration: CacheDuration, duration_max: CacheDuration) -> CacheValue<T> {
         let timestamp = unix_timestamp();
         CacheValue {
@@ -133,6 +137,12 @@ where
         MemoryCache {
             data: Arc::from(RwLock::from(CacheValueMap::new())),
         }
+    }
+
+    /// how many items are there in the memory cache
+    pub async fn len(&self) -> usize {
+        let reader = self.data.read().await;
+        reader.len()
     }
 
     /// iterates through the memory cache and decides based on cache duration which entries to remove

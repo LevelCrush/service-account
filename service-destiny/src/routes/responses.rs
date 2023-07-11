@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use crate::app::report::member::MemberReport;
+use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::leaderboard::LeaderboardEntryResult;
 use crate::database::seasons::SeasonRecord;
@@ -14,7 +17,7 @@ use ts_rs::TS;
 #[derive(serde::Serialize, TS, Default, Debug, Clone)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct ClanInformation {
-    pub group_id: GroupId,
+    pub group_id: String,
     pub name: String,
     pub call_sign: String,
     pub is_network: bool,
@@ -35,7 +38,7 @@ pub struct ClanInformation {
 impl ClanInformation {
     pub fn from_db(record: ClanInfoResult) -> ClanInformation {
         ClanInformation {
-            group_id: record.group_id,
+            group_id: record.group_id.to_string(),
             name: record.name,
             call_sign: record.call_sign,
             is_network: record.is_network == 1,
@@ -69,8 +72,7 @@ pub struct MemberResponse {
 
     /// this is the membership id that is primarily used by the bungie account
     /// because of cross save, this is not the "true" bungie account id
-    #[ts(type = "number")]
-    pub membership_id: MembershipId,
+    pub membership_id: String,
 
     /// the platform type of the membership. Included because other calls to the bungie api require it
     pub membership_platform: MembershipType,
@@ -92,7 +94,7 @@ impl MemberResponse {
         let clan = if result.clan_group_id > 0 {
             Some(MemberClanInformation {
                 info: ClanInformation {
-                    group_id: result.clan_group_id,
+                    group_id: result.clan_group_id.to_string(),
                     name: result.clan_name,
                     call_sign: result.clan_call_sign,
                     is_network: result.clan_is_network == 1,
@@ -111,7 +113,7 @@ impl MemberResponse {
         MemberResponse {
             display_name: result.display_name_global,
             display_name_platform: result.display_name,
-            membership_id: result.membership_id,
+            membership_id: result.membership_id.to_string(),
             membership_platform: result.platform,
             raid_report: app::member::generate_raid_report_url(result.membership_id, result.platform),
             clan,
@@ -212,6 +214,34 @@ impl DestinySeason {
             number: record.number,
             starts_at: record.starts_at,
             ends_at: record.ends_at,
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct NetworkActivityClanBreakdown {
+    pub group_id: String,
+    pub name: String,
+    pub total_members: i32,
+    pub activity_attempts: i32,
+    pub activities_completed_with_clan: i32,
+    pub activities_completed: i32,
+    pub percent_with_clan: i32,
+    pub avg_clan_member_amount: i32,
+}
+
+impl NetworkActivityClanBreakdown {
+    pub fn from_db(record: NetworkBreakdownResult) -> NetworkActivityClanBreakdown {
+        NetworkActivityClanBreakdown {
+            group_id: record.group_id.to_string(),
+            name: record.name,
+            total_members: record.total_members as i32,
+            activity_attempts: record.activity_attempts as i32,
+            activities_completed_with_clan: record.activities_completed_with_clan as i32,
+            activities_completed: record.activities_completed as i32,
+            percent_with_clan: record.percent_with_clan.to_i32().unwrap_or_default(),
+            avg_clan_member_amount: record.avg_clan_member_amount.to_i32().unwrap_or_default(),
         }
     }
 }

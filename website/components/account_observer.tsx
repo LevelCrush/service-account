@@ -154,7 +154,9 @@ export const AccountObserver = () => {
 
     // when we unmount our component run this for cleanup
     return () => {
-      //
+      // component unmount, stop timer
+      window.clearInterval(accountTimerInterval);
+      setAccountTimerInterval(0);
     };
   }, []);
 
@@ -171,7 +173,7 @@ export const AccountObserver = () => {
         // attempt logout
         sendLogout();
         // log out, stop running interval
-        clearInterval(accountTimerInterval);
+        window.clearInterval(accountTimerInterval);
         setAccountTimerInterval(0);
       } else {
         console.log('Have not yet finished doing the first external check');
@@ -181,7 +183,7 @@ export const AccountObserver = () => {
 
     return () => {
       // component unmount, stop timer
-      clearInterval(accountTimerInterval);
+      window.clearInterval(accountTimerInterval);
       setAccountTimerInterval(0);
     };
   }, [loggedIn]);

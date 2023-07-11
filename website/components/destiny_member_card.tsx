@@ -116,7 +116,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     display_name: 'Not Found',
     display_name_platform: 'Not Found',
     known_display_names: {},
-    membership_id: 0,
+    membership_id: '0',
     membership_platform: 0,
     timestamp_last_played: 0,
     raid_report: '',
@@ -270,7 +270,9 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                 className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
                 intention="attention"
                 href={
-                  '/admin/report/' + encodeURIComponent(memberInfo.display_name)
+                  '/admin/member/' +
+                  encodeURIComponent(memberInfo.display_name) +
+                  '/lifetime/modes/all'
                 }
               >
                 Overview

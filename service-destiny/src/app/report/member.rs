@@ -118,9 +118,7 @@ pub struct MemberReportSearchQuery {
 pub struct MemberReport {
     pub version: u8,
 
-    #[ts(type = "number")]
-    pub membership_id: i64,
-
+    pub membership_id: String,
     pub snapshot_range: String,
 
     pub display_name_global: String,
@@ -359,7 +357,7 @@ async fn merge_reports(
         version: VERSION_MEMBER_REPORT_CURRENT,
         snapshot_range,
         activity_timestamps: HashMap::from_iter(instance_timestamps.into_iter()),
-        membership_id,
+        membership_id: membership_id.to_string(),
         display_name_global: bungie_name,
         titles,
         last_played_at,

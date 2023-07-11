@@ -3,12 +3,14 @@ import ENV from '@website/core/env';
 import {
   ReportPage,
   ReportPageSeasonProps,
-} from '@website/pages/admin/report/[member]/season/[season]/modes/[modes]';
+} from '@website/pages/admin/member/[member]/season/[season]/modes/[modes]';
 import {
   getDestinyModeGroups,
   getDestinySeasons,
   getNetworkRoster,
 } from '@levelcrush/service-destiny';
+
+export const revalidate = 600;
 
 export const getServerSideProps: GetServerSideProps<
   ReportPageSeasonProps
@@ -25,7 +27,7 @@ export const getServerSideProps: GetServerSideProps<
       seasons: seasons,
       member: context.query.member as string,
       target_season: 'lifetime',
-      target_mode: 'all',
+      target_mode: (context.query.lifetime_modes as string) || 'all',
       modes: modes,
       roster: roster,
     },

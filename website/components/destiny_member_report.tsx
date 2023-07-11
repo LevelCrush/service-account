@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DestinyMemberReport,
   DestinyMemberReportResponse,
@@ -29,13 +29,12 @@ import {
   BarChart,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
+import { ReportOutput } from '@levelcrush/service-destiny';
 
 export interface MemberReportProps {
   bungie_name: string;
   season: 'lifetime' | number;
   modes?: string[];
-  onReportLoaded?: (data: DestinyMemberReport) => void;
-  onLoadingData?: () => void;
 }
 
 interface TitleCardProps extends CardProps {
@@ -93,7 +92,21 @@ const TitleCard = (prop: TitleCardProps) => {
 
 interface FireteamCardProps extends CardProps {
   members: DestinyMemberReport['frequent_clan_members'];
+  season: string;
+  mode: string;
   fireteamType: string;
+}
+
+function generate_url(bungie_name: string, season: string, mode: string) {
+  return (
+    '/admin/member/' +
+    encodeURIComponent(bungie_name) +
+    (season === 'lifetime'
+      ? '/lifetime'
+      : '/season/' + encodeURIComponent(season)) +
+    '/modes/' +
+    encodeURIComponent(mode)
+  );
 }
 
 const FireteamCard = (props: FireteamCardProps) => {
@@ -106,7 +119,7 @@ const FireteamCard = (props: FireteamCardProps) => {
             key={props.fireteamType + '_fireteam_member_' + memberIndex}
           >
             <Hyperlink
-              href={'/admin/report/' + encodeURIComponent(member.display_name)}
+              href={generate_url(member.display_name, props.season, props.mode)}
               className="whitespace-nowrap text-ellipsis overflow-hidden max-w-[10rem] inline-block"
               title={member.display_name}
             >
@@ -240,7 +253,11 @@ function createActivityPeriods(memberReport: DestinyMemberReport) {
   return buckets;
 }
 
-function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
+function renderOverall(
+  memberReport: DestinyMemberReport,
+  modes: string[],
+  props: MemberReportProps
+) {
   const overallKills = combineStats(memberReport, 'kills');
   const overallDeaths = combineStats(memberReport, 'deaths');
   const overallAssists = combineStats(memberReport, 'assists');
@@ -437,11 +454,15 @@ function renderOverall(memberReport: DestinyMemberReport, modes: string[]) {
         <TitleCard titles={memberReport.titles} />
         <FireteamCard
           members={memberReport.frequent_clan_members}
+          mode={modes.join(',') || 'all'}
+          season={props.season.toString()}
           fireteamType="Network Fireteam"
         />
         <FireteamCard
           members={memberReport.frequent_non_clan_members}
           fireteamType="Not Network Fireteam"
+          mode={modes.join(',') || 'all'}
+          season={props.season.toString()}
         />
       </Grid>
     </div>
@@ -455,10 +476,41 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
 
   const [alreadyLoadedData, setAlreadyLoadedData] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
+  // const [fetchTimerInterval, setFetchTimerInterval] = useState(0);
+  const fetchTimerInterval = useRef(0);
 
+  const clearFetchTimer = () => {
+    if (fetchTimerInterval.current) {
+      window.clearTimeout(fetchTimerInterval.current);
+      fetchTimerInterval.current = 0;
+    }
+  };
+
+  const getReportType = (memberReport: ReportOutput | null) => {
+    switch (typeof memberReport) {
+      case 'bigint':
+      case 'number':
+        return 'loading';
+      case 'object':
+        return 'report';
+      default:
+        return 'unknown';
+    }
+  };
+
+  const setupFetchInterval = (bungie_name: string, report_type: string) =>
+    (fetchTimerInterval.current = window.setTimeout(() => {
+      fetchReport(bungie_name, report_type);
+    }, 5 * 1000));
+
+  /**
+   * Fetch the report of a user and constantly check in if the report is still being generated
+   * @param bungie_name
+   * @param report_type
+   */
   const fetchReport = async (bungie_name: string, report_type: string) => {
     const modeString = (props.modes || []).join(',');
+
     const apiResponse = await fetch(
       ENV.hosts.destiny +
         '/member/' +
@@ -471,89 +523,50 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     );
 
     const data = (await apiResponse.json()) as DestinyMemberReportResponse;
-
-    if (
-      typeof data.response === 'number' ||
-      typeof data.response === 'bigint'
-    ) {
-      setFetchTimerInterval(
-        window.setTimeout(() => {
-          fetchReport(bungie_name, report_type);
-        }, 1 * 5000)
-      ); // check on the report every 1 seconds
-      if (props.onLoadingData) {
-        props.onLoadingData();
-      }
-    } else {
-      // stop timer
-      if (fetchTimerInterval) {
-        console.log('Data received. Stopping current timer');
-        window.clearTimeout(fetchTimerInterval);
-        setFetchTimerInterval(0);
-      }
-    }
-
-    // set membger report response
-    if (!alreadyLoadedData) {
-      // if we have never loaded any data into our report, update our response
-
-      setMemberReport(data.response);
-    } else if (typeof data.response === 'object') {
-      // only update our member report when we have the report in our responsea.response.search.modes == props.modes?.join(',')
-
-      setIsLoadingData(false);
-      setMemberReport(data.response);
-    } else {
-      setIsLoadingData(true);
-    }
-
-    if (!alreadyLoadedData && typeof data.response === 'object') {
-      setAlreadyLoadedData(true);
+    const reportOutputType = getReportType(data.response);
+    switch (reportOutputType) {
+      case 'loading':
+        setupFetchInterval(bungie_name, report_type);
+        setIsLoadingData(true);
+        if (!alreadyLoadedData) {
+          // if we have not yet loaded in any data, go ahead and send this through to move to a loading state vs initial querying state
+          setMemberReport(data.response);
+        }
+        break;
+      case 'report':
+        clearFetchTimer();
+        setIsLoadingData(false);
+        setAlreadyLoadedData(true);
+        setMemberReport(data.response);
+        break;
+      default:
+        console.log('An unknown case has occurred.', reportOutputType);
     }
   };
 
-  useEffect(() => {
-    if (
-      memberReport !== null &&
-      typeof memberReport === 'number' &&
-      typeof memberReport === 'bigint' &&
-      props.onLoadingData
-    ) {
-      console.log('Loading data!');
-      props.onLoadingData();
-    } else if (memberReport !== null && typeof memberReport === 'object') {
-      setAlreadyLoadedData(true);
-      if (props.onReportLoaded) {
-        props.onReportLoaded(memberReport as DestinyMemberReport);
-      }
-    }
-  }, [memberReport]);
-
   // fetch the member report on load
   useEffect(() => {
-    const report_type =
-      props.season === 'lifetime' ? 'lifetime' : 'season/' + props.season;
+    const reportType =
+      props.season === 'lifetime'
+        ? 'lifetime'
+        : 'season/' + encodeURIComponent(props.season);
 
     if (props.bungie_name && props.bungie_name.trim().length > 0) {
       // fetch the member report
-      fetchReport(props.bungie_name, report_type).finally(() =>
-        console.log('Member report fetched for: ', props.bungie_name)
-      );
+      // fire the on loading data before we start our fetch request
+      fetchReport(props.bungie_name, reportType);
     }
 
     return () => {
       // cleanup
-      if (fetchTimerInterval) {
-        console.log('Stopping current timeout', fetchTimerInterval);
-        window.clearTimeout(fetchTimerInterval);
-        setFetchTimerInterval(0);
-      }
+      clearFetchTimer();
     };
   }, [props.bungie_name, props.modes, props.season]);
 
   if (memberReport) {
-    switch (typeof memberReport) {
-      case 'object':
+    const report_output = getReportType(memberReport);
+    switch (report_output) {
+      case 'report':
         // this conversion is fine to do because we know we are already working with an object type
         const data = memberReport as unknown as DestinyMemberReport;
         return (
@@ -584,7 +597,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
               </span>
             </p>
             <Divider />
-            {renderOverall(memberReport, props.modes || [])}
+            {renderOverall(data, props.modes || [], props)}
           </div>
         );
       default:
