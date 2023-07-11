@@ -348,34 +348,44 @@ function createActivityPeriods(memberReports: DestinyMemberReport[]) {
   return buckets;
 }
 
+type ReportStatusMap = MemberRosterListProps['reportStatuses'];
+type ActivityBreakdown = { [group_id: string]: NetworkActivityClanBreakdown };
+type ActivityTimeBucketMap = {
+  [clan: string]: {
+    [bucket: string]: InstanceData[];
+  };
+};
+type ActivityClanMap = {
+  [clan: string]: { name: string; day: string; activities: number }[];
+};
+
+type ActivityPeriod = {
+  name: string;
+  day: string;
+  [clan: string]: string | number;
+};
+type ActivityIndexMap = { [day: string]: number };
 export const DestinyClanReportComponent = (props: ClanReportProps) => {
   const forceUpdate = useForceUpdate();
 
   const modes = (props.modes || []).join(',');
-  let [reportStatuses, setReportStatuses] = useState(
-    {} as MemberRosterListProps['reportStatuses']
-  );
-  let [reportMapData, setReportMapData] = useState({} as ReportMap);
-  let [activityBreakdown, setActivityBreakdown] = useState(
-    null as null | { [group_id: string]: NetworkActivityClanBreakdown }
+  const [reportStatuses, setReportStatuses] = useState({} as ReportStatusMap);
+  const [reportMapData, setReportMapData] = useState({} as ReportMap);
+  const [activityBreakdown, setActivityBreakdown] = useState(
+    null as null | ActivityBreakdown
   );
 
   // things required by our component to render that are state dependent
-  let [reportArrayData, setReportArrayData] = useState([] as MemberReport[]);
-  let [activityTimeBuckets, setActivityTimeBuckets] = useState(
-    {} as {
-      [clan: string]: {
-        [bucket: string]: InstanceData[];
-      };
-    }
+  const [reportArrayData, setReportArrayData] = useState([] as MemberReport[]);
+  const [activityTimeBuckets, setActivityTimeBuckets] = useState(
+    {} as ActivityTimeBucketMap
   );
+
   const ignoreBuckets = ['0', '1', '2', '3', '4', '5', '6'];
-  let [dailyActivityClanMap, setDailyActivityClanMap] = useState(
-    {} as {
-      [clan: string]: { name: string; day: string; activities: number }[];
-    }
+  const [dailyActivityClanMap, setDailyActivityClanMap] = useState(
+    {} as ActivityClanMap
   );
-  let [weekdaysTimePeriods, setWeekdayTimePeriods] = useState([
+  const [weekdaysTimePeriods, setWeekdayTimePeriods] = useState([
     {
       name: 'Monday',
       day: '1',
@@ -404,23 +414,15 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       name: 'Sunday',
       day: '0',
     },
-  ] as {
-    name: string;
-    day: string;
-    [clan: string]: string | number;
-  }[]);
+  ] as ActivityPeriod[]);
 
-  let [clans, setClans] = useState([] as string[]);
-  let [dailyActivityIndexMap, setDailyActivityIndexMap] = useState(
-    {} as { [day: string]: number }
+  const [clans, setClans] = useState([] as string[]);
+  const [dailyActivityIndexMap, setDailyActivityIndexMap] = useState(
+    {} as ActivityIndexMap
   );
 
-  let [dailyActivities, setDailyActivities] = useState(
-    [] as {
-      day: string;
-      name: string;
-      [clan: string]: number | string;
-    }[]
+  const [dailyActivities, setDailyActivities] = useState(
+    [] as ActivityPeriod[]
   );
 
   // start updating other parts of our state based off this map data
@@ -435,7 +437,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
 
   useDeepCompareEffect(() => {
     console.log('Generating week day time periods');
-    const weekdaysTimePeriods = [
+    const newWeekdaysTimePeriods = [
       {
         name: 'Monday',
         day: '1',
@@ -464,34 +466,30 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         name: 'Sunday',
         day: '0',
       },
-    ] as {
-      name: string;
-      day: string;
-      [clan: string]: string | number;
-    }[];
+    ] as ActivityPeriod[];
 
     const clans = [] as string[];
     for (const clan in activityTimeBuckets) {
       clans.push(clan);
-      for (let i = 0; i < weekdaysTimePeriods.length; i++) {
-        const dayKey = weekdaysTimePeriods[i].day;
-        weekdaysTimePeriods[i][clan] =
+      for (let i = 0; i < newWeekdaysTimePeriods.length; i++) {
+        const dayKey = newWeekdaysTimePeriods[i].day;
+        newWeekdaysTimePeriods[i][clan] =
           typeof activityTimeBuckets[clan][dayKey] !== 'undefined'
             ? activityTimeBuckets[clan][dayKey].length
             : 0;
       }
     }
-    setWeekdayTimePeriods(weekdaysTimePeriods);
+    setWeekdayTimePeriods(newWeekdaysTimePeriods);
     setClans(clans);
   }, [reportArrayData, activityTimeBuckets]);
 
   useDeepCompareEffect(() => {
     console.log('Generating activity maps');
-    dailyActivityClanMap = {};
-    dailyActivityIndexMap = {};
-    dailyActivities = [];
+    const newDailyActivityClanMap = {} as ActivityClanMap;
+    const newDailyActivityIndexMap = {} as ActivityIndexMap;
+    const newDailyActivities = [] as ActivityPeriod[];
     for (const clan in activityTimeBuckets) {
-      dailyActivityClanMap[clan] = [];
+      newDailyActivityClanMap[clan] = [];
       for (const day in activityTimeBuckets[clan]) {
         if (!ignoreBuckets.includes(day)) {
           const date = new Date(day);
@@ -501,7 +499,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             (date.getDate() + '').padStart(2, '0') +
             '-' +
             date.getFullYear();
-          dailyActivityClanMap[clan].push({
+          newDailyActivityClanMap[clan].push({
             name: name,
             day: day,
             activities: activityTimeBuckets[clan][day].length,
@@ -509,19 +507,19 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         }
       }
     }
-    setDailyActivityClanMap(dailyActivityClanMap);
+    setDailyActivityClanMap(newDailyActivityClanMap);
 
-    for (const clan in dailyActivityClanMap) {
-      for (let i = 0; i < dailyActivityClanMap[clan].length; i++) {
-        const dailyActivity = dailyActivityClanMap[clan][i];
+    for (const clan in newDailyActivityClanMap) {
+      for (let i = 0; i < newDailyActivityClanMap[clan].length; i++) {
+        const dailyActivity = newDailyActivityClanMap[clan][i];
         //if(typeof dailyActivityIndexMap[dailyActivity.]
         const day = dailyActivity.day;
 
         // create a new daily activities entry and store the idnex
-        if (typeof dailyActivityIndexMap[day] === 'undefined') {
+        if (typeof newDailyActivityIndexMap[day] === 'undefined') {
           // new
           const index = dailyActivities.length;
-          dailyActivityIndexMap[day] = index;
+          newDailyActivityIndexMap[day] = index;
 
           const details = {
             day: day,
@@ -532,24 +530,24 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             details[clanName] = 0;
           }
 
-          dailyActivities.push(details);
+          newDailyActivities.push(details);
         }
 
         const index = dailyActivityIndexMap[day];
-        dailyActivities[index][clan] = dailyActivity.activities;
+        newDailyActivities[index][clan] = dailyActivity.activities;
       }
     }
 
-    dailyActivities.sort((a, b) => {
+    newDailyActivities.sort((a, b) => {
       const timestamp_a = new Date(a.day).getTime() * 1000;
       const timestamp_b = new Date(b.day).getTime() * 1000;
       return timestamp_a - timestamp_b;
     });
 
-    setDailyActivityIndexMap(dailyActivityIndexMap);
-    setDailyActivities(dailyActivities);
+    setDailyActivityIndexMap(newDailyActivityIndexMap);
+    setDailyActivities(newDailyActivities);
 
-    console.log('Daily activities', dailyActivities);
+    console.log('Daily activities', newDailyActivities);
   }, [weekdaysTimePeriods, clans]);
 
   const getReportType = (memberReport: ReportOutput | null) => {
@@ -654,11 +652,11 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     }
 
     console.log('Merging completed reports', reportsDone);
-    reportMapData = {};
-    reportStatuses = {};
+    const newReportMapData = {} as ReportMap;
+    const newReportStatuses = {} as ReportStatusMap;
     for (const member in reportsDone) {
-      reportMapData[member] = reportsDone[member];
-      reportStatuses[member] = true;
+      newReportMapData[member] = reportsDone[member];
+      newReportStatuses[member] = true;
     }
 
     if (needTimers.length > 0) {
@@ -671,8 +669,8 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       }, 5 * 1000);
     }
 
-    setReportMapData(reportMapData);
-    setReportStatuses(reportStatuses);
+    setReportMapData(newReportMapData);
+    setReportStatuses(newReportStatuses);
 
     //doForceUpdate();
   };
@@ -696,132 +694,6 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     'blue',
     'emerald',
   ] as CardProps['decorationColor'][];
-
-  // create time buckets
-  /* const reportArrayData = Object.values(reportMapData);
-  const activityTimeBuckets = reportMapData
-    ? createActivityPeriods(reportArrayData)
-    : {};
-
-  // activity overtime
-  const ignoreBuckets = ['0', '1', '2', '3', '4', '5', '6'];
-  
-  const dailyActivityClanMap2 = {} as {
-    [clan: string]: { name: string; day: string; activities: number }[];
-  };
-
-  /*
-  const weekdaysTimePeriods = [
-    {
-      name: 'Monday',
-      day: '1',
-    },
-    {
-      name: 'Tuesday',
-      day: '2',
-    },
-    {
-      name: 'Wednesday',
-      day: '3',
-    },
-    {
-      name: 'Thursday',
-      day: '4',
-    },
-    {
-      name: 'Friday',
-      day: '5',
-    },
-    {
-      name: 'Saturday',
-      day: '6',
-    },
-    {
-      name: 'Sunday',
-      day: '0',
-    },
-  ] as {
-    name: string;
-    day: string;
-    [clan: string]: string | number;
-  }[]; 
-
-  const clans = [] as string[];
-  for (const clan in activityTimeBuckets) {
-    clans.push(clan);
-    for (let i = 0; i < weekdaysTimePeriods.length; i++) {
-      const dayKey = weekdaysTimePeriods[i].day;
-      weekdaysTimePeriods[i][clan] =
-        typeof activityTimeBuckets[clan][dayKey] !== 'undefined'
-          ? activityTimeBuckets[clan][dayKey].length
-          : 0;
-    }
-  }
-
-  for (const clan in activityTimeBuckets) {
-    dailyActivityClanMap[clan] = [];
-    for (const day in activityTimeBuckets[clan]) {
-      if (!ignoreBuckets.includes(day)) {
-        const date = new Date(day);
-        const name =
-          (date.getMonth() + 1).toString().padStart(2, '0') +
-          '-' +
-          (date.getDate() + '').padStart(2, '0') +
-          '-' +
-          date.getFullYear();
-        dailyActivityClanMap[clan].push({
-          name: name,
-          day: day,
-          activities: activityTimeBuckets[clan][day].length,
-        });
-      }
-    }
-  } 
-
-  const dailyActivityIndexMap = {} as {
-    [day: string]: number;
-  };
-
-  const dailyActivities = [] as {
-    day: string;
-    name: string;
-    [clan: string]: number | string;
-  }[];
-
-  for (const clan in dailyActivityClanMap) {
-    for (let i = 0; i < dailyActivityClanMap[clan].length; i++) {
-      const dailyActivity = dailyActivityClanMap[clan][i];
-      //if(typeof dailyActivityIndexMap[dailyActivity.]
-      const day = dailyActivity.day;
-
-      // create a new daily activities entry and store the idnex
-      if (typeof dailyActivityIndexMap[day] === 'undefined') {
-        // new
-        const index = dailyActivities.length;
-        dailyActivityIndexMap[day] = index;
-
-        const details = {
-          day: day,
-          name: dailyActivity.name,
-        } as { day: string; name: string; [clan: string]: number | string };
-
-        for (const clanName of clans) {
-          details[clanName] = 0;
-        }
-
-        dailyActivities.push(details);
-      }
-
-      const index = dailyActivityIndexMap[day];
-      dailyActivities[index][clan] = dailyActivity.activities;
-    }
-  }
-
-  dailyActivities.sort((a, b) => {
-    const timestamp_a = new Date(a.day).getTime() * 1000;
-    const timestamp_b = new Date(b.day).getTime() * 1000;
-    return timestamp_a - timestamp_b;
-  }); */
 
   // what badges to display
   const badgeClanColors = {
