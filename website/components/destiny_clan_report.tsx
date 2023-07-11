@@ -76,25 +76,33 @@ const MemberListCard = (props: MemberListProps) => (
   <Card className=" ">
     <Title>{props.listType}</Title>
     <List className="h-[23.25rem] overflow-y-auto">
-      {props.members.map((data, memberIndex) => (
-        <ListItem key={props.listType + '_member_list_' + memberIndex}>
-          <Hyperlink
-            href={generate_member_url(
-              data.display_name_global,
-              props.season,
-              props.mode
-            )}
-            target="_blank"
-            className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
-            title={data.member.display_name}
-          >
-            {(memberIndex + 1).toString().padStart(2, '0') +
-              '. ' +
-              data.member.display_name}
-          </Hyperlink>
-          <span className="mr-4">{(data as any)[props.metric]}</span>
-        </ListItem>
-      ))}
+      {props.members.map((data, memberIndex) => {
+        const metric = data[props.metric];
+
+        return (
+          <ListItem key={props.listType + '_member_list_' + memberIndex}>
+            <Hyperlink
+              href={generate_member_url(
+                data.display_name_global,
+                props.season,
+                props.mode
+              )}
+              target="_blank"
+              className=" whitespace-nowrap text-ellipsis overflow-hidden w-[10rem] inline-block mr-2"
+              title={data.member.display_name}
+            >
+              {(memberIndex + 1).toString().padStart(2, '0') +
+                '. ' +
+                data.member.display_name}
+            </Hyperlink>
+            <span className="mr-4">
+              {props.metric !== 'last_played_at'
+                ? metric.toString()
+                : new Date((metric as number) * 1000).toLocaleString('en-US')}
+            </span>
+          </ListItem>
+        );
+      })}
     </List>
   </Card>
 );
@@ -176,15 +184,6 @@ const MemberRosterCard = (props: MemberRosterListProps) => {
 
 type ReportMap = { [member: string]: DestinyMemberReport };
 
-//https://stackoverflow.com/questions/46240647/how-to-force-a-functional-react-component-to-render/53837442#53837442
-//create your forceUpdate hook
-function useForceUpdate() {
-  const [value, setValue] = useState(0); // integer state
-  return () => setValue((value) => value + 1); // update state to force render
-  // A function that increment 👆🏻 the previous state like here
-  // is better than directly setting `setValue(value + 1)`
-}
-
 interface InstanceData {
   instance_id: number;
   occurred_at: number;
@@ -192,6 +191,21 @@ interface InstanceData {
 
 function getActivityAmounts(memberReports: DestinyMemberReport[]) {
   //
+}
+
+function getZeroActivityMembers(memberReports: DestinyMemberReport[]) {
+  const member_reports = [] as DestinyMemberReport[];
+  for (const member of memberReports) {
+    if (member.activity_attempts === 0) {
+      member_reports.push(member);
+    }
+  }
+
+  member_reports.sort((a, b) =>
+    a.display_name_global.localeCompare(b.display_name_global)
+  );
+
+  return member_reports;
 }
 
 /**
@@ -353,10 +367,20 @@ type ActivityPeriod = {
   [clan: string]: string | number;
 };
 type ActivityIndexMap = { [day: string]: number };
-export const DestinyClanReportComponent = (props: ClanReportProps) => {
-  const forceUpdate = useForceUpdate();
+type SumActivityStats = {
+  activities: number;
+  activities_completed: number;
+  activities_completed_with_clan: number;
+};
 
+export const DestinyClanReportComponent = (props: ClanReportProps) => {
   const modes = (props.modes || []).join(',');
+
+  const [sumStats, setSumStats] = useState({
+    activities: 0,
+    activities_completed: 0,
+    activities_completed_with_clan: 0,
+  } as SumActivityStats);
   const [reportStatuses, setReportStatuses] = useState({} as ReportStatusMap);
   const [reportMapData, setReportMapData] = useState({} as ReportMap);
   const [activityBreakdown, setActivityBreakdown] = useState(
@@ -661,6 +685,29 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   };
 
   useEffect(() => {
+    //
+
+    if (activityBreakdown !== null) {
+      let sumActivities = 0;
+      let sumActivitiesCompletions = 0;
+      let sumActivitiesCompletedWithClan = 0;
+      for (const clan in activityBreakdown) {
+        const breakdown = activityBreakdown[clan];
+        sumActivities += breakdown.activity_attempts;
+        sumActivitiesCompletions += breakdown.activities_completed;
+        sumActivitiesCompletedWithClan +=
+          breakdown.activities_completed_with_clan;
+      }
+
+      setSumStats({
+        activities: sumActivities,
+        activities_completed: sumActivitiesCompletions,
+        activities_completed_with_clan: sumActivitiesCompletedWithClan,
+      });
+    }
+  }, [activityBreakdown]);
+
+  useEffect(() => {
     console.log('Starting initial report fetch');
     fetchClanReport();
 
@@ -696,6 +743,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
   // bucket members
   const mostActiveMembers = getMostActiveMembers(reportArrayData);
   const mostActiveMembersWithClan = getMostClanActiveMembers(reportArrayData);
+  const noActivityMembers = getZeroActivityMembers(reportArrayData);
 
   const categories = Object.keys(activityTimeBuckets);
   categories.sort();
@@ -755,7 +803,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
         />
       </Grid>
       <Divider />
-      <Grid className="gap-4 mt-4" numItemsLg={4}>
+      <Grid className="gap-4 mt-4" numItemsLg={3}>
         <MemberListCard
           members={mostActiveMembers}
           listType={'Most Activities'}
@@ -770,7 +818,13 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           mode={modes || 'all'}
           metric={'activity_attempts_with_clan'}
         />
-        <Col numColSpanLg={1}></Col>
+        <MemberListCard
+          members={noActivityMembers}
+          listType={'Zero Activities'}
+          season={props.season.toString()}
+          mode={modes || 'all'}
+          metric={'last_played_at'}
+        />
       </Grid>
     </div>
   );
