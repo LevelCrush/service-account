@@ -123,7 +123,7 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
                   {props.clans.map((clan, clanIndex) => (
                     <SearchSelectItem
                       key={'clan_report_roster_select_item_' + clanIndex}
-                      value={clan.name}
+                      value={clan.slug || ''}
                     >
                       {clan.name}
                     </SearchSelectItem>

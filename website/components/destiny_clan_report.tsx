@@ -19,6 +19,9 @@ import {
   TabPanels,
   BarChart,
   AreaChart,
+  DonutChart,
+  Text,
+  Legend,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
 import {
@@ -371,6 +374,7 @@ type SumActivityStats = {
   activities: number;
   activities_completed: number;
   activities_completed_with_clan: number;
+  percent_with_clan: number;
 };
 
 export const DestinyClanReportComponent = (props: ClanReportProps) => {
@@ -621,7 +625,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       ENV.hosts.destiny +
         '/' +
         clanPath +
-        '/report/activities/' +
+        '/report/activity/' +
         reportType +
         (modeString.length > 0
           ? '?modes=' + encodeURIComponent(modeString)
@@ -691,18 +695,24 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
       let sumActivities = 0;
       let sumActivitiesCompletions = 0;
       let sumActivitiesCompletedWithClan = 0;
+      let avgPercentWithClan = 0;
       for (const clan in activityBreakdown) {
         const breakdown = activityBreakdown[clan];
         sumActivities += breakdown.activity_attempts;
         sumActivitiesCompletions += breakdown.activities_completed;
         sumActivitiesCompletedWithClan +=
           breakdown.activities_completed_with_clan;
+        avgPercentWithClan += breakdown.percent_with_clan;
       }
+
+      avgPercentWithClan =
+        avgPercentWithClan / Object.keys(activityBreakdown).length;
 
       setSumStats({
         activities: sumActivities,
         activities_completed: sumActivitiesCompletions,
         activities_completed_with_clan: sumActivitiesCompletedWithClan,
+        percent_with_clan: avgPercentWithClan,
       });
     }
   }, [activityBreakdown]);
@@ -825,6 +835,50 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
           mode={modes || 'all'}
           metric={'last_played_at'}
         />
+      </Grid>
+      <Grid className="mt-8 gap-4" numItemsLg={3}>
+        <Card>
+          <Title>
+            {props.clan === 'network'
+              ? 'Activity % completed with network'
+              : 'Activity % completed with clan'}
+          </Title>
+          <Grid numItemsMd={7} className="gap-4 mt-4">
+            <Col numColSpanMd={4}>
+              <DonutChart
+                index="name"
+                category="metric"
+                showAnimation={true}
+                label={sumStats.percent_with_clan + '%'}
+                data={
+                  activityBreakdown !== null
+                    ? Object.keys(activityBreakdown).map(
+                        (clanId, clanIndex) => {
+                          const data = activityBreakdown[clanId];
+                          return {
+                            name: data.name,
+                            metric: data.percent_with_clan,
+                          };
+                        }
+                      )
+                    : []
+                }
+              ></DonutChart>
+            </Col>
+            <Col numColSpanMd={3}>
+              <Legend
+                className="flex-col gap-4 items-center md:items-stretch"
+                categories={
+                  activityBreakdown !== null
+                    ? Object.keys(activityBreakdown).map(
+                        (v) => activityBreakdown[v].name
+                      )
+                    : []
+                }
+              ></Legend>
+            </Col>
+          </Grid>
+        </Card>
       </Grid>
     </div>
   );
