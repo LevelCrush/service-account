@@ -20,6 +20,7 @@ export * from "./service-destiny/Leaderboard";
 export * from "./service-destiny/LeaderboardEntry";
 export * from "./service-destiny/SettingModeRecord";
 export * from "./service-destiny/DestinySeason";
+export * from "./service-destiny/NetworkActivityClanBreakdown";
 
 export type DestinyModeTypeSearch = "all" | "leaderboards" | "dashboard";
 /**
