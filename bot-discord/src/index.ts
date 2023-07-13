@@ -29,18 +29,27 @@ async function bot() {
     const guild_logs = new Map<string, ChannelLoggerCleanup>();
     const guild_jtcs = new Map<string, JoinToCreateCleanup>();
 
-    // anything that should happen once the client has is ready
     client.on(Events.ClientReady, async () => {
-        console.log('Client ready!');
-
         // reading join to create config
         console.log('Parsing JTC config');
         const jtc_config_file = await fs.promises.readFile(process.env['JOIN_TO_CREATE_CONFIG'] || '', {
             encoding: 'utf-8',
         });
-
         const jtc_json = JSON.parse(jtc_config_file) as JoinToCreateConfig;
         console.log(jtc_json);
+
+        const jtc_manager = JoinToCreate();
+        jtc_manager.configure(jtc_json);
+
+        for (const [guild_id, guild] of client.guilds.cache) {
+            console.log('Join to create enabled on ', guild.name);
+            guild_jtcs.set(guild.id, jtc_manager.monitor(client, guild));
+        }
+    });
+
+    // anything that should happen once the client has is ready
+    client.on(Events.ClientReady, async () => {
+        console.log('Client ready!');
 
         console.log('Setting up role decay and channel logs');
         const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
@@ -51,8 +60,6 @@ async function bot() {
 
         const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
         const log_manager = ChannelLogger();
-        const jtc_manager = JoinToCreate();
-        jtc_manager.configure(jtc_json);
 
         if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
             const guilds = client.guilds.cache;
@@ -90,7 +97,6 @@ async function bot() {
                 decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
                 guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
                 guild_logs.set(guild.id, log_manager.monitor(client, guild));
-                guild_jtcs.set(guild.id, jtc_manager.monitor(client, guild));
             }
         }
     });
