@@ -6,6 +6,8 @@ import RoleDecay, { RoleDecayManager, RoleMonitorCleanup } from './role_decay';
 import { ChannelLogger, ChannelLoggerCleanup } from './channel_logger';
 import { category_active_users, channel_active_users } from './api/query';
 import { role_get_denies } from './api/settings';
+import JoinToCreate, { JoinToCreateCleanup, JoinToCreateConfig } from './join_to_create';
+import * as fs from 'fs';
 
 // import env settings into the process env
 dotenv.config();
@@ -25,10 +27,20 @@ async function bot() {
 
     const guild_decays = new Map<string, RoleMonitorCleanup>();
     const guild_logs = new Map<string, ChannelLoggerCleanup>();
+    const guild_jtcs = new Map<string, JoinToCreateCleanup>();
 
     // anything that should happen once the client has is ready
     client.on(Events.ClientReady, async () => {
         console.log('Client ready!');
+
+        // reading join to create config
+        console.log('Parsing JTC config');
+        const jtc_config_file = await fs.promises.readFile(process.env['JOIN_TO_CREATE_CONFIG'] || '', {
+            encoding: 'utf-8',
+        });
+
+        const jtc_json = JSON.parse(jtc_config_file) as JoinToCreateConfig;
+        console.log(jtc_json);
 
         console.log('Setting up role decay and channel logs');
         const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
@@ -37,17 +49,16 @@ async function bot() {
         const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CEHCK_SECS'] || '60');
         const target_channels = (process.env['ROLE_DECAY_CHANNEL'] || '').split(',');
 
-        console.log(target_category);
-        console.log(target_channels);
         const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
         const log_manager = ChannelLogger();
+        const jtc_manager = JoinToCreate();
+        jtc_manager.configure(jtc_json);
+
         if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
             const guilds = client.guilds.cache;
             for (const [guild_id, guild] of guilds) {
                 const unix_timestamp = Math.ceil(Date.now() / 1000);
                 const timestamp = unix_timestamp - (target_decay_time + 1);
-                console.log(timestamp);
-                console.log('Getting category members for guild', guild.name, 'at category', target_category);
                 const last_interaction_map = new Map<string, number>();
                 for (const cat of target_category) {
                     const category_users = await category_active_users(guild.id, cat, timestamp);
@@ -75,12 +86,11 @@ async function bot() {
                     }
                 }
 
-                console.log(dont_want_map);
-
                 decay_manager.set_dont_want(guild, dont_want_map); // for now empty
                 decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
                 guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
                 guild_logs.set(guild.id, log_manager.monitor(client, guild));
+                guild_jtcs.set(guild.id, jtc_manager.monitor(client, guild));
             }
         }
     });
