@@ -79,18 +79,49 @@ export function JoinToCreate() {
                 const category = channel.parent;
 
                 // count how many of this type there is
-                const similiar_vc_types = guild.channels.cache.filter((chan) => {
-                    return chan.type === ChannelType.GuildVoice && typeof managed_vc_types[chan.id] !== 'undefined';
+                const similiar_vc_types = guild.voiceStates.cache.filter((chan) => {
+                    if (chan.channelId === null) {
+                        return false;
+                    }
+                    console.log([
+                        managed_vc_types[chan.channelId],
+                        channel.name,
+                        typeof managed_vc_types[chan.channelId] !== 'undefined' &&
+                            managed_vc_types[chan.channelId] === channel.name,
+                    ]);
+                    return (
+                        typeof managed_vc_types[chan.channelId] !== 'undefined' &&
+                        managed_vc_types[chan.channelId] === channel.name
+                    );
                 });
+
+                console.log('Total Similar VC', similiar_vc_types);
 
                 const lookup_table = {
                     '{$username}': user.nickname || user.displayName,
-                    '{$counter}': similiar_vc_types.size.toString(),
+                    '{$counter}': '1',
                 } as { [key: string]: string };
 
-                let name = jtc_config.name;
-                for (const lookup_var in lookup_table) {
-                    name = name.replaceAll(lookup_var, lookup_table[lookup_var]);
+                let name = '';
+                for (let i = 0; i < similiar_vc_types.size + 1; i++) {
+                    name = jtc_config.name;
+                    const is_using_counter = jtc_config.name.includes('{$counter}');
+                    const internal_counter = is_using_counter ? (i + 1).toString() : i > 0 ? i.toString() : '';
+                    lookup_table['{$counter}'] = internal_counter;
+                    for (const lookup_var in lookup_table) {
+                        name = name.replaceAll(lookup_var, lookup_table[lookup_var]);
+                    }
+
+                    const exactly_named = guild.voiceStates.cache.filter((vs) => {
+                        if (vs.channel === null) {
+                            return false;
+                        }
+                        return vs.channel.name === name;
+                    });
+
+                    if (exactly_named.size === 0) {
+                        break;
+                    }
                 }
 
                 const vc = await guild.channels.create({
