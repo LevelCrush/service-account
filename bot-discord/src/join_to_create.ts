@@ -40,6 +40,7 @@ export interface JoinToCreateManager {
 export function JoinToCreate() {
     // managed vc information
     const managed_vc = {} as { [channel_id: string]: VoiceChannel };
+    const managed_vc_types = {} as { [channel_id: string]: string };
 
     // owner permissions for vc
     const vc_owner_permissions = [
@@ -76,10 +77,26 @@ export function JoinToCreate() {
                 }
                 const jtc_config = config[channel_name];
                 const category = channel.parent;
+
+                // count how many of this type there is
+                const similiar_vc_types = guild.channels.cache.filter((chan) => {
+                    return chan.type === ChannelType.GuildVoice && typeof managed_vc_types[chan.id] !== 'undefined';
+                });
+
+                const lookup_table = {
+                    '{$username}': user.nickname || user.displayName,
+                    '{$counter}': similiar_vc_types.size.toString(),
+                } as { [key: string]: string };
+
+                let name = jtc_config.name;
+                for (const lookup_var in lookup_table) {
+                    name = name.replaceAll(lookup_var, lookup_table[lookup_var]);
+                }
+
                 const vc = await guild.channels.create({
                     type: ChannelType.GuildVoice,
                     parent: category,
-                    name: jtc_config.name,
+                    name: name,
                     permissionOverwrites: [
                         {
                             id: user.id,
@@ -93,14 +110,13 @@ export function JoinToCreate() {
 
                 // track
                 managed_vc[vc.id] = vc;
+                managed_vc_types[vc.id] = channel_name;
             }
         };
 
         // this function exclusively handles watching join to create result channels and managing them
-        const jtc_manage = async (old_state: VoiceState, new_state: VoiceState) => {
-            //
+        const jtc_channel_orphans = async (old_state: VoiceState, new_state: VoiceState) => {
             const old_member = old_state.member;
-            const new_member = new_state.member;
             const old_vc_is_managed = typeof managed_vc[old_state.channelId || ''] !== 'undefined';
             const vc_changed = new_state.channelId !== old_state.channelId;
             if (old_vc_is_managed && vc_changed) {
@@ -125,10 +141,10 @@ export function JoinToCreate() {
                 if (old_channel.members.size === 0) {
                     console.log('Deleting channel: ', old_channel.name);
                     await old_channel.delete('No members remaining. Removing');
-                } else if (old_channel.members.size > 0 && other_owners.length > 0) {
+                } else if (was_owner && old_channel.members.size > 0 && other_owners.length > 0) {
                     console.log('Removing owner permissions for', old_channel.name);
                     await old_channel.permissionOverwrites.delete(old_member.id);
-                } else if (old_channel.members.size > 0 && other_owners.length === 0) {
+                } else if (was_owner && old_channel.members.size > 0 && other_owners.length === 0) {
                     // find a new owner
                     const member = old_channel.members.first();
                     if (member) {
@@ -146,11 +162,11 @@ export function JoinToCreate() {
         };
 
         client.on(Events.VoiceStateUpdate, jtc_watch);
-        client.on(Events.VoiceStateUpdate, jtc_manage);
+        client.on(Events.VoiceStateUpdate, jtc_channel_orphans);
 
         return () => {
             client.off(Events.VoiceStateUpdate, jtc_watch);
-            client.off(Events.VoiceStateUpdate, jtc_manage);
+            client.off(Events.VoiceStateUpdate, jtc_channel_orphans);
         };
     };
 
