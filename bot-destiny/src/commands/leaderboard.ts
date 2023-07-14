@@ -117,10 +117,7 @@ export const LeaderboardCommand = {
                 .setDescription(
                     (is_pvp ? 'Standings are Win Rate % based' : 'Standings are based on full completions' + '\r\n') +
                         standings.join('\r\n'),
-                )
-                .setFooter({
-                    text: 'For the full leaderboard, visit ' + url,
-                });
+                );
 
             interaction.followUp({
                 embeds: [embed],
