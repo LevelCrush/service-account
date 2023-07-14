@@ -55,7 +55,7 @@ async function bot() {
         const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
         const target_role = process.env['ROLE_NAME_DECAY'] || '';
         const target_decay_time = parseInt(process.env['ROLE_DECAY_TIME_SECONDS'] || '60');
-        const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CEHCK_SECS'] || '60');
+        const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CHECK_SECS'] || '60');
         const target_channels = (process.env['ROLE_DECAY_CHANNEL'] || '').split(',');
 
         const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);

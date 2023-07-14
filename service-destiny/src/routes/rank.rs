@@ -9,7 +9,7 @@ use levelcrush::{
         routing::get,
         Json, Router,
     },
-    cache::{CacheDuration, CacheValue},
+    cache::{self, CacheDuration, CacheValue},
     server::APIResponse,
     tracing,
 };
@@ -76,7 +76,8 @@ async fn rank_generic(
     modes.sort();
 
     let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");
-    let (should_cache, entries) = match state.ranks.access(&mode_str).await {
+    let cache_key_str = format!("rank_leaderboard||{}||{}", mode_str, display_name);
+    let (should_cache, entries) = match state.ranks.access(&cache_key_str).await {
         Some(data) => (false, data),
         _ => (
             true,
@@ -93,7 +94,7 @@ async fn rank_generic(
         state
             .ranks
             .write(
-                &mode_str,
+                &cache_key_str,
                 CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
             )
             .await
@@ -126,7 +127,9 @@ async fn rank_titles(
 ) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
 
-    let (should_cache, entries) = match state.ranks.access("Titles").await {
+    let cache_key_str = format!("rank_leaderboard||{}||{}", "Titles", display_name);
+
+    let (should_cache, entries) = match state.ranks.access(&cache_key_str).await {
         Some(data) => (false, data),
         _ => (true, database::rank::titles(&display_name, &state.database).await),
     };
@@ -135,7 +138,7 @@ async fn rank_titles(
         state
             .ranks
             .write(
-                "Titles",
+                &cache_key_str,
                 CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
             )
             .await;
@@ -158,8 +161,8 @@ async fn rank_raids(
     State(mut state): State<AppState>,
 ) -> Json<APIResponse<Leaderboard>> {
     let mut response = APIResponse::new();
-
-    let (should_cache, entries) = match state.ranks.access("Raid").await {
+    let cache_key_str = format!("rank_leaderboard||{}||{}", "Raid", display_name);
+    let (should_cache, entries) = match state.ranks.access(&cache_key_str).await {
         Some(data) => (false, data),
         _ => (true, database::rank::raids(&display_name, &state.database).await),
     };
@@ -168,7 +171,7 @@ async fn rank_raids(
         state
             .ranks
             .write(
-                "Raid",
+                cache_key_str,
                 CacheValue::with_duration(entries.clone(), CacheDuration::OneHour, CacheDuration::OneHour),
             )
             .await;
