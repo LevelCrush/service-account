@@ -103,7 +103,11 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
                 const server_role = find_role();
                 if (server_role) {
                     message.member.roles
-                        .add(server_role)
+                        .add(
+                            server_role,
+                            (message.member.nickname || message.member.displayName) +
+                                ' interacted with a channel that supports this auto role',
+                        )
                         .then(() => {
                             console.log('Role added to ', message.author.username, ' in ', target_guild.name);
                         })
@@ -157,7 +161,7 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
                 const not_wanted = users_dont_want.get(target_guild.id)?.has(discord_id);
                 if (has_role && (has_decayed || not_wanted)) {
                     try {
-                        await member.roles.remove(decayed_role);
+                        await member.roles.remove(decayed_role, 'Role Decayed');
                         console.log(
                             'Removed role',
                             target_role,
@@ -197,6 +201,7 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
                             await target_guild.members.removeRole({
                                 user: user,
                                 role: role.id,
+                                reason: (guild_member.nickname || guild_member.displayName) + ' opted out of this role',
                             });
                             console.log(
                                 'User had role',
