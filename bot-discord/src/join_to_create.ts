@@ -50,6 +50,7 @@ export function JoinToCreate() {
         PermissionsBitField.Flags.ModerateMembers,
         PermissionsBitField.Flags.MuteMembers,
         PermissionsBitField.Flags.ManageRoles,
+        PermissionsBitField.Flags.MoveMembers,
     ];
 
     // configuration options
@@ -164,30 +165,41 @@ export function JoinToCreate() {
                 const other_member_permissions = old_channel.permissionOverwrites;
                 const other_owners = [] as string[];
                 other_member_permissions.cache.forEach((perm_overwrite) => {
-                    if (perm_overwrite.allow.has(PermissionsBitField.Flags.ManageChannels)) {
+                    if (
+                        perm_overwrite.id !== old_member.id &&
+                        perm_overwrite.allow.has(PermissionsBitField.Flags.ManageChannels)
+                    ) {
                         other_owners.push(perm_overwrite.id);
                     }
                 });
                 // no one is left. This VC is orphaned. Delete it
-                if (old_channel.members.size === 0) {
-                    console.log('Deleting channel: ', old_channel.name);
-                    await old_channel.delete('No members remaining. Removing');
-                } else if (was_owner && old_channel.members.size > 0 && other_owners.length > 0) {
-                    console.log('Removing owner permissions for', old_channel.name);
-                    await old_channel.permissionOverwrites.delete(old_member.id);
-                } else if (was_owner && old_channel.members.size > 0 && other_owners.length === 0) {
-                    // find a new owner
-                    const member = old_channel.members.first();
-                    if (member) {
-                        await old_channel.permissionOverwrites.edit(member, {
-                            ManageRoles: true,
-                            ManageChannels: true,
-                            PrioritySpeaker: true,
-                            DeafenMembers: true,
-                            MuteMembers: true,
-                            ModerateMembers: true,
-                        });
+                try {
+                    if (old_channel.members.size === 0) {
+                        console.log('Deleting channel: ', old_channel.name);
+                        await old_channel.delete('No members remaining. Removing');
+                    } else if (was_owner && old_channel.members.size > 0 && other_owners.length > 0) {
+                        console.log('Removing owner permissions for', old_channel.name);
+                        await old_channel.permissionOverwrites.delete(old_member.id);
+                    } else if (was_owner && old_channel.members.size > 0 && other_owners.length === 0) {
+                        // find a new owner
+                        const member = old_channel.members.first();
+                        if (member) {
+                            console.log('Assigning owner to: ', member.nickname, 'in server: ', guild.name);
+                            await old_channel.permissionOverwrites.edit(member, {
+                                ManageRoles: true,
+                                ManageChannels: true,
+                                PrioritySpeaker: true,
+                                DeafenMembers: true,
+                                MuteMembers: true,
+                                ModerateMembers: true,
+                                MoveMembers: true,
+                            });
+                        }
+                        console.log('Removing owner permissions for', old_channel.name);
+                        await old_channel.permissionOverwrites.delete(old_member.id);
                     }
+                } catch (err) {
+                    console.log('Unable to claim or modify the orphaned voice channel in', guild.name, err);
                 }
             }
         };
