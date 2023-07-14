@@ -135,10 +135,11 @@ export function JoinToCreate() {
                             allow: vc_owner_permissions,
                         },
                     ],
+                    reason: 'User ' + (user.nickname || user.displayName) + ' requested to make a vc',
                 });
 
                 // move new member to vc
-                await user.voice.setChannel(vc.id, 'Auto VC Creation');
+                await user.voice.setChannel(vc.id, 'Moving user to their new VC: ' + vc.name);
 
                 // track
                 managed_vc[vc.id] = vc;
