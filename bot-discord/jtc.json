@@ -1,0 +1,14 @@
+{
+    "Join to Create": {
+        "name": "{$username} Channel",
+        "amount": 0
+    },
+    "Fireteam - Join to Create": {
+        "name": "Fireteam #{$counter}",
+        "amount": 3
+    },
+    "Raid - Join to Create": {
+        "name": "Raid #{$counter}",
+        "amount": 6
+    }
+}
