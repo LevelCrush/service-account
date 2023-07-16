@@ -97,7 +97,7 @@ async function bot() {
                     decay_manager.set_dont_want(guild, dont_want_map); // for now empty
                     decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
                     guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
-                    guild_logs.set(guild.id, log_manager.monitor(client, guild));
+                    // guild_logs.set(guild.id, log_manager.monitor(client, guild));
                 }
             }
         });
