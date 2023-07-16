@@ -48,7 +48,7 @@ async function bot() {
     });
 
     // anything that should happen once the client has is ready
-    if (false) {
+    if (true) {
         client.on(Events.ClientReady, async () => {
             console.log('Client ready!');
 

@@ -261,27 +261,27 @@ export function RoleDecay(role: string, decay_time_seconds: number, decay_check_
         };
 
         // subscribe to events
-        client.on(Events.MessageCreate, monitor_messages);
+        //client.on(Events.MessageCreate, monitor_messages);
         client.on(Events.GuildMemberUpdate, member_updated);
 
         client.on('role_added', role_added);
         client.on('role_allow', role_allowed);
         client.on('role_deny', role_deny);
 
-        const decay_interval = setInterval(() => {
+        /*  const decay_interval = setInterval(() => {
             console.info('Checking', target_guild.name, 'for  any decay');
             check_for_decay();
-        }, 1000 * decay_check_interval_secs);
+        }, 1000 * decay_check_interval_secs); */
 
         // cleanup
         return () => {
-            client.off(Events.MessageCreate, monitor_messages);
+            // client.off(Events.MessageCreate, monitor_messages);
             client.off(Events.GuildMemberUpdate, member_updated);
             client.off('role_added', role_added);
             client.off('role_allow', role_allowed);
             client.off('role_deny', role_deny);
 
-            clearInterval(decay_interval);
+            // clearInterval(decay_interval);
         };
     };
 
