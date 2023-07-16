@@ -39,8 +39,8 @@ export interface JoinToCreateManager {
 
 export function JoinToCreate() {
     // managed vc information
-    const managed_vc = {} as { [channel_id: string]: VoiceChannel };
-    const managed_vc_types = {} as { [channel_id: string]: string };
+    const managed_vc = {} as { [guild_id: string]: { [channel_id: string]: VoiceChannel } };
+    const managed_vc_types = {} as { [guild_id: string]: { [channel_id: string]: string } };
 
     // owner permissions for vc
     const vc_owner_permissions = [
@@ -61,11 +61,15 @@ export function JoinToCreate() {
     };
 
     const monitor: JoinToCreateManager['monitor'] = (client, guild) => {
-        //
+        managed_vc[guild.id] = {};
+        managed_vc_types[guild.id] = {};
 
         // this event handler exlcusively just watches join to create voice channels and creates them as neccessary
         const jtc_watch = async (old_state: VoiceState, new_state: VoiceState) => {
             if (!new_state.channel) {
+                return;
+            }
+            if (new_state.guild.id !== guild.id) {
                 return;
             }
             const channel = new_state.channel;
@@ -84,15 +88,13 @@ export function JoinToCreate() {
                     if (chan.channelId === null) {
                         return false;
                     }
-                    console.log([
-                        managed_vc_types[chan.channelId],
-                        channel.name,
-                        typeof managed_vc_types[chan.channelId] !== 'undefined' &&
-                            managed_vc_types[chan.channelId] === channel.name,
-                    ]);
+
+                    console.log(managed_vc_types[guild.id], managed_vc_types[guild.id][chan.channelId]);
+
                     return (
-                        typeof managed_vc_types[chan.channelId] !== 'undefined' &&
-                        managed_vc_types[chan.channelId] === channel.name
+                        typeof managed_vc_types[guild.id] !== 'undefined' &&
+                        typeof managed_vc_types[guild.id][chan.channelId] !== 'undefined' &&
+                        managed_vc_types[guild.id][chan.channelId] === channel.name
                     );
                 });
 
@@ -125,6 +127,7 @@ export function JoinToCreate() {
                     }
                 }
 
+                console.log('Creating VC in', guild.name, 'Category', category ? category.id : 'No category');
                 const vc = await guild.channels.create({
                     type: ChannelType.GuildVoice,
                     parent: category,
@@ -138,12 +141,14 @@ export function JoinToCreate() {
                     reason: 'User ' + (user.nickname || user.displayName) + ' requested to make a vc',
                 });
 
+                console.log('VC was created in', guild.name);
+
                 // move new member to vc
-                await user.voice.setChannel(vc.id, 'Moving user to their new VC: ' + vc.name);
+                await user.voice.setChannel(vc, 'Moving user to their new VC: ' + vc.name);
 
                 // track
-                managed_vc[vc.id] = vc;
-                managed_vc_types[vc.id] = channel_name;
+                managed_vc[guild.id][vc.id] = vc;
+                managed_vc_types[guild.id][vc.id] = channel_name;
             }
         };
 
