@@ -68,21 +68,23 @@ async function bot() {
                     const unix_timestamp = Math.ceil(Date.now() / 1000);
                     const timestamp = unix_timestamp - (target_decay_time + 1);
                     const last_interaction_map = new Map<string, number>();
-                    for (const cat of target_category) {
-                        const category_users = await category_active_users(guild.id, cat, timestamp);
-                        for (const cat_user of category_users) {
-                            last_interaction_map.set(cat_user.member_id, parseInt(cat_user.message_timestamp));
+                    if (false) {
+                        for (const cat of target_category) {
+                            const category_users = await category_active_users(guild.id, cat, timestamp);
+                            for (const cat_user of category_users) {
+                                last_interaction_map.set(cat_user.member_id, parseInt(cat_user.message_timestamp));
+                            }
                         }
-                    }
 
-                    console.log('Getting category members for guild', guild.name, 'at channels', target_channels);
-                    for (const chan of target_channels) {
-                        const chan_users = await channel_active_users(guild.id, chan, timestamp);
-                        for (const chan_user of chan_users) {
-                            last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
+                        console.log('Getting category members for guild', guild.name, 'at channels', target_channels);
+                        for (const chan of target_channels) {
+                            const chan_users = await channel_active_users(guild.id, chan, timestamp);
+                            for (const chan_user of chan_users) {
+                                last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
+                            }
                         }
+                        console.log(last_interaction_map);
                     }
-                    console.log(last_interaction_map);
 
                     console.log('Getting dont want map');
                     const dont_wants = await role_get_denies(guild.id, target_role);
