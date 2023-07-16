@@ -48,58 +48,60 @@ async function bot() {
     });
 
     // anything that should happen once the client has is ready
-    client.on(Events.ClientReady, async () => {
-        console.log('Client ready!');
+    if (false) {
+        client.on(Events.ClientReady, async () => {
+            console.log('Client ready!');
 
-        console.log('Setting up role decay and channel logs');
-        const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
-        const target_role = process.env['ROLE_NAME_DECAY'] || '';
-        const target_decay_time = parseInt(process.env['ROLE_DECAY_TIME_SECONDS'] || '60');
-        const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CHECK_SECS'] || '60');
-        const target_channels = (process.env['ROLE_DECAY_CHANNEL'] || '').split(',');
+            console.log('Setting up role decay and channel logs');
+            const target_category = (process.env['ROLE_DECAY_CATEGORY'] || '').toLowerCase().split(',');
+            const target_role = process.env['ROLE_NAME_DECAY'] || '';
+            const target_decay_time = parseInt(process.env['ROLE_DECAY_TIME_SECONDS'] || '60');
+            const target_decay_interval_check = parseInt(process.env['ROLE_DECAY_INTERVAL_CHECK_SECS'] || '60');
+            const target_channels = (process.env['ROLE_DECAY_CHANNEL'] || '').split(',');
 
-        const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
-        const log_manager = ChannelLogger();
+            const decay_manager = RoleDecay(target_role, target_decay_time, target_decay_interval_check);
+            const log_manager = ChannelLogger();
 
-        if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
-            const guilds = client.guilds.cache;
-            for (const [guild_id, guild] of guilds) {
-                const unix_timestamp = Math.ceil(Date.now() / 1000);
-                const timestamp = unix_timestamp - (target_decay_time + 1);
-                const last_interaction_map = new Map<string, number>();
-                for (const cat of target_category) {
-                    const category_users = await category_active_users(guild.id, cat, timestamp);
-                    for (const cat_user of category_users) {
-                        last_interaction_map.set(cat_user.member_id, parseInt(cat_user.message_timestamp));
+            if (target_role && !isNaN(target_decay_time) && !isNaN(target_decay_interval_check)) {
+                const guilds = client.guilds.cache;
+                for (const [guild_id, guild] of guilds) {
+                    const unix_timestamp = Math.ceil(Date.now() / 1000);
+                    const timestamp = unix_timestamp - (target_decay_time + 1);
+                    const last_interaction_map = new Map<string, number>();
+                    for (const cat of target_category) {
+                        const category_users = await category_active_users(guild.id, cat, timestamp);
+                        for (const cat_user of category_users) {
+                            last_interaction_map.set(cat_user.member_id, parseInt(cat_user.message_timestamp));
+                        }
                     }
-                }
 
-                console.log('Getting category members for guild', guild.name, 'at channels', target_channels);
-                for (const chan of target_channels) {
-                    const chan_users = await channel_active_users(guild.id, chan, timestamp);
-                    for (const chan_user of chan_users) {
-                        last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
+                    console.log('Getting category members for guild', guild.name, 'at channels', target_channels);
+                    for (const chan of target_channels) {
+                        const chan_users = await channel_active_users(guild.id, chan, timestamp);
+                        for (const chan_user of chan_users) {
+                            last_interaction_map.set(chan_user.member_id, parseInt(chan_user.message_timestamp));
+                        }
                     }
-                }
-                console.log(last_interaction_map);
+                    console.log(last_interaction_map);
 
-                console.log('Getting dont want map');
-                const dont_wants = await role_get_denies(guild.id, target_role);
-                const dont_want_map = new Map<string, User>();
-                for (const discord_id of dont_wants) {
-                    const guild_member = guild.members.cache.find((r) => r.id === discord_id);
-                    if (guild_member) {
-                        dont_want_map.set(discord_id, guild_member.user);
+                    console.log('Getting dont want map');
+                    const dont_wants = await role_get_denies(guild.id, target_role);
+                    const dont_want_map = new Map<string, User>();
+                    for (const discord_id of dont_wants) {
+                        const guild_member = guild.members.cache.find((r) => r.id === discord_id);
+                        if (guild_member) {
+                            dont_want_map.set(discord_id, guild_member.user);
+                        }
                     }
-                }
 
-                decay_manager.set_dont_want(guild, dont_want_map); // for now empty
-                decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
-                guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
-                guild_logs.set(guild.id, log_manager.monitor(client, guild));
+                    decay_manager.set_dont_want(guild, dont_want_map); // for now empty
+                    decay_manager.set_last_interactions(guild, last_interaction_map); // for now empty
+                    guild_decays.set(guild.id, decay_manager.monitor(client, guild, target_category, target_channels));
+                    guild_logs.set(guild.id, log_manager.monitor(client, guild));
+                }
             }
-        }
-    });
+        });
+    }
 
     // handle auto complete commands
     client.on(Events.InteractionCreate, async (interaction) => {
