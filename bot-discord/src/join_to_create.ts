@@ -154,10 +154,11 @@ export function JoinToCreate() {
 
         // this function exclusively handles watching join to create result channels and managing them
         const jtc_channel_orphans = async (old_state: VoiceState, new_state: VoiceState) => {
+            const is_guild_vc = old_state.guild.id === guild.id;
             const old_member = old_state.member;
-            const old_vc_is_managed = typeof managed_vc[old_state.channelId || ''] !== 'undefined';
+            const old_vc_is_managed = typeof managed_vc[guild.id][old_state.channelId || ''] !== 'undefined';
             const vc_changed = new_state.channelId !== old_state.channelId;
-            if (old_vc_is_managed && vc_changed) {
+            if (old_vc_is_managed && vc_changed && is_guild_vc) {
                 const old_channel = old_state.channel;
                 if (old_channel === null || old_member === null) {
                     return;
@@ -231,7 +232,6 @@ export function JoinToCreate() {
 
         client.on(Events.VoiceStateUpdate, jtc_watch);
         client.on(Events.VoiceStateUpdate, jtc_channel_orphans);
-
         return () => {
             client.off(Events.VoiceStateUpdate, jtc_watch);
             client.off(Events.VoiceStateUpdate, jtc_channel_orphans);
