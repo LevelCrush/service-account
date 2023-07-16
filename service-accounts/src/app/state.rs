@@ -1,4 +1,6 @@
-use crate::{database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView};
+use crate::{
+    database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView, sync::discord::MemberSyncResult,
+};
 use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp, uuid::Uuid};
 use sqlx::MySqlPool;
 
@@ -10,6 +12,7 @@ pub struct AppState {
     pub mass_searches: MemoryCache<Vec<AccountLinkedPlatformsResult>>,
     pub searches: MemoryCache<AccountLinkedPlatformsResult>,
     pub challenges: MemoryCache<ProfileView>,
+    pub link_gens: MemoryCache<MemberSyncResult>,
     pub guard: RetryLock,
 }
 
@@ -31,6 +34,7 @@ impl AppState {
             searches: MemoryCache::new(),
             guard: RetryLock::default(),
             challenges: MemoryCache::new(),
+            link_gens: MemoryCache::new(),
         }
     }
 }

@@ -1891,6 +1891,7 @@ name = "service-accounts"
 version = "0.1.0"
 dependencies = [
  "base64 0.21.2",
+ "clap",
  "levelcrush",
  "md5",
  "rand",
@@ -1900,6 +1901,7 @@ dependencies = [
  "serde_urlencoded",
  "sqlx",
  "tower-http",
+ "ts-rs",
  "urlencoding",
 ]
 
@@ -1917,6 +1919,25 @@ dependencies = [
  "serde_repr",
  "serde_urlencoded",
  "sqlx",
+ "ts-rs",
+ "urlencoding",
+]
+
+[[package]]
+name = "service-discord"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.2",
+ "clap",
+ "levelcrush",
+ "md5",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sqlx",
+ "tower-http",
  "ts-rs",
  "urlencoding",
 ]

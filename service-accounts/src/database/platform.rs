@@ -50,7 +50,7 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
         new_platform.platform_user.clone(),
         unix_timestamp()
     );
-    let token = format!("{:X}", md5::compute(token_seed));
+    let token = format!("{:x}", md5::compute(token_seed));
 
     let query_result = sqlx::query_file!(
         "queries/account_platform_insert.sql",
@@ -200,4 +200,20 @@ pub async fn unlink(account_platform: &AccountPlatform, pool: &MySqlPool) {
         .execute(pool)
         .await
         .ok();
+}
+
+pub async fn need_update(platform: AccountPlatformType, limit: u64, pool: &MySqlPool) -> Vec<String> {
+    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform.to_string(), limit)
+        .fetch_all(pool)
+        .await;
+
+    if let Ok(query) = query {
+        query
+            .into_iter()
+            .map(|record| record.discord_id)
+            .collect::<Vec<String>>()
+    } else {
+        database::log_error(query);
+        Vec::new()
+    }
 }

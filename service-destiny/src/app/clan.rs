@@ -2,15 +2,16 @@ use super::state::CacheItem;
 use crate::app::state::AppState;
 use crate::bungie::enums::DestinyRouteParam;
 use crate::bungie::schemas::{DestinyGroupResponse, DestinySearchResultOfGroupMember, GetGroupsForMemberResponse};
+use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::member::MemberResult;
 use crate::jobs::task;
 use crate::{database, sync};
-use levelcrush::cache::CacheValue;
-use levelcrush::futures;
+use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::tokio;
 use levelcrush::types::destiny::{GroupId, MembershipId, MembershipType};
 use levelcrush::util::unix_timestamp;
+use levelcrush::{futures, tracing};
 use sqlx::MySqlPool;
 use std::collections::HashMap;
 
@@ -19,6 +20,7 @@ pub const CACHE_KEY_CLAN_ROSTER: &str = "clan_roster||";
 const CACHE_KEY_NETWORK_CLANS: &str = "network_clans_info||main";
 const CACHE_KEY_NETWORK_CLANS_ROSTER: &str = "network_clans_roster||main";
 const CACHE_KEY_CLAN_INFO_MEMBERSHIP: &str = "clan_info_membership||";
+const CACHE_KEY_NETWORK_BREAKDOWN: &str = "activity_breakdown||network";
 
 const UPDATE_CLAN_INTERVAL: u64 = 86400; // 24 hours
 const UPDATE_CLAN_NETWORK_INTERVAL: u64 = 3600; // 1 hour
@@ -353,4 +355,79 @@ pub async fn get_by_slug(slug: &str, state: &mut AppState) -> Option<ClanInfoRes
     }
 
     clan_info
+}
+
+/// gets network activity breakdown for clans in the network
+///
+/// Note: Feeding a value of 0 to timestamp_end will make it pull the current unix timestamp
+pub async fn network_breakdown(
+    modes: &[i32],
+    timestamp_start: u64,
+    timestamp_end: u64,
+    state: &mut AppState,
+) -> HashMap<i64, NetworkBreakdownResult> {
+    let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");
+
+    let (timestamp_end_key, timestamp_end) = if timestamp_end == 0 {
+        ("lifetime".to_string(), unix_timestamp())
+    } else {
+        (timestamp_end.to_string(), timestamp_end)
+    };
+
+    let cache_key = format!(
+        "{}||{}||{}||{}",
+        CACHE_KEY_NETWORK_BREAKDOWN, mode_str, timestamp_start, timestamp_end_key
+    );
+
+    let (mut should_update, mut result) = {
+        let cache = match state.cache.access(&cache_key).await {
+            Some(CacheItem::NetworkBreakdown(data)) => Some(data),
+            _ => None,
+        };
+        (cache.is_none(), cache.unwrap_or_default())
+    };
+
+    let mut did_lock = false;
+    let mut retries = 0;
+    if should_update {
+        tracing::warn!("Not in cache for network activity breakdown, locking");
+        retries = state.locks.lock(&cache_key).await;
+        did_lock = true;
+    }
+
+    // we are trying to update, but when we went to lock we encountered some retries.
+    // check cache again
+    if should_update && retries > 0 {
+        tracing::warn!("Attempts to get activity breakdown: {}", retries);
+        (should_update, result) = {
+            let cache = match state.cache.access(&cache_key).await {
+                Some(CacheItem::NetworkBreakdown(data)) => Some(data),
+                _ => None,
+            };
+            (cache.is_none(), cache.unwrap_or_default())
+        };
+    }
+
+    if should_update {
+        tracing::warn!("Calling DB for network activity breakdown");
+        let db_result =
+            database::activity_history::network_breakdown(modes, timestamp_start, timestamp_end, &state.database).await;
+
+        state
+            .cache
+            .write(
+                &cache_key,
+                CacheValue::exact(CacheItem::NetworkBreakdown(db_result.clone()), CacheDuration::OneHour),
+            )
+            .await;
+
+        result = db_result;
+    }
+
+    if did_lock {
+        tracing::warn!("Unlocking: {}", cache_key);
+        state.locks.unlock(&cache_key).await;
+    }
+
+    result
 }

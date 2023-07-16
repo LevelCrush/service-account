@@ -14,7 +14,6 @@ pub enum AppVariable {
 
     // host variables
     HostMain,
-    HostApi,
     HostAccounts,
     HostAssets,
 
@@ -23,6 +22,7 @@ pub enum AppVariable {
     DiscordClientId,
     DiscordClientSecret,
     DiscordPublicKey,
+    DiscordBotToken,
 
     // twitch
     TwitchClientId,
@@ -34,6 +34,12 @@ pub enum AppVariable {
     BungieClientSecret,
     BungieApiKey,
     BungieValidateUrl,
+
+    RateLimit,
+    RateLimitDuration,
+    RateLimitBuffer,
+
+    AccountKey,
 }
 
 impl From<AppVariable> for &'static str {
@@ -45,7 +51,6 @@ impl From<AppVariable> for &'static str {
             AppVariable::DatabaseUrl => "DATABASE_URL",
             AppVariable::DangerAppInvalidCerts => "DANGER_APP_INVALID_CERTS",
             AppVariable::HostMain => "HOST_MAIN",
-            AppVariable::HostApi => "HOST_API",
             AppVariable::HostAssets => "HOST_ASSETS",
             AppVariable::DiscordClientId => "DISCORD_CLIENT_ID",
             AppVariable::DiscordClientSecret => "DISCORD_CLIENT_SECRET",
@@ -60,6 +65,11 @@ impl From<AppVariable> for &'static str {
             AppVariable::BungieValidateUrl => "BUNGIE_VALIDATE_URL",
             AppVariable::ServerFallbackUrl => "SERVER_FALLBACK_URL",
             AppVariable::HostAccounts => "HOST_ACCOUNTS",
+            AppVariable::DiscordBotToken => "DISCORD_BOT_TOKEN",
+            AppVariable::RateLimit => "RATE_LIMIT",
+            AppVariable::RateLimitDuration => "RATE_LIMIT_DURATION",
+            AppVariable::RateLimitBuffer => "RATE_LIMIT_BUFFER",
+            AppVariable::AccountKey => "ACCOUNT_KEY",
         }
     }
 }

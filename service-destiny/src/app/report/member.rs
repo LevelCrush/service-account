@@ -107,12 +107,18 @@ pub struct MemberReportFireteamMember {
 
 #[derive(serde::Serialize, Clone, Debug, Default, TS)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+pub struct MemberReportSearchQuery {
+    pub member: String,
+    pub modes: String,
+    pub season: String,
+}
+
+#[derive(serde::Serialize, Clone, Debug, Default, TS)]
+#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct MemberReport {
     pub version: u8,
 
-    #[ts(type = "number")]
-    pub membership_id: i64,
-
+    pub membership_id: String,
     pub snapshot_range: String,
 
     pub display_name_global: String,
@@ -149,7 +155,8 @@ pub struct MemberReport {
     #[ts(type = "number")]
     pub total_non_clan_members: u64,
     pub titles: Vec<MemberTitle>,
-    pub member: MemberResponse, // added later on,
+    pub member: MemberResponse,
+    pub search: MemberReportSearchQuery,
 }
 
 const CACHE_KEY_LIFETIME: &str = "member_report||lifetime||";
@@ -310,7 +317,7 @@ async fn merge_reports(
         .map(|(mode, count)| {
             let mode: DestinyActivityModeType = mode.into();
             MemberReportActivityMode {
-                mode: mode.to_string(),
+                mode: mode.as_str().to_string(),
                 count,
             }
         })
@@ -350,7 +357,7 @@ async fn merge_reports(
         version: VERSION_MEMBER_REPORT_CURRENT,
         snapshot_range,
         activity_timestamps: HashMap::from_iter(instance_timestamps.into_iter()),
-        membership_id,
+        membership_id: membership_id.to_string(),
         display_name_global: bungie_name,
         titles,
         last_played_at,
@@ -370,6 +377,11 @@ async fn merge_reports(
         member: MemberResponse::from_db(member.unwrap_or_default()),
         top_activities: activities,
         activity_map,
+        search: MemberReportSearchQuery {
+            member: String::new(),
+            modes: String::new(),
+            season: String::new(),
+        },
     }
 }
 
@@ -478,8 +490,17 @@ pub async fn season<T: Into<String>>(
 
                         // stop getting reports.
                         let snapshot_range = format!("Season {}", season_number);
-                        let report =
-                            merge_reports(display_name_global, reports, snapshot_range, &mut thread_app_state).await;
+                        let mut report = merge_reports(
+                            display_name_global,
+                            reports,
+                            snapshot_range.clone(),
+                            &mut thread_app_state,
+                        )
+                        .await;
+
+                        report.search.season = snapshot_range;
+                        report.search.member = bungie_name;
+                        report.search.modes = mode_str;
 
                         thread_app_state
                             .cache
@@ -600,13 +621,17 @@ pub async fn lifetime<T: Into<String>>(
                             }
                         }
 
-                        let report = merge_reports(
+                        let mut report = merge_reports(
                             display_name_global,
                             reports,
                             "Lifetime".to_string(),
                             &mut thread_app_state,
                         )
                         .await;
+
+                        report.search.season = "Lifetime".to_string();
+                        report.search.member = bungie_name;
+                        report.search.modes = modes_str;
 
                         thread_app_state
                             .cache
@@ -696,14 +721,18 @@ async fn get_stats(membership_id: MembershipId, instance_ids: &[InstanceId], sta
     );
 
     let mut unique_instances = HashSet::new();
-    let mut complete_full_instances = Vec::new();
+    let mut complete_full_instances = HashSet::new();
     for instance in instances_completed.iter() {
         unique_instances.insert(instance.instance_id);
     }
 
     for instance in instances_data.iter() {
-        if instance.started_from_beginning == 1 && instance.completed == 1 {
-            complete_full_instances.push(instance.instance_id);
+        if ((instance.occurred_at <= 1605045600 && instance.starting_phase_index == 0)
+            || (instance.occurred_at >= 1605045600 && instance.occurred_at <= 1645567200)
+            || (instance.occurred_at >= 1645567200 && instance.started_from_beginning == 1))
+            && unique_instances.contains(&instance.instance_id)
+        {
+            complete_full_instances.insert(instance.instance_id);
         }
     }
 

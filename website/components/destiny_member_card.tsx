@@ -44,6 +44,9 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     discord: null,
     twitch: null,
   } as LinkedPlatformMap);
+  const [linkedPlatformResult, setLinkedPlatformResult] = useState(
+    null as null | AccountLinkedPlatformResult
+  );
   const [accountToken, setAccountToken] = useState('');
   useEffect(() => {
     if (!props.data && !props.asHeaders) {
@@ -85,6 +88,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
             twitch: parsed.response.twitch || null,
           });
           setAccountToken(parsed.response.account_token);
+          setLinkedPlatformResult(parsed.response);
         }
       };
 
@@ -103,6 +107,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
         discord: props.platforms.discord || null,
         twitch: props.platforms.twitch || null,
       });
+      setLinkedPlatformResult(props.platforms);
       setAccountToken(props.platforms.account_token);
     }
   }, []);
@@ -111,7 +116,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     display_name: 'Not Found',
     display_name_platform: 'Not Found',
     known_display_names: {},
-    membership_id: 0,
+    membership_id: '0',
     membership_platform: 0,
     timestamp_last_played: 0,
     raid_report: '',
@@ -128,6 +133,8 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
   const badgeClanColors = {
     'Level Crush': 'bg-[#50AFE0] text-black',
     'Level Stomp': 'bg-[#44A8BD] text-black',
+    'Righteous Indiggnation':
+      'bg-gradient-to-r from-[#F988B6] to-[#7A4359] text-[#FAF2A2] border-[#F988B6] border-[1px]',
   } as { [clan: string]: string };
 
   if (memberInfo.clan) {
@@ -186,7 +193,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
             <span
               key={'member_' + props.display_name + '_badge_' + badgeIndex}
               className={
-                'mb-4 lg:my-0 shrink-0 grow-0 basis-auto px-2 py-1 text-sm align-middle inline-block h-auto w-[6rem] self-start ' +
+                'mb-4 lg:my-0 shrink-0 grow-0 basis-auto px-2 py-1 text-sm align-middle inline-block h-auto w-auto w-min-[6rem] w-max-[10rem] self-start border-1 ' +
                 badges[badge]
               }
             >
@@ -220,7 +227,11 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                   }
                   onClick={(ev) => {
                     navigator.clipboard.writeText(
-                      linkedPlatforms[platform] as string
+                      platform === 'discord'
+                        ? linkedPlatformResult !== null
+                          ? linkedPlatformResult.username
+                          : (linkedPlatforms[platform] as string)
+                        : (linkedPlatforms[platform] as string)
                     );
                     const btn = ev.target as HTMLButtonElement;
                     const origHtml = btn.innerHTML;
@@ -238,8 +249,6 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                   className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
                   intention={'inactive'}
                   title={linkedPlatforms[platform] as string}
-                  data-platform={platform}
-                  data-platform-id={linkedPlatforms[platform] as string}
                   key={
                     'member_' +
                     props.display_name +
@@ -261,7 +270,9 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
                 className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
                 intention="attention"
                 href={
-                  '/admin/report/' + encodeURIComponent(memberInfo.display_name)
+                  '/admin/member/' +
+                  encodeURIComponent(memberInfo.display_name) +
+                  '/lifetime/modes/all'
                 }
               >
                 Overview

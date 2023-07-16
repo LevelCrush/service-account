@@ -1,22 +1,15 @@
-import { APIResponse, ServiceDestiny } from '@levelcrush';
+import { APIResponse, ServiceDestiny, ServiceAccounts } from '@levelcrush';
 
 export interface APIError {
   field: string;
   message: string;
 }
 
-export interface AccountLinkedPlatformResult {
-  account_token: string;
-  discord: string;
-  bungie: string;
-  twitch: string;
-}
+export type AccountLinkedPlatformResult =
+  ServiceAccounts.AccountLinkedPlatformsResult;
 
-export interface AccountLinkedPlatformsResponse {
-  success: boolean;
-  response: AccountLinkedPlatformResult | null;
-  error: APIError[];
-}
+export type AccountLinkedPlatformsResponse =
+  APIResponse<AccountLinkedPlatformResult>;
 
 export interface AccountLinkedPlatformResultMap {
   [bungie_name: string]: AccountLinkedPlatformResult | null;

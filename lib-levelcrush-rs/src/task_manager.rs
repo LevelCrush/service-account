@@ -39,6 +39,10 @@ impl TaskManagerData {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.futures.len()
+    }
+
     pub fn queue(&mut self, f: TaskRequest) -> u128 {
         let task = f;
 
@@ -73,6 +77,13 @@ impl TaskManager {
             data: Arc::new(RwLock::new(TaskManagerData::new(max_allowed))),
         }
     }
+
+    /// Gets how many task are currently in our manager queue
+    pub async fn len(&self) -> usize {
+        let data = self.data.read().await;
+        data.len()
+    }
+
     pub async fn queue(&self, f: TaskRequest) -> u128 {
         let mut data = self.data.write().await;
         data.queue(f)

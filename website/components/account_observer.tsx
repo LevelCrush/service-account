@@ -65,6 +65,7 @@ export function unsubscribeAccountEvent<K extends keyof AccountEvent>(
  * @constructor
  */
 export const AccountObserver = () => {
+  const [didExternalCheck, setDidExternalCheck] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
   const [platformData, setPlatformData] = useState(
@@ -75,14 +76,11 @@ export const AccountObserver = () => {
 
   const saveChallenge = async (challenge_token: string) => {
     const endpoint = ENV.hosts.frontend + '/api/challenge';
-    const response = await fetch(endpoint, {
+    await fetch(endpoint, {
       method: 'POST',
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
-      next: {
-        revalidate: 0,
-      },
       body: challenge_token,
     });
   };
@@ -94,9 +92,6 @@ export const AccountObserver = () => {
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
-      next: {
-        revalidate: 0,
-      },
     });
   };
 
@@ -109,9 +104,6 @@ export const AccountObserver = () => {
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
-      next: {
-        revalidate: 0,
-      },
     });
 
     const data = response.ok
@@ -133,17 +125,16 @@ export const AccountObserver = () => {
       setLoggedIn(true);
       setPlatformData(data.response.platforms);
       setIsAdmin(data.response.is_admin);
-
-      console.log('Sending challenge');
       saveChallenge(data.response.challenge).finally(() =>
         console.log('Challenge delivered')
       );
+      setDidExternalCheck(true);
     } else {
       setDisplayName('');
       setPlatformData({});
       setLoggedIn(false);
       setIsAdmin(false);
-
+      setDidExternalCheck(true);
       window.localStorage.removeItem('session_logged_in');
       window.localStorage.removeItem('session_is_admin');
       window.localStorage.removeItem('session_display_name');
@@ -159,13 +150,13 @@ export const AccountObserver = () => {
     }
 
     // run the initial login check, we don't care
-    accountLoginCheck().finally(() =>
-      console.log('Initial login check completed')
-    );
+    accountLoginCheck();
 
     // when we unmount our component run this for cleanup
     return () => {
-      //
+      // component unmount, stop timer
+      window.clearInterval(accountTimerInterval);
+      setAccountTimerInterval(0);
     };
   }, []);
 
@@ -174,24 +165,25 @@ export const AccountObserver = () => {
     if (loggedIn) {
       setAccountTimerInterval(
         window.setInterval(() => {
-          accountLoginCheck().finally(() =>
-            console.log('Checking if logged in')
-          );
+          accountLoginCheck();
         }, 1000 * 60)
       );
     } else {
-      // attempt logout
-      sendLogout().finally(() => console.log('Attempted logout'));
-
-      // log out, stop running interval
-      clearInterval(accountTimerInterval);
-      setAccountTimerInterval(0);
+      if (didExternalCheck) {
+        // attempt logout
+        sendLogout();
+        // log out, stop running interval
+        window.clearInterval(accountTimerInterval);
+        setAccountTimerInterval(0);
+      } else {
+        console.log('Have not yet finished doing the first external check');
+      }
     }
     dispatchAccountEvent(loggedIn ? 'account_login' : 'account_logout', null);
 
     return () => {
       // component unmount, stop timer
-      clearInterval(accountTimerInterval);
+      window.clearInterval(accountTimerInterval);
       setAccountTimerInterval(0);
     };
   }, [loggedIn]);
@@ -201,9 +193,15 @@ export const AccountObserver = () => {
   // there are better ways to get the same effect without having to repeat the same call
   // but at the same time, the redudant request will just return a cache copy regardless, no database overhead
   useEffect(() => {
-    accountLoginCheck()
-      .then(() => console.log('Login state changed. Double confirming state'))
-      .finally(() => console.log('Login double check completed'));
+    if (didExternalCheck) {
+      accountLoginCheck()
+        .then(() => console.log('Login state changed. Double confirming state'))
+        .finally(() => console.log('Login double check completed'));
+    } else {
+      console.log(
+        'Have not done the first external check yet. Cannot run duplicate check'
+      );
+    }
   }, [loggedIn, isAdmin]);
 
   // anytime our platform data changes this effect should run and we should emit an event
