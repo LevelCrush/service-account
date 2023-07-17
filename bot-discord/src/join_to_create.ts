@@ -133,6 +133,7 @@ export function JoinToCreate() {
                         type: ChannelType.GuildVoice,
                         parent: category,
                         name: name,
+                        userLimit: jtc_config.amount > 0 ? jtc_config.amount : undefined,
                         permissionOverwrites: [
                             {
                                 id: user.id,
