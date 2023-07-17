@@ -1,5 +1,9 @@
 # Level Crush
 
+![Discord](<https://img.shields.io/discord/303862208419594240?logo=discord&logoColor=rgb(255%2C255%2C255)&link=https%3A%2F%2Fdiscord.gg%2Flevelcrush>)
+
+[Join us on Discord](https://discord.gg/levelcrush)
+
 This is a mono repo intended to host all level crush related projects.
 
 The following services can be found here
