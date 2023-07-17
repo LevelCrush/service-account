@@ -23,7 +23,7 @@ At the moment there are no contribution guideliness (yet) or license for the cod
 
 ## Index
 
-1. Technical Readme - [View](./readme.md)
+1. Technical Readme - [View](./technical.md)
 2. Tagbind Repository - [View](https://github.com/LevelCrush/TagBind)
 3. Satisfactory Saves - [View](https://github.com/LevelCrush/satisfactory)
 4. levelcrush.com (Archived) (Repository) - [View](https://github.com/LevelCrush/levelcrush.com)
