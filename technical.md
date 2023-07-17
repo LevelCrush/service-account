@@ -4,28 +4,28 @@ This is a mono repo intended to host all level crush related projects.
 
 The following services can be found here
 
-- [Website](https://github.com/LevelCrush/levelcrush/tree/main/website)
-- [Service-Destiny](https://github.com/LevelCrush/levelcrush/tree/main/service-destiny)
-- [Service-Accounts](https://github.com/LevelCrush/levelcrush/tree/main/service-accounts)
-- [Service-Feed](https://github.com/LevelCrush/levelcrush/tree/main/service-feed)
-- [Service-Automations](https://github.com/LevelCrush/levelcrush/tree/main/service-automations)
-- [Service-Assets](https://github.com/LevelCrush/levelcrush/tree/main/service-assets)
+- [Website](./website)
+- [Service-Destiny](./service-destiny)
+- [Service-Accounts](./service-accounts)
+- [Service-Feed](./service-feed)
+- [Service-Automations](./service-automations)
+- [Service-Assets](./service-assets)
 
 There are an additional three libraries defined here that are also stored and used between the above services.
 
-- [Lib-LevelCrush-RS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-rs)
-- [Lib-LevelCrush-Macros-RS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-macros-rs)
-- [Lib-LevelCrush-TS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-ts)
+- [Lib-LevelCrush-RS](./lib-levelcrush-rs)
+- [Lib-LevelCrush-Macros-RS](./lib-levelcrush-macros-rs)
+- [Lib-LevelCrush-TS](./lib-levelcrush-ts)
 
 The libraries themselves have the language they are intended to be used with appended at the end. So
 
-- [Lib-LevelCrush-RS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-rs) is intended to be used with Rust applications
-- [Lib-LevelCrush-Macros-RS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-macros-rs) is intended to be used with Rust applications
-- [Lib-LevelCrush-TS](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-ts) is intended to be used with Typescript related projects.
+- [Lib-LevelCrush-RS](./lib-levelcrush-rs) is intended to be used with Rust applications
+- [Lib-LevelCrush-Macros-RS](./lib-levelcrush-macros-rs) is intended to be used with Rust applications
+- [Lib-LevelCrush-TS](./lib-levelcrush-ts) is intended to be used with Typescript related projects.
 
 # Lib-Levelcrush-RS
 
-The project specific readme can be found [here](https://github.com/LevelCrush/levelcrush/tree/main/lib-levelcrush-rs). A brief overview of what this library is as follows.
+The project specific readme can be found [here](./lib-levelcrush-rs). A brief overview of what this library is as follows.
 
 ### Feature Flags
 
