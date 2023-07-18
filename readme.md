@@ -33,3 +33,9 @@ At the moment there are no contribution guideliness (yet) or license for the cod
 4. levelcrush.com (Archived) (Repository) - [View](https://github.com/LevelCrush/levelcrush.com)
 5. api.levelcrush.com (Archived) (Repository) - [View](https://github.com/LevelCrush/api.levelcrush.com)
 6. login.levelcrush.com (Archived) (Repository) - [View](https://github.com/LevelCrush/login.levelcrush.com)
+
+## Other Bots used in our Discord
+
+1. Music Man - [View](https://github.com/austinharms/MusicMan)
+2. Lilith - [View](https://github.com/lilith-discord-bot/lilith)
+3. Charlemagne - [View](https://warmind.io/)
