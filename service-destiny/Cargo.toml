@@ -6,24 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-levelcrush = { path = "../lib-levelcrush-rs", features = ["server", "cors", "database"], default_features = false }
+levelcrush = { path = "../lib-levelcrush-rs", features = ["server", "cors",], default_features = false }
 
-# This is a little weird because our levelcrush lib has sqlx as a dependency but to use the proc macros or sqlx::FromRow it has to be included here as well
-# this is due to how the proc macro builds
-sqlx = { version = "0.6.2", features = ["mysql", "bigdecimal", "runtime-tokio-rustls", "macros", "chrono"], default_features = false }
-
-# serde , same as sqlx should be included in the project here as well  due to proc macro's and derives
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json = { version = "1.0.93" }
-serde_urlencoded = { version = "0.7.1" }
-serde_repr = { version = "0.1.12" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_urlencoded = { workspace = true }
+serde_repr = { workspace = true }
+sqlx = { workspace = true }
+reqwest = { workspace = true  }
+rand = { workspace = true  }
+ts-rs = { workspace = true  }
+clap = { workspace = true }
 
 # other
-reqwest = { version = "0.11.14", features = ["json", "rustls-tls"], default_features = false }
-md5 = { version = "0.7.0" }
-base64 = { version = "0.21.0" }
-urlencoding = { version = "2.1.2" }
-clap = { version = "4.2.7", features = ["derive"] }
-
-# definition export
-ts-rs = { version = "6.2.1", features = ["serde-compat", "chrono-impl", "bigdecimal-impl"], default_features = false }
+md5 = { workspace = true  }
+base64 = { workspace = true }
+urlencoding = { workspace = true }

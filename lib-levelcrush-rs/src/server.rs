@@ -6,9 +6,6 @@ use {
     axum_sessions::{SameSite, SessionLayer},
 };
 
-#[cfg(all(feature = "session", feature = "database"))]
-use crate::mysql_session::MySqlSessionStore;
-
 use axum::{
     error_handling::HandleErrorLayer, extract::State, http::StatusCode, response::IntoResponse, BoxError, Json, Router,
 };
@@ -87,22 +84,6 @@ impl<T: serde::ser::Serialize> APIResponse<T> {
         self.success = self.response.is_some() && self.errors.is_empty();
         self.completed_at = unix_timestamp();
     }
-}
-
-// private function to build the session layer
-#[cfg(all(feature = "session", feature = "database"))]
-async fn setup_session_layer_db(pool: sqlx::MySqlPool) -> SessionLayer<MySqlSessionStore> {
-    // the session layer must maintain its own connection information
-    // server secret must have more then or equal to 64 characters for this to work
-    let secret = std::env::var("SERVER_SECRET").unwrap_or_default();
-    let store = MySqlSessionStore::from_client(pool);
-
-    store.migrate().await.ok();
-    store.spawn_cleanup_task(Duration::from_secs(3600));
-
-    SessionLayer::new(store, secret.as_bytes())
-        .with_secure(true)
-        .with_same_site_policy(SameSite::None)
 }
 
 #[cfg(feature = "session")]
@@ -217,17 +198,7 @@ impl Server {
             );
         }
 
-        if self.allow_session && self.session_db.is_some() {
-            #[cfg(all(feature = "session", feature = "database"))]
-            {
-                if let Some(session_db) = &self.session_db {
-                    tracing::info!("Enabling Database Session");
-
-                    let session_layer = setup_session_layer_db(session_db.clone()).await;
-                    router = router.layer(session_layer);
-                }
-            }
-        } else if self.allow_session {
+        if self.allow_session {
             #[cfg(feature = "session")]
             {
                 tracing::info!("Enabling In-Memory session!");

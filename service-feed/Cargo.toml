@@ -6,8 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-levelcrush = { path = "../lib-levelcrush-rs", features=["server","cors", "database"], default_features = false }
+levelcrush = { path = "../lib-levelcrush-rs", features=["server","cors"], default_features = false }
 
-# This is a little weird because our levelcrush lib has sqlx as a dependency but to use the proc macros or sqlx::FromRow it has to be included here as well
-# this is due to how the proc macro builds
-sqlx = { version = "0.6.2", features = ["mysql", "bigdecimal", "runtime-tokio-rustls", "macros","chrono"], default_features = false}
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_urlencoded = { workspace = true }
+serde_repr = { workspace = true }
+sqlx = { workspace = true }
+rand = { workspace = true  }
+ts-rs = { workspace = true  }
+clap = { workspace = true }

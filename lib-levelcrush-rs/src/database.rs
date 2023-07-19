@@ -8,9 +8,9 @@ use tracing::log::LevelFilter;
 /// connects to the application database based off .env specific variables
 pub async fn connect() -> MySqlPool {
     let database_url = std::env::var("DATABASE_URL").unwrap_or_default();
-    let mut database_options = MySqlConnectOptions::from_str(database_url.as_str()).unwrap();
-    database_options.log_statements(LevelFilter::Off);
-    database_options.log_slow_statements(LevelFilter::Warn, Duration::from_secs(5));
+    let mut database_options: MySqlConnectOptions = MySqlConnectOptions::from_str(database_url.as_str()).unwrap();
+    database_options = database_options.log_statements(LevelFilter::Off);
+    database_options = database_options.log_slow_statements(LevelFilter::Warn, Duration::from_secs(5));
 
     let max_connections = std::env::var("DATABASE_CONNECTIONS_MAX")
         .unwrap_or_default()
