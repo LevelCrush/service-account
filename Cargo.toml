@@ -2,6 +2,7 @@
 members = [
     "./lib-levelcrush-macros-rs",
     "./lib-levelcrush-rs",
+    "./lib-destiny-rs",
     "./service-accounts",
     "./service-destiny",
     "./service-feed",
