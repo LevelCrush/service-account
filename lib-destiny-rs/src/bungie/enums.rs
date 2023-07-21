@@ -1,5 +1,3 @@
-use std::fmt::{self, Formatter};
-
 #[derive(Eq, Hash, PartialEq, Clone)]
 pub enum DestinyComponentType {
     None,

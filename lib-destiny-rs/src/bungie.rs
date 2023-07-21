@@ -3,7 +3,6 @@ pub mod enums;
 pub mod schemas;
 use crate::bungie::enums::{DestinyComponentType, DestinyRouteParam, PlatformErrorCodes};
 use levelcrush::anyhow;
-use levelcrush::anyhow::anyhow;
 use levelcrush::macros::ExternalAPIResponse;
 use levelcrush::serde;
 use levelcrush::tokio;
@@ -225,11 +224,6 @@ where
 
         if response.is_throttled() && self.retries < self.retries_max {
             self.retries += 1;
-            tracing::warn!(
-                "Retrying request (Attempt {}): {}",
-                (self.retries + 1),
-                self.endpoint.as_str()
-            );
             tokio::time::sleep(tokio::time::Duration::from_secs(response.throttle_seconds + 1)).await;
             response = self.send_once().await?;
         }
