@@ -1,19 +1,22 @@
-use super::state::CacheItem;
-use crate::app::state::AppState;
-use crate::bungie::enums::DestinyRouteParam;
-use crate::bungie::schemas::{DestinyGroupResponse, DestinySearchResultOfGroupMember, GetGroupsForMemberResponse};
-use crate::database::activity_history::NetworkBreakdownResult;
-use crate::database::clan::ClanInfoResult;
-use crate::database::member::MemberResult;
-use crate::jobs::task;
-use crate::{database, sync};
+use std::collections::HashMap;
+
+use sqlx::MySqlPool;
+
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::tokio;
 use levelcrush::types::destiny::{GroupId, MembershipId, MembershipType};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{futures, tracing};
-use sqlx::MySqlPool;
-use std::collections::HashMap;
+
+use crate::app::state::AppState;
+use crate::bungie::schemas::{DestinyGroupResponse, DestinySearchResultOfGroupMember};
+use crate::database::activity_history::NetworkBreakdownResult;
+use crate::database::clan::ClanInfoResult;
+use crate::database::member::MemberResult;
+use crate::jobs::task;
+use crate::{database, sync};
+
+use super::state::CacheItem;
 
 const CACHE_KEY_CLAN: &str = "clan_info||";
 pub const CACHE_KEY_CLAN_ROSTER: &str = "clan_roster||";
@@ -22,25 +25,9 @@ const CACHE_KEY_NETWORK_CLANS_ROSTER: &str = "network_clans_roster||main";
 const CACHE_KEY_CLAN_INFO_MEMBERSHIP: &str = "clan_info_membership||";
 const CACHE_KEY_NETWORK_BREAKDOWN: &str = "activity_breakdown||network";
 
-const UPDATE_CLAN_INTERVAL: u64 = 86400; // 24 hours
+const UPDATE_CLAN_INTERVAL: u64 = 86400;
+// 24 hours
 const UPDATE_CLAN_NETWORK_INTERVAL: u64 = 3600; // 1 hour
-
-/// get clan info by querying the bungie api via membership id and type
-pub async fn from_membership_api(
-    membership_id: MembershipId,
-    membership_type: MembershipType,
-    state: &AppState,
-) -> Option<GetGroupsForMemberResponse> {
-    let request = state
-        .bungie
-        .get("/GroupV2/User/{membershipType}/{membershipId}/0/1")
-        .param(DestinyRouteParam::PlatformMembershipID, membership_id.to_string())
-        .param(DestinyRouteParam::PlatformMembershipType, membership_type.to_string())
-        .send::<GetGroupsForMemberResponse>()
-        .await;
-
-    request.response
-}
 
 pub async fn from_membership(
     membership_id: MembershipId,
@@ -67,9 +54,13 @@ pub async fn from_membership(
 
     if call_api {
         let group_id = task::clan_info_by_membership(membership_id, membership_type, state).await;
-        task::clan_roster(group_id, state).await;
-
-        clan_info = database::clan::from_membership(membership_id, &state.database).await;
+        if let Ok(group_id) = group_id {
+            task::clan_roster(group_id, state).await.ok();
+            clan_info = database::clan::from_membership(membership_id, &state.database).await;
+        } else {
+            let err = group_id.err().unwrap();
+            tracing::error!("Error fetching group id from membership {}: {}", membership_id, err);
+        }
     }
 
     if should_update {
@@ -87,34 +78,10 @@ pub async fn from_membership(
     clan_info
 }
 
-/// queries the clan info via the bungie api
-pub async fn clan_info_api(group_id: GroupId, state: &AppState) -> Option<DestinyGroupResponse> {
-    let request = state
-        .bungie
-        .get("/GroupV2/{groupId}/")
-        .param(DestinyRouteParam::GroupID, group_id.to_string())
-        .send::<DestinyGroupResponse>()
-        .await;
-
-    request.response
-}
-
 /// takes the input from a group response from destiny and syncs to the database
 pub async fn clan_info_sync(response: &DestinyGroupResponse, state: &MySqlPool) {
     // start syncing to the database
     sync::clan::info(&response.detail, state).await;
-}
-
-/// queries the clan roster information from the bungie api
-pub async fn clan_roster_api(group_id: GroupId, state: &AppState) -> Option<DestinySearchResultOfGroupMember> {
-    let request = state
-        .bungie
-        .get("/GroupV2/{groupId}/Members")
-        .param(DestinyRouteParam::GroupID, group_id.to_string())
-        .send::<DestinySearchResultOfGroupMember>()
-        .await;
-
-    request.response
 }
 
 /// takes the response from the clan_roster_api function call  and then syncs that data to our database
@@ -235,24 +202,38 @@ pub async fn get(group_id: GroupId, state: &mut AppState) -> Option<ClanInfoResu
         let arc_ci_state = state.clone();
         let arc_roster_state = state.clone();
 
-        let clan_info_api_future = tokio::spawn(async move { clan_info_api(group_id, &arc_ci_state).await });
-        let clan_roster_api_future = tokio::spawn(async move { clan_roster_api(group_id, &arc_roster_state).await });
+        let clan_info_api_future =
+            tokio::spawn(async move { lib_destiny::api::clan::info(group_id, &arc_ci_state.bungie).await });
+        let clan_roster_api_future =
+            tokio::spawn(async move { lib_destiny::api::clan::roster(group_id, &arc_roster_state.bungie).await });
         let (clan_info_result, clan_roster_result) = tokio::join!(clan_info_api_future, clan_roster_api_future);
 
         let mut future_handles = Vec::with_capacity(2);
-        if let Ok(Some(clan_info_result)) = clan_info_result {
+        if let Ok(clan_info_result) = clan_info_result {
             let arc_ci_state = state.clone(); // reclone our handle
             future_handles.push(tokio::spawn(async move {
-                clan_info_sync(&clan_info_result, &arc_ci_state.database).await;
+                if let Ok(Some(clan_info_result)) = &clan_info_result {
+                    clan_info_sync(clan_info_result, &arc_ci_state.database).await;
+                } else {
+                    if let Err(err) = clan_info_result {
+                        tracing::error!("Clan Info Err for {} : {}", group_id, err);
+                    }
+                }
             }));
 
             should_update = true;
         }
 
-        if let Ok(Some(clan_roster_result)) = clan_roster_result {
+        if let Ok(clan_roster_result) = clan_roster_result {
             let arc_roster_state = state.clone(); // reclone our handle
             future_handles.push(tokio::spawn(async move {
-                clan_roster_sync(group_id, &clan_roster_result, &arc_roster_state.database).await;
+                if let Ok(Some(clan_roster_result)) = &clan_roster_result {
+                    clan_roster_sync(group_id, &clan_roster_result, &arc_roster_state.database).await;
+                } else {
+                    if let Err(err) = clan_roster_result {
+                        tracing::error!("Clan Roster Fetch Error for {}: {}", group_id, err);
+                    }
+                }
             }));
         }
 
@@ -313,24 +294,38 @@ pub async fn get_by_slug(slug: &str, state: &mut AppState) -> Option<ClanInfoRes
         let arc_ci_state = state.clone();
         let arc_roster_state = state.clone();
 
-        let clan_info_api_future = tokio::spawn(async move { clan_info_api(group_id, &arc_ci_state).await });
-        let clan_roster_api_future = tokio::spawn(async move { clan_roster_api(group_id, &arc_roster_state).await });
+        let clan_info_api_future =
+            tokio::spawn(async move { lib_destiny::api::clan::info(group_id, &arc_ci_state.bungie).await });
+        let clan_roster_api_future =
+            tokio::spawn(async move { lib_destiny::api::clan::roster(group_id, &arc_roster_state.bungie).await });
         let (clan_info_result, clan_roster_result) = tokio::join!(clan_info_api_future, clan_roster_api_future);
 
         let mut future_handles = Vec::with_capacity(2);
-        if let Ok(Some(clan_info_result)) = clan_info_result {
+        if let Ok(clan_info_result) = clan_info_result {
             let arc_ci_state = state.clone(); // reclone our handle
             future_handles.push(tokio::spawn(async move {
-                clan_info_sync(&clan_info_result, &arc_ci_state.database).await;
+                if let Ok(Some(clan_info_result)) = &clan_info_result {
+                    clan_info_sync(clan_info_result, &arc_ci_state.database).await;
+                } else {
+                    if let Err(err) = clan_info_result {
+                        tracing::error!("Clan Info Err for {} : {}", group_id, err);
+                    }
+                }
             }));
 
             should_update = true;
         }
 
-        if let Ok(Some(clan_roster_result)) = clan_roster_result {
+        if let Ok(clan_roster_result) = clan_roster_result {
             let arc_roster_state = state.clone(); // reclone our handle
             future_handles.push(tokio::spawn(async move {
-                clan_roster_sync(group_id, &clan_roster_result, &arc_roster_state.database).await;
+                if let Ok(Some(clan_roster_result)) = &clan_roster_result {
+                    clan_roster_sync(group_id, &clan_roster_result, &arc_roster_state.database).await;
+                } else {
+                    if let Err(err) = clan_roster_result {
+                        tracing::error!("Clan Roster Fetch Error for {}: {}", group_id, err);
+                    }
+                }
             }));
         }
 

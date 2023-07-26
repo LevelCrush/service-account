@@ -1,40 +1,49 @@
 use std::collections::HashSet;
 
-use crate::{app::state::AppState, jobs::task};
+use levelcrush::anyhow;
 use levelcrush::tracing;
+
+use crate::{app::state::AppState, jobs::task};
+
 /// always fetch the bungie api and return fresh data when being called as a job
-pub async fn profile(args: &[String]) {
+pub async fn profile(args: &[String]) -> anyhow::Result<()> {
     tracing::warn!("Setting up application state");
     let state = AppState::new().await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
-        task::profile_search(bungie_name, &state).await;
+        task::profile_search(bungie_name, &state).await?;
     }
+
+    Ok(())
 }
 
-pub async fn crawl_profile(args: &[String]) {
+pub async fn crawl_profile(args: &[String]) -> anyhow::Result<()> {
     let state = AppState::new().await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
-        let profile_results = task::profile_search(bungie_name, &state).await;
+        let profile_results = task::profile_search(bungie_name, &state).await?;
         if let Some(profile_results) = profile_results {
             // querying clan information
-            task::clan_info_by_membership(profile_results.membership_id, profile_results.membership_type, &state).await;
+            task::clan_info_by_membership(profile_results.membership_id, profile_results.membership_type, &state)
+                .await?;
         }
     }
+
+    Ok(())
 }
 
-pub async fn crawl_profile_deep(args: &[String]) {
+pub async fn crawl_profile_deep(args: &[String]) -> anyhow::Result<()> {
     let state = AppState::new().await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
-        let profile_results = task::profile_search(bungie_name, &state).await;
+        let profile_results = task::profile_search(bungie_name, &state).await?;
         if let Some(profile_results) = profile_results {
             // querying clan information
-            task::clan_info_by_membership(profile_results.membership_id, profile_results.membership_type, &state).await;
+            task::clan_info_by_membership(profile_results.membership_id, profile_results.membership_type, &state)
+                .await?;
             let mut tmp_set = HashSet::new();
             // now go through and do any character actions
             for character in profile_results.characters.iter() {
@@ -44,7 +53,7 @@ pub async fn crawl_profile_deep(args: &[String]) {
                     *character,
                     &state,
                 )
-                .await;
+                .await?;
                 tmp_set.extend(character_instances.iter());
             }
 
@@ -52,8 +61,9 @@ pub async fn crawl_profile_deep(args: &[String]) {
 
             tracing::info!("Now crawling {} total instances", instance_ids.len());
             if !instance_ids.is_empty() {
-                task::instance_data(&instance_ids, &state).await;
+                task::instance_data(&instance_ids, &state).await?;
             }
         }
     }
+    Ok(())
 }

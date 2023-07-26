@@ -59,7 +59,7 @@ pub async fn character(
     character_id: CharacterId,
     start_timestamp: UnixTimestamp,
     bungie: &BungieClient,
-) -> Vec<DestinyHistoricalStatsPeriodGroup> {
+) -> anyhow::Result<Vec<DestinyHistoricalStatsPeriodGroup>> {
     // only query the information if we have activities to query
     let mut activities = Vec::new();
     let mut page = 0;
@@ -84,5 +84,5 @@ pub async fn character(
             page += 1;
         }
     }
-    activities
+    Ok(activities)
 }

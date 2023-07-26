@@ -1,14 +1,14 @@
-use std::time::Duration;
+use levelcrush::anyhow;
+use levelcrush::cache::CacheValue;
+use levelcrush::server::Server;
+use levelcrush::{tokio, tracing};
 
 use crate::app::state::{AppState, Setting};
 use crate::bungie::enums::DestinyActivityModeType;
 use crate::env::AppVariable;
 use crate::{app, database, env, routes};
-use levelcrush::cache::CacheValue;
-use levelcrush::server::Server;
-use levelcrush::{tokio, tracing};
 
-pub async fn run() {
+pub async fn run() -> anyhow::Result<()> {
     let server_port = env::get(AppVariable::ServerPort).parse::<u16>().unwrap_or(3003);
 
     let app_state = AppState::new().await;
@@ -165,4 +165,6 @@ pub async fn run() {
         settings_updater,
         leaderboard_updater
     );
+
+    Ok(())
 }

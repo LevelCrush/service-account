@@ -1,5 +1,5 @@
 [package]
-name = "lib-destiny-rs"
+name = "lib_destiny"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,12 +13,12 @@ serde_json = { workspace = true }
 serde_urlencoded = { workspace = true }
 serde_repr = { workspace = true }
 sqlx = { workspace = true }
-reqwest = { workspace = true  }
-rand = { workspace = true  }
-ts-rs = { workspace = true  }
+reqwest = { workspace = true }
+rand = { workspace = true }
+ts-rs = { workspace = true }
 clap = { workspace = true }
 
 # other
-md5 = { workspace = true  }
+md5 = { workspace = true }
 base64 = { workspace = true }
 urlencoding = { workspace = true }

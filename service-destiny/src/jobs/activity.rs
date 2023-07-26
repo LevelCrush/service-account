@@ -1,16 +1,18 @@
-use crate::app::state::AppState;
-use crate::database;
-use crate::jobs::task;
+use levelcrush::anyhow;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
 
-pub async fn history(args: &[String]) {
+use crate::app::state::AppState;
+use crate::database;
+use crate::jobs::task;
+
+pub async fn history(args: &[String]) -> anyhow::Result<()> {
     tracing::info!("Running member character activity");
     tracing::info!("Setting up application state");
     let state = AppState::new().await;
 
     for bungie_name in args.iter() {
-        let profile_results = task::profile_search(bungie_name, &state).await;
+        let profile_results = task::profile_search(bungie_name, &state).await?;
         let (membership_id, membership_type, character_ids) = match profile_results {
             Some(profile_result) => (
                 profile_result.membership_id,
@@ -22,13 +24,15 @@ pub async fn history(args: &[String]) {
 
         // now run our character task
         for character_id in character_ids.iter() {
-            task::activities(membership_id, membership_type, *character_id, &state).await;
+            task::activities(membership_id, membership_type, *character_id, &state).await?;
         }
     }
+
+    Ok(())
 }
 
 /// crawl the instances that have available based off membership_activities
-pub async fn crawl_instances(args: &[String]) {
+pub async fn crawl_instances(args: &[String]) -> anyhow::Result<()> {
     tracing::info!("Crawling missing instance data");
     tracing::info!("Setting up application state");
 
@@ -79,16 +83,18 @@ pub async fn crawl_instances(args: &[String]) {
         total_records += missing_instances.len();
 
         for instances in missing_instances.chunks(100) {
-            task::instance_data(instances, &state).await;
+            task::instance_data(instances, &state).await?;
         }
 
         // now make our end timestamp = what our current start timestamp is. On the next iteration this will decrement our current start timestamp by whatever amount we want.
         end_timestamp = start_timestamp;
         start_timestamp = start_timestamp.min(end_timestamp - 2764800).max(earliest_timestamp);
     }
+
+    Ok(())
 }
 
-pub async fn instance_member_profiles(args: &[String]) {
+pub async fn instance_member_profiles(args: &[String]) -> anyhow::Result<()> {
     let amount = {
         if !args.is_empty() {
             match args.first() {
@@ -132,11 +138,13 @@ pub async fn instance_member_profiles(args: &[String]) {
 
         // run our profile task
         for profile in need_profiles.iter() {
-            task::profile(profile.membership_id, profile.platform, &state).await;
+            task::profile(profile.membership_id, profile.platform, &state).await?;
         }
 
         // now make our end timestamp = what our current start timestamp is. On the next iteration this will decrement our current start timestamp by whatever amount we want.
         end_timestamp = start_timestamp;
         start_timestamp = start_timestamp.min(end_timestamp - 2764800).max(earliest_timestamp);
     }
+
+    Ok(())
 }

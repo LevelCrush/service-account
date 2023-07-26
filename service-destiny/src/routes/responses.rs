@@ -1,17 +1,16 @@
-use std::collections::HashMap;
+use ts_rs::TS;
+
+use levelcrush::bigdecimal::ToPrimitive;
+use levelcrush::server::{APIResponse, PaginationResponse};
+use levelcrush::types::{destiny::MembershipType, UnixTimestamp};
 
 use crate::app::report::member::MemberReport;
 use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::leaderboard::LeaderboardEntryResult;
+use crate::database::member::MemberResult;
 use crate::database::seasons::SeasonRecord;
 use crate::database::triumph::TriumphTitleResult;
-use crate::{app, database::member::MemberResult};
-use levelcrush::bigdecimal::ToPrimitive;
-use levelcrush::server::{APIResponse, PaginationResponse};
-use levelcrush::types::destiny::GroupId;
-use levelcrush::types::{destiny::MembershipId, destiny::MembershipType, UnixTimestamp};
-use ts_rs::TS;
 
 // clan responses
 #[derive(serde::Serialize, TS, Default, Debug, Clone)]
@@ -115,7 +114,7 @@ impl MemberResponse {
             display_name_platform: result.display_name,
             membership_id: result.membership_id.to_string(),
             membership_platform: result.platform,
-            raid_report: app::member::generate_raid_report_url(result.membership_id, result.platform),
+            raid_report: lib_destiny::api::member::generate_raid_report_url(result.membership_id, result.platform),
             clan,
             timestamp_last_played: result.last_played_at,
         }

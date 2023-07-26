@@ -1,13 +1,18 @@
-use crate::bungie::manifest::DestinyManifest;
-use crate::bungie::BungieClient;
-use crate::sync;
+use levelcrush::anyhow;
 use levelcrush::database;
 use levelcrush::tokio;
 use levelcrush::tracing;
+use lib_destiny::api::manifest::DestinyManifest;
+use lib_destiny::bungie::BungieClient;
 
-pub async fn run() {
+use crate::env;
+use crate::env::AppVariable;
+use crate::sync;
+
+pub async fn run() -> anyhow::Result<()> {
     tracing::info!("Starting Bungie HTTP client");
-    let client = BungieClient::new();
+    let api_key = env::get(AppVariable::BungieAPIKey);
+    let client = BungieClient::new(api_key);
 
     // connect to our database
     tracing::info!("Connecting to database");
@@ -16,7 +21,7 @@ pub async fn run() {
     tracing::info!("Fetching new manifest");
 
     // fetch a new manifest if possible
-    let manifest = DestinyManifest::get(client.clone()).await;
+    let manifest = DestinyManifest::get(client.clone()).await?;
 
     // this type of flow control is new to me. Just in case, copying the link here for anyone new to it as well or if I am using it wrong
     // tl;dr: if let similar to match, but simpler
@@ -25,19 +30,11 @@ pub async fn run() {
         tracing::info!("Updating manifest");
 
         // at the same time, make a external request to the class definitions and activity definitions urls that were provided by the destiny manifest
-        let (
-            class_definitions,
-            activity_definitions,
-            activity_type_definitions,
-            season_definitions,
-            records_definitions,
-        ) = tokio::join!(
-            manifest.get_class_definition(client.clone()),
-            manifest.get_activity_definitions(client.clone()),
-            manifest.get_activity_type_definitions(client.clone()),
-            manifest.get_season_definitions(client.clone()),
-            manifest.get_record_definition(client.clone())
-        );
+        let class_definitions = manifest.get_class_definition(client.clone()).await?;
+        let activity_definitions = manifest.get_activity_definitions(client.clone()).await?;
+        let activity_type_definitions = manifest.get_activity_type_definitions(client.clone()).await?;
+        let season_definitions = manifest.get_season_definitions(client.clone()).await?;
+        let records_definitions = manifest.get_record_definition(client.clone()).await?;
 
         // start syncing definitions
         tracing::info!("Syncing activity type definitions");
@@ -49,4 +46,5 @@ pub async fn run() {
             sync::definition::records(&records_definitions, &database)
         );
     }
+    Ok(())
 }

@@ -1,30 +1,20 @@
-use crate::{
-    app::state::AppState,
-    bungie::{enums::DestinyRouteParam, schemas::DestinyPostGameCarnageReportData},
-    database::{self, instance::InstanceMemberRecord},
-    sync,
-};
+use std::collections::HashMap;
+
 use levelcrush::{
     cache::CacheValue,
     types::destiny::{CharacterId, InstanceId, MembershipId, MembershipType},
 };
-use std::collections::HashMap;
+use lib_destiny::bungie::schemas::DestinyPostGameCarnageReportData;
+
+use crate::{
+    app::state::AppState,
+    database::{self, instance::InstanceMemberRecord},
+    sync,
+};
 
 use super::state::CacheItem;
 
 const CACHE_KEY_INSTANCE_MEMBERS: &str = "instance_members||";
-
-/// get the carnage report from the bungie api
-pub async fn carnage_report_api(instance_id: InstanceId, state: &AppState) -> Option<DestinyPostGameCarnageReportData> {
-    let request = state
-        .bungie
-        .get("/Destiny2/Stats/PostGameCarnageReport/{activityId}")
-        .param(DestinyRouteParam::Activity, instance_id.to_string())
-        .send::<DestinyPostGameCarnageReportData>()
-        .await;
-
-    request.response
-}
 
 /// syncs the carnage report info to the database
 /// returns a HashMap<(membership_id:i64, membership_type: i32), Vec<i64>> tied to instance
