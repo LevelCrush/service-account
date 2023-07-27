@@ -169,7 +169,7 @@ pub async fn by_bungie_name(bungie_name: &str, state: &mut AppState) -> Option<M
         member_record = database::member::get_by_bungie_name(bungie_name, &state.database).await;
     }
 
-    // now check if this profile needs to be refereshed
+    // now check if this profile needs to be refreshed
     if let Some(record) = &member_record {
         call_api = profile_needs_refresh(record.updated_at);
     }
@@ -191,7 +191,7 @@ pub async fn by_bungie_name(bungie_name: &str, state: &mut AppState) -> Option<M
                 tracing::info!("Syncing profile information for {}", bungie_name);
                 profile_api_sync(profile_response, &state.database).await;
 
-                // refetch record
+                // re fetch record
                 member_record = database::member::get_by_bungie_name(bungie_name, &state.database).await;
 
                 should_cache = true;
