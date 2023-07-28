@@ -101,7 +101,7 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &SqlitePool) -> Opt
             },
             NewAccountPlatformData {
                 key: "avatar".to_string(),
-                value: discord_user.avatar,
+                value: discord_user.avatar.unwrap_or_default(),
             },
         ];
 
