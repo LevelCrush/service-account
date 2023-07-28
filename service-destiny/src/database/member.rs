@@ -1,10 +1,10 @@
-use levelcrush::macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
 use levelcrush::{bigdecimal::ToPrimitive, BigDecimal};
 use levelcrush::{database, project_str};
-use sqlx::{mysql::MySqlRow, Row, SqlitePool};
+use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 
 #[DatabaseRecord]
 pub struct MemberRecord {
@@ -23,7 +23,7 @@ pub struct MembershipReadyCheckResult {
     pub updated_at: u64,
 }
 
-#[DatabaseResultSerde]
+#[DatabaseResult]
 pub struct MemberResult {
     pub membership_id: MembershipId,
     pub platform: i32,
@@ -43,7 +43,7 @@ pub struct MemberResult {
 pub struct MemberSnapshotRecord {
     pub membership_id: MembershipId,
     pub snapshot_name: String,
-    pub version: u8,
+    pub version: i64,
     pub data: String,
 }
 
@@ -71,14 +71,21 @@ pub async fn get_snapshot(
     }
 }
 
-pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version: u8, data: String, pool: &SqlitePool) {
+pub async fn write_snapshot(
+    membership_id: MembershipId,
+    snapshot: &str,
+    version: i64,
+    data: String,
+    pool: &SqlitePool,
+) {
+    let timestamp = unix_timestamp();
     let query = sqlx::query_file!(
         "queries/member_snapshot_write.sql",
         membership_id,
         snapshot,
         version,
         data,
-        unix_timestamp(),
+        timestamp,
         0,
         0,
     );
