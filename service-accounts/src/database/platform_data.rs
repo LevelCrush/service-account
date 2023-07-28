@@ -75,11 +75,11 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
         keys.push(new_data.key.as_str());
         value_map.insert(new_data.key.clone(), index);
 
-        query_parameters.push("(?,?,?,?,?,?,?,?)");
+        query_parameters.push("(?,?,?,?,?,?,?)");
     }
 
     //  pull in the existing data related to the specified account platform. We will use this to merge and figure out which are new or need to be updated
-    let existing_data = read(account_platform, &keys, pool).await;
+
     let query_parameters = query_parameters.join(", ");
     let insert_statement = format!(
         project_str!("queries/account_platform_data_insert.sql"),
@@ -88,41 +88,16 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
 
     let mut query_builder = sqlx::query(insert_statement.as_str());
 
-    // construct a hash map of all new values that need to be inserted
-    for (key, record_id) in existing_data.iter() {
-        let data_index = value_map.get(key).unwrap();
-        let record = values.get(*data_index).unwrap();
-
-        // make sure to produce a 255 length version of the string if neccessary
-        let mut value_trimmed = String::new();
-        if record.value.len() > 255 {
-            value_trimmed = record.value.clone().get(0..255).unwrap_or_default().to_string();
-        } else {
-            value_trimmed = record.value.clone();
-        }
-
-        if *record_id == 0 {
-            // new record for sure bind parameters to match
-            query_builder = query_builder
-                .bind(0)
-                .bind(account_platform.account)
-                .bind(account_platform.id)
-                .bind(record.key.clone())
-                .bind(record.value.clone())
-                .bind(unix_timestamp())
-                .bind(0)
-                .bind(0);
-        } else {
-            query_builder = query_builder
-                .bind(record_id)
-                .bind(account_platform.account)
-                .bind(account_platform.id)
-                .bind(record.key.clone())
-                .bind(record.value.clone())
-                .bind(0) // our query wont actually pull from the from this if its a duplicate key (which this path is for)
-                .bind(unix_timestamp())
-                .bind(0);
-        }
+    for record in values.iter() {
+        // new record for sure bind parameters to match
+        query_builder = query_builder
+            .bind(account_platform.account)
+            .bind(account_platform.id)
+            .bind(record.key.clone())
+            .bind(record.value.clone())
+            .bind(unix_timestamp())
+            .bind(0)
+            .bind(0);
     }
 
     // finally execute the query to update/insert this data
