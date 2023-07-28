@@ -13,17 +13,17 @@ pub fn DatabaseRecord(_attr: TokenStream, item: TokenStream) -> TokenStream {
         // created_at field
         fields
             .named
-            .push(syn::Field::parse_named.parse2(quote! { pub created_at: u64 }).unwrap());
+            .push(syn::Field::parse_named.parse2(quote! { pub created_at: i64 }).unwrap());
 
         // updated_at field
         fields
             .named
-            .push(syn::Field::parse_named.parse2(quote! { pub updated_at: u64 }).unwrap());
+            .push(syn::Field::parse_named.parse2(quote! { pub updated_at: i64 }).unwrap());
 
         // deleted_at field
         fields
             .named
-            .push(syn::Field::parse_named.parse2(quote! { pub deleted_at: u64 }).unwrap());
+            .push(syn::Field::parse_named.parse2(quote! { pub deleted_at: i64 }).unwrap());
 
         // deleted_at field
         fields
