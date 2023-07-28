@@ -1,4 +1,5 @@
 use crate::database::platform::AccountPlatform;
+use levelcrush::database;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{project_str, tracing, types::RecordId};
@@ -11,7 +12,6 @@ pub struct AccountPlatformData {
     pub platform: RecordId,
     pub key: String,
     pub value: String,
-    pub value_big: String,
 }
 
 #[DatabaseResult]
@@ -75,12 +75,11 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
         keys.push(new_data.key.as_str());
         value_map.insert(new_data.key.clone(), index);
 
-        query_parameters.push("(?,?,?,?,?,?,?,?,?,?)");
+        query_parameters.push("(?,?,?,?,?,?,?,?)");
     }
 
     //  pull in the existing data related to the specified account platform. We will use this to merge and figure out which are new or need to be updated
     let existing_data = read(account_platform, &keys, pool).await;
-
     let query_parameters = query_parameters.join(", ");
     let insert_statement = format!(
         project_str!("queries/account_platform_data_insert.sql"),
@@ -109,8 +108,6 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
                 .bind(account_platform.account)
                 .bind(account_platform.id)
                 .bind(record.key.clone())
-                .bind(value_trimmed)
-                .bind(record.value.parse::<i64>().unwrap_or_default())
                 .bind(record.value.clone())
                 .bind(unix_timestamp())
                 .bind(0)
@@ -121,8 +118,6 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
                 .bind(account_platform.account)
                 .bind(account_platform.id)
                 .bind(record.key.clone())
-                .bind(value_trimmed)
-                .bind(record.value.parse::<i64>().unwrap_or_default())
                 .bind(record.value.clone())
                 .bind(0) // our query wont actually pull from the from this if its a duplicate key (which this path is for)
                 .bind(unix_timestamp())
@@ -132,8 +127,5 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
 
     // finally execute the query to update/insert this data
     let query = query_builder.execute(pool).await;
-    if query.is_err() {
-        let err = query.err().unwrap();
-        tracing::error!("{}", err);
-    }
+    database::log_error(query);
 }

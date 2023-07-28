@@ -32,7 +32,7 @@ pub fn DatabaseRecord(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     quote! {
-        #[derive(sqlx::FromRow, Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+        #[derive(sqlx::FromRow, Debug, Default, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
         #item_struct
     }
     .into()
@@ -44,7 +44,7 @@ pub fn DatabaseResult(_args: TokenStream, input: TokenStream) -> TokenStream {
     let input: proc_macro2::TokenStream = input.into();
 
     let output = quote! {
-        #[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
+        #[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize, Debug, Default, Clone, ts_rs::TS)]
         #input
     };
 

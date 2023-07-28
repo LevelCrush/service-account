@@ -32,7 +32,7 @@ async fn job_discord_profiles(args: &[String]) {
     let limit = {
         if !args.is_empty() {
             match args.first() {
-                Some(v) => v.parse::<u64>().unwrap_or_default(),
+                Some(v) => v.parse::<i64>().unwrap_or_default(),
                 _ => 1000,
             }
         } else {

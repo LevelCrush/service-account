@@ -51,21 +51,24 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &SqlitePool) -> Opti
         unix_timestamp()
     );
     let token = format!("{:x}", md5::compute(token_seed));
+    let platform = new_platform.platform.to_string();
+    let platform_user = new_platform.platform_user;
+    let timestamp = unix_timestamp();
 
     let query_result = sqlx::query_file!(
         "queries/account_platform_insert.sql",
         new_platform.account,
         token,
-        new_platform.platform.to_string(),
-        new_platform.platform_user,
-        unix_timestamp()
+        platform,
+        platform_user,
+        timestamp
     )
     .execute(pool)
     .await;
 
     // attempt to fetch the last inserted platform record
     if let Ok(query_result) = query_result {
-        let last_inserted_id = query_result.last_insert_id();
+        let last_inserted_id = query_result.last_insert_rowid();
         let platform_result = sqlx::query_file_as!(
             AccountPlatform,
             "queries/account_platform_get_by_id.sql",
@@ -92,11 +95,13 @@ pub async fn from_account(
     platform_type: AccountPlatformType,
     pool: &SqlitePool,
 ) -> Option<AccountPlatform> {
+    let platform = platform_type.to_string();
+
     let query_result = sqlx::query_file_as!(
         AccountPlatform,
         "queries/account_platform_from_account.sql",
         account.id,
-        platform_type.to_string()
+        platform
     )
     .fetch_optional(pool)
     .await;
@@ -115,10 +120,11 @@ pub async fn match_account(
     platform_type: AccountPlatformType,
     pool: &SqlitePool,
 ) -> Option<Account> {
+    let platform = platform_type.to_string();
     let query_result = sqlx::query_file_as!(
         Account,
         "queries/account_platform_match_account.sql",
-        platform_type.to_string(),
+        platform,
         platform_user
     )
     .fetch_optional(pool)
@@ -138,10 +144,11 @@ pub async fn read(
     platform_user: String,
     pool: &SqlitePool,
 ) -> Option<AccountPlatform> {
+    let platform = platform_type.to_string();
     let query_result = sqlx::query_file_as!(
         AccountPlatform,
         "queries/account_platform_read.sql",
-        platform_type.to_string(),
+        platform,
         platform_user
     )
     .fetch_optional(pool)
@@ -202,8 +209,9 @@ pub async fn unlink(account_platform: &AccountPlatform, pool: &SqlitePool) {
         .ok();
 }
 
-pub async fn need_update(platform: AccountPlatformType, limit: u64, pool: &SqlitePool) -> Vec<String> {
-    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform.to_string(), limit)
+pub async fn need_update(platform: AccountPlatformType, limit: i64, pool: &SqlitePool) -> Vec<String> {
+    let platform = platform.to_string();
+    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform, limit)
         .fetch_all(pool)
         .await;
 

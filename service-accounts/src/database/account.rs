@@ -1,8 +1,8 @@
-use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResultSerde, project_str, util::unix_timestamp};
+use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResult, project_str, util::unix_timestamp};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 
-#[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow, Debug, Clone, Default, ts_rs::TS)]
+#[DatabaseResult]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-accounts/")]
 pub struct AccountLinkedPlatformsResult {
     pub account_token: String,
@@ -15,10 +15,10 @@ pub struct AccountLinkedPlatformsResult {
 #[DatabaseRecord]
 pub struct Account {
     pub token: String,
-    pub admin: i8,
+    pub admin: i64,
     pub token_secret: String,
     pub timezone: String,
-    pub last_login_at: u64,
+    pub last_login_at: i64,
 }
 
 pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &SqlitePool) -> Option<Account> {
@@ -59,7 +59,7 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     // if we were able to insert a new user fetch it based off the last inserted id from our query result
     let mut user = None;
     if let Ok(query_result) = query_result {
-        let last_inserted_id = query_result.last_insert_id();
+        let last_inserted_id = query_result.last_insert_rowid();
         let account_result = sqlx::query_file_as!(Account, "queries/account_get_by_id.sql", last_inserted_id)
             .fetch_optional(pool)
             .await;
