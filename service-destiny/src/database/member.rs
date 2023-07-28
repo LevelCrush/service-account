@@ -9,34 +9,34 @@ use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 #[DatabaseRecord]
 pub struct MemberRecord {
     pub membership_id: MembershipId,
-    pub platform: i32,
+    pub platform: i64,
     pub display_name: String,
     pub display_name_global: String,
-    pub guardian_rank_current: u8,
-    pub guardian_rank_lifetime: u8,
-    pub last_played_at: u64,
+    pub guardian_rank_current: i64,
+    pub guardian_rank_lifetime: i64,
+    pub last_played_at: i64,
 }
 
 #[DatabaseResult]
 pub struct MembershipReadyCheckResult {
     pub membership_id: MembershipId,
-    pub updated_at: u64,
+    pub updated_at: i64,
 }
 
 #[DatabaseResult]
 pub struct MemberResult {
     pub membership_id: MembershipId,
-    pub platform: i32,
-    pub last_played_at: u64,
+    pub platform: i64,
+    pub last_played_at: i64,
     pub display_name: String,
     pub display_name_global: String,
     pub clan_group_id: i64,
     pub clan_name: String,
     pub clan_call_sign: String,
-    pub clan_joined_at: u64,
-    pub clan_group_role: i8,
-    pub clan_is_network: i8,
-    pub updated_at: u64,
+    pub clan_joined_at: i64,
+    pub clan_group_role: i64,
+    pub clan_is_network: i64,
+    pub updated_at: i64,
 }
 
 #[DatabaseRecord]
@@ -50,7 +50,7 @@ pub struct MemberSnapshotRecord {
 pub async fn get_snapshot(
     membership_id: MembershipId,
     snapshot: &str,
-    version: u8,
+    version: i64,
     pool: &SqlitePool,
 ) -> Option<MemberSnapshotRecord> {
     let query = sqlx::query_file_as!(
@@ -169,7 +169,7 @@ pub async fn multi_get(membership_ids: &[i64], pool: &SqlitePool) -> Vec<MemberR
     }
 
     let query = query_builder
-        .map(|row: MySqlRow| MemberResult {
+        .map(|row: SqliteRow| MemberResult {
             membership_id: row.get("membership_id"),
             platform: row.get("platform"),
             last_played_at: row.get("last_played_at"),
@@ -178,7 +178,7 @@ pub async fn multi_get(membership_ids: &[i64], pool: &SqlitePool) -> Vec<MemberR
             updated_at: row.get("updated_at"),
             clan_group_id: row.get("clan_group_id"),
             clan_call_sign: row.get("clan_call_sign"),
-            clan_joined_at: row.get::<BigDecimal, _>("clan_joined_at").to_u64().unwrap_or_default(),
+            clan_joined_at: row.get::<BigDecimal, _>("clan_joined_at").to_i64().unwrap_or_default(),
             clan_group_role: row.get("clan_group_role"),
             clan_is_network: row.get("clan_is_network"),
             clan_name: row.get("clan_name"),
@@ -252,7 +252,7 @@ pub async fn create(member: MemberRecord, database: &SqlitePool) -> RecordId {
     .await;
 
     if let Ok(query) = query {
-        query.last_insert_id() as RecordId
+        query.last_insert_rowid() as RecordId
     } else {
         database::log_error(query);
         -1
