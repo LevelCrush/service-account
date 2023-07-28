@@ -1,23 +1,17 @@
 use crate::util::unix_timestamp;
-
-#[cfg(feature = "session")]
-use {
-    axum_sessions::async_session::MemoryStore,
-    axum_sessions::{SameSite, SessionLayer},
-};
-
-use axum::{
-    error_handling::HandleErrorLayer, extract::State, http::StatusCode, response::IntoResponse, BoxError, Json, Router,
-};
-use sqlx::SqlitePool;
+use axum::{error_handling::HandleErrorLayer, http::StatusCode, response::IntoResponse, BoxError, Json, Router};
 use std::{net::SocketAddr, time::Duration};
 use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
 use ts_rs::TS;
-
 #[cfg(feature = "cors")]
 use {
     axum::http::{HeaderValue, Method},
     tower_http::cors::{AllowOrigin, CorsLayer},
+};
+#[cfg(feature = "session")]
+use {
+    axum_sessions::async_session::MemoryStore,
+    axum_sessions::{SameSite, SessionLayer},
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
@@ -50,8 +44,8 @@ pub struct APIResponse<T: serde::ser::Serialize> {
     success: bool,
     response: Option<T>,
     errors: Vec<APIResponseError>,
-    requested_at: u64,
-    completed_at: u64,
+    requested_at: i64,
+    completed_at: i64,
 }
 
 impl<T: serde::ser::Serialize> APIResponse<T> {
