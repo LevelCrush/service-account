@@ -68,7 +68,7 @@ pub async fn character(
         // normally we would want to borrow the data, but this time we will consume it
         let mut found_activities = 0;
         for activity in response.activities {
-            let timestamp = activity.period.timestamp() as u64;
+            let timestamp = activity.period.timestamp();
             if timestamp > start_timestamp {
                 // the date of this activity is greater then our start time that we want. Include it!
                 activities.push(activity);
