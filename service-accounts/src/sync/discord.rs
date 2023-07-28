@@ -7,7 +7,7 @@ use crate::{
     routes::responses::DiscordUserResponse,
 };
 use levelcrush::{tokio, tracing, util::unix_timestamp, uuid::Uuid};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[derive(Default, Clone, Debug)]
 pub struct MemberSyncResult {
@@ -18,7 +18,7 @@ pub struct MemberSyncResult {
 }
 
 /// Syncs the api response from discord and returns a member sync result
-pub async fn member(discord_user: DiscordUserResponse, pool: &MySqlPool) -> Option<MemberSyncResult> {
+pub async fn member(discord_user: DiscordUserResponse, pool: &SqlitePool) -> Option<MemberSyncResult> {
     let discord_user_id = discord_user.id.unwrap_or_default();
     let mut account =
         database::platform::match_account(discord_user_id.clone(), AccountPlatformType::Discord, pool).await;

@@ -1,5 +1,5 @@
 use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResultSerde, project_str, util::unix_timestamp};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow, Debug, Clone, Default, ts_rs::TS)]
@@ -21,7 +21,7 @@ pub struct Account {
     pub last_login_at: u64,
 }
 
-pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &MySqlPool) -> Option<Account> {
+pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &SqlitePool) -> Option<Account> {
     let token = token.into();
     let token_secret = token_secret.into();
 
@@ -46,7 +46,7 @@ pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, 
 pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     token_seed: TokenSeed,
     token_secret_seed: TokenSecretSeed,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Option<Account> {
     let token = format!("{:x}", md5::compute(token_seed.into()));
     let token_secret = format!("{:x}", md5::compute(token_secret_seed.into()));
@@ -76,7 +76,7 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     user
 }
 
-pub async fn all_data(account: &Account, pool: &MySqlPool) -> HashMap<String, HashMap<String, String>> {
+pub async fn all_data(account: &Account, pool: &SqlitePool) -> HashMap<String, HashMap<String, String>> {
     let query_results = sqlx::query_file!("queries/account_platform_all_data.sql", account.id)
         .fetch_all(pool)
         .await;
@@ -100,7 +100,7 @@ pub async fn all_data(account: &Account, pool: &MySqlPool) -> HashMap<String, Ha
     results
 }
 
-pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<AccountLinkedPlatformsResult> {
+pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &SqlitePool) -> Vec<AccountLinkedPlatformsResult> {
     let prepared_pos = vec!["?"; bungie_ids.len()].join(",");
     let statement = project_str!("queries/account_search_by_bungie_bulk.sql", prepared_pos);
     let mut query_builder = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str());
@@ -117,7 +117,7 @@ pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &MySqlPool) -> Vec<Acco
     }
 }
 
-pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
+pub async fn by_bungie(bungie_id: String, pool: &SqlitePool) -> Option<AccountLinkedPlatformsResult> {
     let query = sqlx::query_file_as!(
         AccountLinkedPlatformsResult,
         "queries/account_search_by_bungie.sql",
@@ -134,7 +134,7 @@ pub async fn by_bungie(bungie_id: String, pool: &MySqlPool) -> Option<AccountLin
     }
 }
 
-pub async fn by_discord(discord_handle: String, pool: &MySqlPool) -> Option<AccountLinkedPlatformsResult> {
+pub async fn by_discord(discord_handle: String, pool: &SqlitePool) -> Option<AccountLinkedPlatformsResult> {
     let query = sqlx::query_file_as!(
         AccountLinkedPlatformsResult,
         "queries/account_search_by_discord.sql",

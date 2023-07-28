@@ -1,9 +1,9 @@
 use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp, uuid::Uuid};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub database: MySqlPool,
+    pub database: SqlitePool,
     pub http_client: reqwest::Client,
     pub guard: RetryLock,
 }

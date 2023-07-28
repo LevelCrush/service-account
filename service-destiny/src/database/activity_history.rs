@@ -5,7 +5,7 @@ use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::{destiny::CharacterId, destiny::InstanceId, RecordId, UnixTimestamp};
 use levelcrush::{database, tracing};
-use levelcrush::{project_str, MySqlPool};
+use levelcrush::{project_str, SqlitePool};
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -54,7 +54,7 @@ pub struct NetworkBreakdownResult {
 pub async fn existing(
     character_id: CharacterId,
     instance_ids: &[InstanceId],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<(CharacterId, InstanceId), RecordId> {
     if instance_ids.is_empty() {
         return HashMap::new();
@@ -84,7 +84,7 @@ pub async fn existing(
 }
 
 /// queries the database for the most recent timestamp of the activity that the character ran
-pub async fn last_activity_timestamp(character_id: CharacterId, pool: &MySqlPool) -> UnixTimestamp {
+pub async fn last_activity_timestamp(character_id: CharacterId, pool: &SqlitePool) -> UnixTimestamp {
     let query = sqlx::query_file_as!(
         ActivityHistoryLastEntryResult,
         "queries/character_activity_last_timestamp.sql",
@@ -102,7 +102,7 @@ pub async fn last_activity_timestamp(character_id: CharacterId, pool: &MySqlPool
 
 /// write bulk amount of activity history records to the database
 /// will insert or update automatically
-pub async fn write(values: &[ActivityHistoryRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityHistoryRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
@@ -137,7 +137,7 @@ pub async fn write(values: &[ActivityHistoryRecord], pool: &MySqlPool) {
     }
 }
 
-pub async fn get_oldest(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
+pub async fn get_oldest(pool: &SqlitePool) -> Option<ActivityHistoryRecord> {
     let query = sqlx::query_file_as!(ActivityHistoryRecord, "queries/activity_history_oldest.sql")
         .fetch_optional(pool)
         .await;
@@ -150,7 +150,7 @@ pub async fn get_oldest(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
     }
 }
 
-pub async fn get_recent(pool: &MySqlPool) -> Option<ActivityHistoryRecord> {
+pub async fn get_recent(pool: &SqlitePool) -> Option<ActivityHistoryRecord> {
     let query = sqlx::query_file_as!(ActivityHistoryRecord, "queries/activity_history_recent.sql")
         .fetch_optional(pool)
         .await;
@@ -168,7 +168,7 @@ pub async fn member(
     timestamp_start: u64,
     timestamp_end: u64,
     modes: &[i32],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<ActivityHistoryRecord> {
     let mode_string = if modes.is_empty() {
         String::new()
@@ -202,7 +202,7 @@ pub async fn missing_instance_data(
     start_timestamp: u64,
     end_timestamp: u64,
     amount: u64,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<InstanceId> {
     let query = sqlx::query_file_as!(
         ActivityInstanceResult,
@@ -229,7 +229,7 @@ pub async fn network_breakdown(
     modes: &[i32],
     timestamp_start: u64,
     timestamp_end: u64,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<i64, NetworkBreakdownResult> {
     let mut mode_filter = String::new();
     let modes_pos = vec!["?"; modes.len()].join(",");

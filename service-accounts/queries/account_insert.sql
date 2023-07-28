@@ -1,11 +1,2 @@
-INSERT INTO accounts
-SET
-    id = NULL,
-    token = ?,
-    token_secret = ?,
-    admin = 0,
-    timezone = '',
-    last_login_at = 0,
-    created_at = ?,
-    updated_at = 0,
-    deleted_at = 0
+INSERT INTO accounts (id,token,token_secret,admin,timezone,last_login_at,created_at,updated_at,deleted_at)
+VALUES(NULL, ?,  ?, 0, '', 0, ?, 0,0)

@@ -1,7 +1,7 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::{destiny::ManifestHash, RecordId};
 use levelcrush::{database, project_str};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -21,7 +21,7 @@ pub struct ClassSearchResult {
     pub hash: u32,
 }
 
-pub async fn exists_bulk(hashes: &[ManifestHash], pool: &MySqlPool) -> HashMap<ManifestHash, RecordId> {
+pub async fn exists_bulk(hashes: &[ManifestHash], pool: &SqlitePool) -> HashMap<ManifestHash, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -47,7 +47,7 @@ pub async fn exists_bulk(hashes: &[ManifestHash], pool: &MySqlPool) -> HashMap<M
     results
 }
 
-pub async fn write(values: &[ClassRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ClassRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }

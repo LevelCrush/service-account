@@ -1,4 +1,4 @@
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 use levelcrush::cache::CacheValue;
 use levelcrush::futures::future::join_all;
@@ -35,7 +35,7 @@ fn profile_needs_refresh(timestamp: u64) -> bool {
 /// exclusively handles syncing a direct profile response from the bungie api
 pub async fn profile_api_sync(
     profile_response: Option<DestinyProfileResponse>,
-    database: &MySqlPool,
+    database: &SqlitePool,
 ) -> Option<MemberRecord> {
     let mut db_record = None;
     let mut profile_component = None;

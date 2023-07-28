@@ -2,7 +2,7 @@ use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::types::destiny::InstanceId;
 use levelcrush::{database, types::RecordId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -49,7 +49,7 @@ pub struct InstanceMissingProfileResult {
 }
 
 /// g et
-pub async fn get(instance_id: InstanceId, pool: &MySqlPool) -> Option<InstanceRecord> {
+pub async fn get(instance_id: InstanceId, pool: &SqlitePool) -> Option<InstanceRecord> {
     let query = sqlx::query_file_as!(InstanceRecord, "queries/instance_get.sql", instance_id)
         .fetch_optional(pool)
         .await;
@@ -62,7 +62,7 @@ pub async fn get(instance_id: InstanceId, pool: &MySqlPool) -> Option<InstanceRe
     }
 }
 
-pub async fn get_oldest(pool: &MySqlPool) -> Option<InstanceRecord> {
+pub async fn get_oldest(pool: &SqlitePool) -> Option<InstanceRecord> {
     let query = sqlx::query_file_as!(InstanceRecord, "queries/instance_get_oldest.sql")
         .fetch_optional(pool)
         .await;
@@ -75,7 +75,7 @@ pub async fn get_oldest(pool: &MySqlPool) -> Option<InstanceRecord> {
     }
 }
 
-pub async fn get_recent(pool: &MySqlPool) -> Option<InstanceRecord> {
+pub async fn get_recent(pool: &SqlitePool) -> Option<InstanceRecord> {
     let query = sqlx::query_file_as!(InstanceRecord, "queries/instance_get_recent.sql")
         .fetch_optional(pool)
         .await;
@@ -92,7 +92,7 @@ pub async fn get_members_missing_profile(
     start_date: u64,
     end_date: u64,
     limit: u64,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<InstanceMissingProfileResult> {
     let query = sqlx::query_file_as!(
         InstanceMissingProfileResult,
@@ -114,7 +114,7 @@ pub async fn get_members_missing_profile(
 
 pub async fn get_members(
     instance_id: InstanceId,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<InstanceId, InstanceGetCharactersResult> {
     let query = sqlx::query_file_as!(
         InstanceGetCharactersResult,
@@ -137,7 +137,7 @@ pub async fn get_members(
     results
 }
 
-pub async fn multi_get_members(instance_ids: &[InstanceId], pool: &MySqlPool) -> Vec<InstanceMemberRecord> {
+pub async fn multi_get_members(instance_ids: &[InstanceId], pool: &SqlitePool) -> Vec<InstanceMemberRecord> {
     if instance_ids.is_empty() {
         return Vec::new();
     }
@@ -160,7 +160,7 @@ pub async fn multi_get_members(instance_ids: &[InstanceId], pool: &MySqlPool) ->
 }
 
 /// write an instance record to the database. This can be either an insert or update depending on if the db finds duplicate keys
-pub async fn write(record: &InstanceRecord, pool: &MySqlPool) {
+pub async fn write(record: &InstanceRecord, pool: &SqlitePool) {
     let query = sqlx::query_file!(
         "queries/instance_write.sql",
         record.id,
@@ -184,7 +184,7 @@ pub async fn write(record: &InstanceRecord, pool: &MySqlPool) {
 }
 
 /// write instance characters to the database in bulk
-pub async fn write_members(values: &[InstanceMemberRecord], pool: &MySqlPool) {
+pub async fn write_members(values: &[InstanceMemberRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
@@ -218,7 +218,7 @@ pub async fn write_members(values: &[InstanceMemberRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn multi_get(instance_ids: &[InstanceId], pool: &MySqlPool) -> Vec<InstanceRecord> {
+pub async fn multi_get(instance_ids: &[InstanceId], pool: &SqlitePool) -> Vec<InstanceRecord> {
     if instance_ids.is_empty() {
         return Vec::new();
     }

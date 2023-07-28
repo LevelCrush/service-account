@@ -11,7 +11,7 @@ use levelcrush::tracing;
 use levelcrush::{
     types::{destiny::CharacterId, destiny::InstanceId, destiny::MembershipId, destiny::MembershipType, UnixTimestamp},
     util::unix_timestamp,
-    MySqlPool,
+    SqlitePool,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -26,7 +26,7 @@ pub async fn history(
     _membership_type: MembershipType,
     character_id: CharacterId,
     values: &[DestinyHistoricalStatsPeriodGroup],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<InstanceId> {
     // pass 1 loop through our values and get the instance id's directly and store them off
     let instance_ids = {
@@ -102,7 +102,7 @@ pub async fn stats(
     _membership_type: MembershipType,
     character_id: CharacterId,
     values: &[DestinyHistoricalStatsPeriodGroup],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) {
     // pass 1 loop through our values and get the instance id's directly and store them off
     let instance_ids = {
@@ -158,7 +158,7 @@ pub async fn stats(
 /// returns a hash map of our key = (membership_id, membership_type aka the platform) and value = Vec<character_ids>
 pub async fn instance(
     data: &DestinyPostGameCarnageReportData,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<(MembershipId, MembershipType), Vec<CharacterId>> {
     // parse instance id from the api
     let instance_id = data.details.instance_id.parse::<MembershipId>().unwrap_or_default();

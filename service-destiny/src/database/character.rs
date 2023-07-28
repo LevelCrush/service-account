@@ -1,7 +1,7 @@
 use levelcrush::database;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::{destiny::CharacterId, RecordId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[DatabaseRecord]
 pub struct CharacterRecord {
@@ -28,7 +28,7 @@ pub struct CharacterStatusRecord {
 }
 
 /// get a full character record from the database
-pub async fn get(character_id: CharacterId, pool: &MySqlPool) -> Option<CharacterRecord> {
+pub async fn get(character_id: CharacterId, pool: &SqlitePool) -> Option<CharacterRecord> {
     let query = sqlx::query_file_as!(CharacterRecord, "queries/character_get.sql", character_id)
         .fetch_optional(pool)
         .await;
@@ -42,7 +42,7 @@ pub async fn get(character_id: CharacterId, pool: &MySqlPool) -> Option<Characte
 }
 
 /// inserts a new character record into the database
-pub async fn create(character: CharacterRecord, database: &MySqlPool) -> RecordId {
+pub async fn create(character: CharacterRecord, database: &SqlitePool) -> RecordId {
     let query = sqlx::query_file!(
         "queries/character_insert.sql",
         character.membership_id,
@@ -70,7 +70,7 @@ pub async fn create(character: CharacterRecord, database: &MySqlPool) -> RecordI
 }
 
 /// updates a record in the database
-pub async fn update(character: &CharacterRecord, database: &MySqlPool) -> bool {
+pub async fn update(character: &CharacterRecord, database: &SqlitePool) -> bool {
     let query = sqlx::query_file!(
         "queries/character_update.sql",
         character.membership_id,

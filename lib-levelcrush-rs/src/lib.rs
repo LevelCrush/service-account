@@ -15,7 +15,7 @@ pub use tracing;
 pub use uuid;
 
 pub use levelcrush_macros as proc_macros;
-pub use {bigdecimal, bigdecimal::BigDecimal, sqlx, sqlx::MySql, sqlx::MySqlPool};
+pub use {bigdecimal, bigdecimal::BigDecimal, sqlx, sqlx::Sqlite, sqlx::SqlitePool};
 
 pub mod cache;
 pub mod database;

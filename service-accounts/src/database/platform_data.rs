@@ -2,7 +2,7 @@ use crate::database::platform::AccountPlatform;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{project_str, tracing, types::RecordId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -26,7 +26,7 @@ pub struct NewAccountPlatformData {
     pub value: String,
 }
 
-pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &MySqlPool) -> HashMap<String, RecordId> {
+pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &SqlitePool) -> HashMap<String, RecordId> {
     let mut results = HashMap::new();
 
     //sqlx/mysql does not allow us to pass an vector into a prepared statement, so we must manually construct a prepared statement and bind manually
@@ -66,7 +66,7 @@ pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &MySq
     results
 }
 
-pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatformData], pool: &MySqlPool) {
+pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatformData], pool: &SqlitePool) {
     // get all keys we need to work with and at the same time construct a hash map that represents the key/value pairs we want to link
     let mut keys = Vec::new();
     let mut value_map = HashMap::new();

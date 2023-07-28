@@ -1,12 +1,12 @@
 use levelcrush::{database, proc_macros::DatabaseResult, util::unix_timestamp};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[DatabaseResult]
 pub struct RoleDenyResult {
     pub member_id: u64,
 }
 
-pub async fn deny(guild_id: u64, member_id: u64, role_name: &str, pool: &MySqlPool) {
+pub async fn deny(guild_id: u64, member_id: u64, role_name: &str, pool: &SqlitePool) {
     let queries = sqlx::query_file!(
         "queries/role_denies.sql",
         guild_id,
@@ -20,7 +20,7 @@ pub async fn deny(guild_id: u64, member_id: u64, role_name: &str, pool: &MySqlPo
     database::log_error(queries);
 }
 
-pub async fn allow(guild_id: u64, member_id: u64, role_name: &str, pool: &MySqlPool) {
+pub async fn allow(guild_id: u64, member_id: u64, role_name: &str, pool: &SqlitePool) {
     let queries = sqlx::query_file!("queries/role_allow.sql", guild_id, role_name, member_id)
         .execute(pool)
         .await;
@@ -28,7 +28,7 @@ pub async fn allow(guild_id: u64, member_id: u64, role_name: &str, pool: &MySqlP
     database::log_error(queries);
 }
 
-pub async fn get_denies(guild_id: u64, role_name: &str, pool: &MySqlPool) -> Vec<RoleDenyResult> {
+pub async fn get_denies(guild_id: u64, role_name: &str, pool: &SqlitePool) -> Vec<RoleDenyResult> {
     let query = sqlx::query_file_as!(RoleDenyResult, "queries/role_denies_get.sql", guild_id, role_name)
         .fetch_all(pool)
         .await;

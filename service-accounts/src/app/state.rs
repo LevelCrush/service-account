@@ -2,11 +2,10 @@ use crate::{
     database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView, sync::discord::MemberSyncResult,
 };
 use levelcrush::{cache::MemoryCache, database, retry_lock::RetryLock, types::UnixTimestamp, uuid::Uuid};
-use sqlx::MySqlPool;
-
+use sqlx::SqlitePool;
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub database: MySqlPool,
+    pub database: SqlitePool,
     pub http_client: reqwest::Client,
     pub profiles: MemoryCache<ProfileView>,
     pub mass_searches: MemoryCache<Vec<AccountLinkedPlatformsResult>>,

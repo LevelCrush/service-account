@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::tokio;
@@ -79,7 +79,7 @@ pub async fn from_membership(
 }
 
 /// takes the input from a group response from destiny and syncs to the database
-pub async fn clan_info_sync(response: &DestinyGroupResponse, state: &MySqlPool) {
+pub async fn clan_info_sync(response: &DestinyGroupResponse, state: &SqlitePool) {
     // start syncing to the database
     sync::clan::info(&response.detail, state).await;
 }
@@ -88,7 +88,7 @@ pub async fn clan_info_sync(response: &DestinyGroupResponse, state: &MySqlPool) 
 pub async fn clan_roster_sync(
     group_id: GroupId,
     roster_response: &DestinySearchResultOfGroupMember,
-    database: &MySqlPool,
+    database: &SqlitePool,
 ) -> HashMap<MembershipId, MembershipType> {
     // at the time of this writing we are just going to pass what we need right to the sync function
     // there may be more we want to do with the roster in the future to return any more data

@@ -1,7 +1,7 @@
 use levelcrush::database;
 use levelcrush::macros::DatabaseRecord;
 use levelcrush::project_str;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -14,7 +14,7 @@ pub struct SeasonRecord {
     pub ends_at: u64,
 }
 
-pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
+pub async fn get(number: i32, pool: &SqlitePool) -> Option<SeasonRecord> {
     let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get.sql", number)
         .fetch_optional(pool)
         .await;
@@ -27,7 +27,7 @@ pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
     }
 }
 
-pub async fn get_all_active(pool: &MySqlPool) -> Vec<SeasonRecord> {
+pub async fn get_all_active(pool: &SqlitePool) -> Vec<SeasonRecord> {
     let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get_all_active.sql")
         .fetch_all(pool)
         .await;
@@ -40,7 +40,7 @@ pub async fn get_all_active(pool: &MySqlPool) -> Vec<SeasonRecord> {
     }
 }
 
-pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord> {
+pub async fn read(hashes: &[u32], pool: &SqlitePool) -> HashMap<u32, SeasonRecord> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -63,7 +63,7 @@ pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord
     }
 }
 
-pub async fn write(records: &[SeasonRecord], pool: &MySqlPool) {
+pub async fn write(records: &[SeasonRecord], pool: &SqlitePool) {
     //
 
     let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");

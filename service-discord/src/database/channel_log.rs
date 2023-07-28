@@ -1,5 +1,5 @@
 use levelcrush::{database, proc_macros::DatabaseRecord, util::unix_timestamp};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[DatabaseRecord]
 pub struct ChannelLogRecord {
@@ -15,7 +15,7 @@ pub struct ChannelLogRecord {
     pub data: String,
 }
 
-pub async fn create(log: ChannelLogRecord, pool: &MySqlPool) {
+pub async fn create(log: ChannelLogRecord, pool: &SqlitePool) {
     let query = sqlx::query_file!(
         "queries/channel_log_insert.sql",
         log.event_type,

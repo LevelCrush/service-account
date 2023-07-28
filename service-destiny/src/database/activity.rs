@@ -3,7 +3,7 @@ use levelcrush::project_str;
 use levelcrush::types::destiny::InstanceId;
 use levelcrush::types::{destiny::ManifestHash, RecordId};
 use levelcrush::{database, BigDecimal};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -42,7 +42,7 @@ pub struct ActivityInstanceResult {
 
 /// sends a set of u32 hashes into a query to check for existence.
 /// Returns a HashMap<u32, i32> which represents HashMap<hash,record_id>
-pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<ManifestHash, RecordId> {
+pub async fn exists_bulk(hashes: &[u32], pool: &SqlitePool) -> HashMap<ManifestHash, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -68,7 +68,7 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<ManifestHa
 
     results
 }
-pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
@@ -103,7 +103,7 @@ pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn from_instances(instance_ids: &[InstanceId], pool: &MySqlPool) -> Vec<ActivityInstanceResult> {
+pub async fn from_instances(instance_ids: &[InstanceId], pool: &SqlitePool) -> Vec<ActivityInstanceResult> {
     if instance_ids.is_empty() {
         return Vec::new();
     }

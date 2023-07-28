@@ -1,5 +1,5 @@
 use levelcrush::{database, macros::DatabaseRecordSerde};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug, sqlx::FromRow, ts_rs::TS)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
@@ -16,7 +16,7 @@ pub struct SettingModeRecord {
     pub deleted_at: u64,
 }
 
-pub async fn modes(pool: &MySqlPool) -> Vec<SettingModeRecord> {
+pub async fn modes(pool: &SqlitePool) -> Vec<SettingModeRecord> {
     let query = sqlx::query_file_as!(SettingModeRecord, "queries/settings_modes_get.sql")
         .fetch_all(pool)
         .await;

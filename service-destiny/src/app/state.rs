@@ -2,7 +2,7 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 use levelcrush::retry_lock::RetryLock;
 use levelcrush::task_manager::TaskManager;
@@ -42,8 +42,8 @@ pub enum Setting {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub database: MySqlPool,
-    // MySqlPool is already wrapped in a arc, safe to clone
+    pub database: SqlitePool,
+    // SqlitePool is already wrapped in a arc, safe to clone
     pub bungie: BungieClient,
     // safe to clone, underlying implementation uses handles/arc
     pub cache: MemoryCache<CacheItem>,

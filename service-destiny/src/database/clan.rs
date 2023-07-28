@@ -2,7 +2,7 @@ use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::types::{destiny::GroupId, destiny::MembershipId, RecordId};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{database, project_str};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 use crate::database::member::MemberResult;
@@ -49,7 +49,7 @@ pub struct ClanInfoResult {
 /// gets a HashMap of existing member ids for the  target clan
 ///
 /// key of membership_id , value of record id
-pub async fn existing_members(group_id: GroupId, database: &MySqlPool) -> HashMap<MembershipId, RecordId> {
+pub async fn existing_members(group_id: GroupId, database: &SqlitePool) -> HashMap<MembershipId, RecordId> {
     let mut results = HashMap::new();
 
     let query = sqlx::query_file!("queries/clan_existing_members.sql", group_id)
@@ -68,7 +68,7 @@ pub async fn existing_members(group_id: GroupId, database: &MySqlPool) -> HashMa
 }
 
 /// searches the clan_members table for matching membership ids/record ids from the specified input
-pub async fn find_by_membership(membership_ids: &[MembershipId], pool: &MySqlPool) -> HashMap<MembershipId, RecordId> {
+pub async fn find_by_membership(membership_ids: &[MembershipId], pool: &SqlitePool) -> HashMap<MembershipId, RecordId> {
     if membership_ids.is_empty() {
         return HashMap::new();
     }
@@ -100,7 +100,7 @@ pub async fn find_by_membership(membership_ids: &[MembershipId], pool: &MySqlPoo
 }
 
 /// insert a clan member into the table
-pub async fn add_member(member: ClanMemberRecord, pool: &MySqlPool) -> RecordId {
+pub async fn add_member(member: ClanMemberRecord, pool: &SqlitePool) -> RecordId {
     let query = sqlx::query_file!(
         "queries/clan_add_member.sql",
         member.group_id,
@@ -122,7 +122,7 @@ pub async fn add_member(member: ClanMemberRecord, pool: &MySqlPool) -> RecordId 
 }
 
 /// update member record in database
-pub async fn update_member(member: &ClanMemberRecord, pool: &MySqlPool) -> bool {
+pub async fn update_member(member: &ClanMemberRecord, pool: &SqlitePool) -> bool {
     let query = sqlx::query_file!(
         "queries/clan_update_member.sql",
         member.group_id,
@@ -146,7 +146,7 @@ pub async fn update_member(member: &ClanMemberRecord, pool: &MySqlPool) -> bool 
 }
 
 /// remove clan members from the database by directly passing their record ids
-pub async fn remove_members(records: &[RecordId], pool: &MySqlPool) {
+pub async fn remove_members(records: &[RecordId], pool: &SqlitePool) {
     let in_prepared_pos = vec!["?"; records.len()].join(",");
     let statement = project_str!("queries/clan_remove_members.sql", in_prepared_pos);
 
@@ -163,7 +163,7 @@ pub async fn remove_members(records: &[RecordId], pool: &MySqlPool) {
 }
 
 /// get a clan by directly querying by the group id
-pub async fn get(group_id: i64, pool: &MySqlPool) -> Option<ClanRecord> {
+pub async fn get(group_id: i64, pool: &SqlitePool) -> Option<ClanRecord> {
     let query = sqlx::query_file_as!(ClanRecord, "queries/clan_get.sql", group_id)
         .fetch_optional(pool)
         .await;
@@ -177,7 +177,7 @@ pub async fn get(group_id: i64, pool: &MySqlPool) -> Option<ClanRecord> {
 }
 
 /// get the group ids of all network clans
-pub async fn get_network(pool: &MySqlPool) -> Vec<GroupId> {
+pub async fn get_network(pool: &SqlitePool) -> Vec<GroupId> {
     let query = sqlx::query_file!("queries/network_get_clans.sql").fetch_all(pool).await;
     if let Ok(results) = query {
         results.iter().map(|record| record.group_id).collect::<Vec<GroupId>>()
@@ -187,7 +187,7 @@ pub async fn get_network(pool: &MySqlPool) -> Vec<GroupId> {
     }
 }
 
-pub async fn from_membership(membership_id: MembershipId, pool: &MySqlPool) -> Option<ClanInfoResult> {
+pub async fn from_membership(membership_id: MembershipId, pool: &SqlitePool) -> Option<ClanInfoResult> {
     let query = sqlx::query_file_as!(ClanInfoResult, "queries/clan_info_from_membership.sql", membership_id)
         .fetch_optional(pool)
         .await;
@@ -200,7 +200,7 @@ pub async fn from_membership(membership_id: MembershipId, pool: &MySqlPool) -> O
     }
 }
 
-pub async fn get_network_roster(pool: &MySqlPool) -> Vec<MemberResult> {
+pub async fn get_network_roster(pool: &SqlitePool) -> Vec<MemberResult> {
     let query = sqlx::query_file_as!(MemberResult, "queries/network_roster.sql")
         .fetch_all(pool)
         .await;
@@ -213,7 +213,7 @@ pub async fn get_network_roster(pool: &MySqlPool) -> Vec<MemberResult> {
     }
 }
 
-pub async fn get_info(group_id: GroupId, pool: &MySqlPool) -> Option<ClanInfoResult> {
+pub async fn get_info(group_id: GroupId, pool: &SqlitePool) -> Option<ClanInfoResult> {
     let query = sqlx::query_file_as!(ClanInfoResult, "queries/clan_info_get.sql", group_id)
         .fetch_optional(pool)
         .await;
@@ -226,7 +226,7 @@ pub async fn get_info(group_id: GroupId, pool: &MySqlPool) -> Option<ClanInfoRes
     }
 }
 
-pub async fn get_roster(group_id: GroupId, pool: &MySqlPool) -> Vec<MemberResult> {
+pub async fn get_roster(group_id: GroupId, pool: &SqlitePool) -> Vec<MemberResult> {
     let query = sqlx::query_file_as!(MemberResult, "queries/clan_roster_get.sql", group_id)
         .fetch_all(pool)
         .await;
@@ -239,7 +239,7 @@ pub async fn get_roster(group_id: GroupId, pool: &MySqlPool) -> Vec<MemberResult
     }
 }
 
-pub async fn get_info_by_slug(slug: &str, pool: &MySqlPool) -> Option<ClanInfoResult> {
+pub async fn get_info_by_slug(slug: &str, pool: &SqlitePool) -> Option<ClanInfoResult> {
     let query = sqlx::query_file_as!(ClanInfoResult, "queries/clan_info_by_slug.sql", slug)
         .fetch_optional(pool)
         .await;
@@ -252,7 +252,7 @@ pub async fn get_info_by_slug(slug: &str, pool: &MySqlPool) -> Option<ClanInfoRe
     }
 }
 
-pub async fn get_network_info(pool: &MySqlPool) -> Vec<ClanInfoResult> {
+pub async fn get_network_info(pool: &SqlitePool) -> Vec<ClanInfoResult> {
     let query = sqlx::query_file_as!(ClanInfoResult, "queries/network_info_get.sql")
         .fetch_all(pool)
         .await;
@@ -266,7 +266,7 @@ pub async fn get_network_info(pool: &MySqlPool) -> Vec<ClanInfoResult> {
 }
 
 /// get group ids of all non network clans
-pub async fn get_non_network(pool: &MySqlPool) -> Vec<GroupId> {
+pub async fn get_non_network(pool: &SqlitePool) -> Vec<GroupId> {
     let query = sqlx::query_file!("queries/clan_non_network.sql").fetch_all(pool).await;
 
     if let Ok(results) = query {
@@ -278,7 +278,7 @@ pub async fn get_non_network(pool: &MySqlPool) -> Vec<GroupId> {
 }
 
 /// insert a new clan into the database
-pub async fn create(clan: ClanRecord, pool: &MySqlPool) -> RecordId {
+pub async fn create(clan: ClanRecord, pool: &SqlitePool) -> RecordId {
     let query = sqlx::query_file!(
         "queries/clan_insert.sql",
         clan.group_id,
@@ -301,7 +301,7 @@ pub async fn create(clan: ClanRecord, pool: &MySqlPool) -> RecordId {
 }
 
 /// update clan record
-pub async fn update(clan: &ClanRecord, pool: &MySqlPool) -> bool {
+pub async fn update(clan: &ClanRecord, pool: &SqlitePool) -> bool {
     let query = sqlx::query_file!(
         "queries/clan_update.sql",
         clan.group_id,

@@ -10,11 +10,11 @@ use crate::database::seasons::SeasonRecord;
 use crate::database::triumph::TriumphRecord;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 const RECORDS_PER_CHUNK: usize = 100;
 
-pub async fn records(definitions: &DestinyRecordDefinitionMap, pool: &MySqlPool) {
+pub async fn records(definitions: &DestinyRecordDefinitionMap, pool: &SqlitePool) {
     tracing::info!("Working on {} total definitions for triumphs", definitions.len());
 
     let hashes = definitions
@@ -60,7 +60,7 @@ pub async fn records(definitions: &DestinyRecordDefinitionMap, pool: &MySqlPool)
     }
 }
 
-pub async fn seasons(definitions: &DestinySeasonDefinitionMap, pool: &MySqlPool) {
+pub async fn seasons(definitions: &DestinySeasonDefinitionMap, pool: &SqlitePool) {
     tracing::info!("Working on {} total definitions for seasons", definitions.len());
 
     let hashes = definitions
@@ -100,7 +100,7 @@ pub async fn seasons(definitions: &DestinySeasonDefinitionMap, pool: &MySqlPool)
 }
 
 /// sync activity definitions to database
-pub async fn activities(definitions: &DestinyActivityDefinitionMap, pool: &MySqlPool) {
+pub async fn activities(definitions: &DestinyActivityDefinitionMap, pool: &SqlitePool) {
     tracing::info!("Working on {} total definitions for activities", definitions.len());
 
     let hashes = definitions
@@ -154,7 +154,7 @@ pub async fn activities(definitions: &DestinyActivityDefinitionMap, pool: &MySql
 }
 
 /// syncs activity type definitions the definitions to the database
-pub async fn activity_types(definitions: &DestinyActivityTypeDefinitionMap, pool: &MySqlPool) {
+pub async fn activity_types(definitions: &DestinyActivityTypeDefinitionMap, pool: &SqlitePool) {
     tracing::info!("Working on {} total activity type definitions", definitions.len());
 
     let hashes = definitions
@@ -203,7 +203,7 @@ pub async fn activity_types(definitions: &DestinyActivityTypeDefinitionMap, pool
 }
 
 /// syncs class definitions to the database
-pub async fn classes(definitions: &DestinyClassDefinitionMap, pool: &MySqlPool) {
+pub async fn classes(definitions: &DestinyClassDefinitionMap, pool: &SqlitePool) {
     tracing::info!("Working on {} total definitions", definitions.len());
 
     let mut hashes = Vec::new();

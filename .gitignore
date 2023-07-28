@@ -8,6 +8,7 @@ node_modules/
 dist/
 assets/
 Cargo.lock
+*.sqlite
 
 
 # Copied from nextjs project

@@ -4,7 +4,7 @@ use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
 use levelcrush::{bigdecimal::ToPrimitive, BigDecimal};
 use levelcrush::{database, project_str};
-use sqlx::{mysql::MySqlRow, MySqlPool, Row};
+use sqlx::{mysql::MySqlRow, Row, SqlitePool};
 
 #[DatabaseRecord]
 pub struct MemberRecord {
@@ -51,7 +51,7 @@ pub async fn get_snapshot(
     membership_id: MembershipId,
     snapshot: &str,
     version: u8,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Option<MemberSnapshotRecord> {
     let query = sqlx::query_file_as!(
         MemberSnapshotRecord,
@@ -71,7 +71,7 @@ pub async fn get_snapshot(
     }
 }
 
-pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version: u8, data: String, pool: &MySqlPool) {
+pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version: u8, data: String, pool: &SqlitePool) {
     let query = sqlx::query_file!(
         "queries/member_snapshot_write.sql",
         membership_id,
@@ -90,7 +90,7 @@ pub async fn write_snapshot(membership_id: MembershipId, snapshot: &str, version
 /// similiar to the status function, except it searches by bungie name instead
 /// NOTE: If in the instance that a user has an inactive linked account (not primary) and it finds it way into our system
 /// we will only return the member record that has been most recently played
-pub async fn get_by_bungie_name(bungie_name: &str, pool: &MySqlPool) -> Option<MemberResult> {
+pub async fn get_by_bungie_name(bungie_name: &str, pool: &SqlitePool) -> Option<MemberResult> {
     let query = sqlx::query_file!("queries/member_get_by_bungie.sql", bungie_name)
         .fetch_optional(pool)
         .await;
@@ -119,7 +119,7 @@ pub async fn get_by_bungie_name(bungie_name: &str, pool: &MySqlPool) -> Option<M
     }
 }
 
-pub async fn get(membership_id: i64, pool: &MySqlPool) -> Option<MemberResult> {
+pub async fn get(membership_id: i64, pool: &SqlitePool) -> Option<MemberResult> {
     let query = sqlx::query_file!("queries/member_get.sql", membership_id)
         .fetch_optional(pool)
         .await;
@@ -148,7 +148,7 @@ pub async fn get(membership_id: i64, pool: &MySqlPool) -> Option<MemberResult> {
     }
 }
 
-pub async fn multi_get(membership_ids: &[i64], pool: &MySqlPool) -> Vec<MemberResult> {
+pub async fn multi_get(membership_ids: &[i64], pool: &SqlitePool) -> Vec<MemberResult> {
     if membership_ids.is_empty() {
         return Vec::new();
     }
@@ -191,7 +191,7 @@ pub async fn multi_get(membership_ids: &[i64], pool: &MySqlPool) -> Vec<MemberRe
 }
 
 /// fetches a member record from the database with only the membership_id
-pub async fn get_record(membership_id: i64, pool: &MySqlPool) -> Option<MemberRecord> {
+pub async fn get_record(membership_id: i64, pool: &SqlitePool) -> Option<MemberRecord> {
     let query = sqlx::query_file_as!(MemberRecord, "queries/member_record_get.sql", membership_id)
         .fetch_optional(pool)
         .await;
@@ -205,7 +205,7 @@ pub async fn get_record(membership_id: i64, pool: &MySqlPool) -> Option<MemberRe
 }
 
 /// update membership record
-pub async fn update(member: &MemberRecord, database: &MySqlPool) -> bool {
+pub async fn update(member: &MemberRecord, database: &SqlitePool) -> bool {
     // record found, update it!
     let query = sqlx::query_file!(
         "queries/member_record_update.sql",
@@ -229,7 +229,7 @@ pub async fn update(member: &MemberRecord, database: &MySqlPool) -> bool {
     }
 }
 
-pub async fn create(member: MemberRecord, database: &MySqlPool) -> RecordId {
+pub async fn create(member: MemberRecord, database: &SqlitePool) -> RecordId {
     let query = sqlx::query_file!(
         "queries/member_record_insert.sql",
         member.platform,
@@ -252,7 +252,7 @@ pub async fn create(member: MemberRecord, database: &MySqlPool) -> RecordId {
     }
 }
 
-pub async fn search_count<T: Into<String>>(display_name: T, pool: &MySqlPool) -> u32 {
+pub async fn search_count<T: Into<String>>(display_name: T, pool: &SqlitePool) -> u32 {
     let normal_name = display_name.into();
     let escaped = normal_name.replace('%', "\\%").replace('_', "\\_");
     let wildcard_search = format!("%{}%", escaped);
@@ -269,7 +269,7 @@ pub async fn search_count<T: Into<String>>(display_name: T, pool: &MySqlPool) ->
     }
 }
 
-pub async fn search<T: Into<String>>(display_name: T, offset: u32, limit: u32, pool: &MySqlPool) -> Vec<MemberResult> {
+pub async fn search<T: Into<String>>(display_name: T, offset: u32, limit: u32, pool: &SqlitePool) -> Vec<MemberResult> {
     let normal_name = display_name.into();
     let escaped = normal_name.replace('%', "\\%").replace('_', "\\_");
     let wildcard_search = format!("%{}%", escaped);

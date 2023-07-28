@@ -1,5 +1,5 @@
 use levelcrush::{database, proc_macros::DatabaseResult, BigDecimal};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 #[DatabaseResult]
 pub struct ChannelActiveUserResult {
@@ -11,7 +11,7 @@ pub async fn active_users(
     guild: &str,
     channel: &str,
     timestamp: u64,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<ChannelActiveUserResult> {
     let query = sqlx::query_file_as!(
         ChannelActiveUserResult,

@@ -4,9 +4,9 @@ use crate::database::clan::{ClanMemberRecord, ClanRecord};
 use levelcrush::tracing;
 use levelcrush::types::{destiny::GroupId, destiny::MembershipId, destiny::MembershipType, UnixTimestamp};
 use levelcrush::util::{slugify, unix_timestamp};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
-pub async fn info(group: &GroupV2, pool: &MySqlPool) {
+pub async fn info(group: &GroupV2, pool: &SqlitePool) {
     let group_id = group.group_id.parse::<GroupId>().unwrap_or_default();
 
     tracing::info!("Searching for clan: {}", group_id);
@@ -54,7 +54,7 @@ pub async fn info(group: &GroupV2, pool: &MySqlPool) {
 pub async fn roster(
     group_id: GroupId,
     members: &[GroupMember],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<MembershipId, MembershipType> {
     // this is important for later on
     // we will use this array to determine who is n

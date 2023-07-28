@@ -6,12 +6,12 @@ use levelcrush::tracing;
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 const CHUNK_SIZE_TRIUMPH: usize = 500;
 
 /// sync a profile
-pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) -> RecordId {
+pub async fn profile(profile: &DestinyProfileComponent, database: &SqlitePool) -> RecordId {
     let user_card = &profile.user_info;
     let membership_id = user_card.membership_id.parse::<i64>().unwrap_or_default();
     let membership_type = user_card.membership_type as i32;
@@ -70,7 +70,7 @@ pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) ->
     }
 }
 
-pub async fn triumphs(membership_id: MembershipId, data: &DestinyRecordComponentMap, pool: &MySqlPool) {
+pub async fn triumphs(membership_id: MembershipId, data: &DestinyRecordComponentMap, pool: &SqlitePool) {
     let hashes = data
         .iter()
         .map(|(hash, _)| hash.parse::<u32>().unwrap_or_default())

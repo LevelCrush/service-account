@@ -1,7 +1,7 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::{database, types::RecordId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -19,7 +19,7 @@ pub struct ActivityTypeSearchResult {
     pub hash: u32,
 }
 
-pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, RecordId> {
+pub async fn exists_bulk(hashes: &[u32], pool: &SqlitePool) -> HashMap<u32, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -46,7 +46,7 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, Recor
 }
 
 /// Send a bulk amount of activity type records to the database , insert when not found and update when found
-pub async fn write(values: &[ActivityTypeRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityTypeRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }

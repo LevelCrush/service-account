@@ -6,9 +6,9 @@ use levelcrush::types::{
     destiny::CharacterId, destiny::MembershipId, destiny::MembershipType, RecordId, UnixTimestamp,
 };
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
-pub async fn single(character: &DestinyCharacterComponent, database: &MySqlPool) -> RecordId {
+pub async fn single(character: &DestinyCharacterComponent, database: &SqlitePool) -> RecordId {
     let membership_id = character.membership_id.parse::<MembershipId>().unwrap_or_default();
     let membership_type = character.membership_type as MembershipType;
 
@@ -51,7 +51,7 @@ pub async fn single(character: &DestinyCharacterComponent, database: &MySqlPool)
     }
 }
 
-pub async fn multiple(characters: &[DestinyCharacterComponent], database: &MySqlPool) {
+pub async fn multiple(characters: &[DestinyCharacterComponent], database: &SqlitePool) {
     let mut character_futures = Vec::with_capacity(characters.len());
     for character in characters.iter() {
         character_futures.push(single(character, database));

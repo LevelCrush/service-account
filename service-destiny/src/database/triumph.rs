@@ -1,7 +1,7 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::{database, types::destiny::MembershipId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -35,7 +35,7 @@ pub struct TriumphTitleResult {
 pub async fn member_read(
     membership_id: MembershipId,
     hashes: &[u32],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<u32, MemberTriumphRecord> {
     if hashes.is_empty() {
         return HashMap::new();
@@ -58,7 +58,7 @@ pub async fn member_read(
     }
 }
 
-pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, TriumphRecord> {
+pub async fn read(hashes: &[u32], pool: &SqlitePool) -> HashMap<u32, TriumphRecord> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -80,7 +80,7 @@ pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, TriumphRecor
     }
 }
 
-pub async fn write(records: &[TriumphRecord], pool: &MySqlPool) {
+pub async fn write(records: &[TriumphRecord], pool: &SqlitePool) {
     let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/triumphs_write.sql", prepared_pos);
@@ -104,7 +104,7 @@ pub async fn write(records: &[TriumphRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn member_write(records: &[MemberTriumphRecord], pool: &MySqlPool) {
+pub async fn member_write(records: &[MemberTriumphRecord], pool: &SqlitePool) {
     let prepared_pos = vec!["(?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/member_triumphs_write.sql", prepared_pos);
@@ -126,7 +126,7 @@ pub async fn member_write(records: &[MemberTriumphRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn member_titles(membership_id: MembershipId, pool: &MySqlPool) -> Vec<TriumphTitleResult> {
+pub async fn member_titles(membership_id: MembershipId, pool: &SqlitePool) -> Vec<TriumphTitleResult> {
     let query = sqlx::query_file_as!(TriumphTitleResult, "queries/member_titles_get.sql", membership_id)
         .fetch_all(pool)
         .await;
