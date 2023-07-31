@@ -46,8 +46,8 @@ pub struct NetworkBreakdownResult {
     pub activity_attempts: i64,
     pub activities_completed_with_clan: i64,
     pub activities_completed: i64,
-    pub percent_with_clan: f64,
-    pub avg_clan_member_amount: f64,
+    pub percent_with_clan: i64,
+    pub avg_clan_member_amount: i64,
 }
 
 /// returns a hash map (key = (character_id, instance id), value = record id) of existing records that match the instance ids passed tied to the passed character id
