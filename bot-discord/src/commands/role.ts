@@ -7,8 +7,6 @@ import {
     ApplicationCommandOptionChoiceData,
 } from 'discord.js';
 import { Command } from './base_command';
-import type { APIResponse } from '@levelcrush';
-import { role_allow, role_deny } from '../api/settings';
 
 const COMMAND_NAME = 'role';
 

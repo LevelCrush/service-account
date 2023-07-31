@@ -2,8 +2,6 @@ import dotenv from 'dotenv';
 import { ParseArgsConfig, parseArgs } from 'node:util';
 import * as discord from './discord';
 import { CategoryChannel, CategoryChildChannel, ChannelType, Events, User, channelLink } from 'discord.js';
-import { category_active_users, channel_active_users } from './api/query';
-import { role_get_denies } from './api/settings';
 import JoinToCreate, { JoinToCreateCleanup, JoinToCreateConfig } from './join_to_create';
 import * as fs from 'fs';
 
