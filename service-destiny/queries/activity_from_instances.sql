@@ -8,7 +8,7 @@ SELECT
     COUNT(DISTINCT instances.instance_id) AS total,
     SUM(instances.completed) AS total_completed
 FROM instances
-LEFT JOIN activities ON instances.activity_hash = activities.hash
-LEFT JOIN activities AS director_activity ON instances.activity_director_hash = director_activity.hash
+LEFT JOIN manifest_activities AS activities ON instances.activity_hash = activities.hash
+LEFT JOIN manifest_activities AS director_activity ON instances.activity_director_hash = director_activity.hash
 WHERE instances.instance_id IN ({})
 GROUP BY  instances.activity_hash, instances.activity_director_hash

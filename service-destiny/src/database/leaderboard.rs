@@ -4,8 +4,8 @@ use sqlx::SqlitePool;
 #[DatabaseResult]
 pub struct LeaderboardEntryResult {
     pub display_name: String,
-    pub amount: BigDecimal,
-    pub standing: u64,
+    pub amount: f64,
+    pub standing: i64,
     pub percent_ranking: f64,
 }
 

@@ -12,14 +12,14 @@ use std::collections::HashMap;
 pub struct ActivityHistoryRecord {
     pub membership_id: i64,
     pub character_id: i64,
-    pub platform_played: i32,
-    pub activity_hash: u32,
-    pub activity_hash_director: u32,
+    pub platform_played: i64,
+    pub activity_hash: i64,
+    pub activity_hash_director: i64,
     pub instance_id: i64,
-    pub mode: i32,
+    pub mode: i64,
     pub modes: String,
-    pub private: i8,
-    pub occurred_at: u64,
+    pub private: i64,
+    pub occurred_at: i64,
 }
 
 #[DatabaseResult]
@@ -30,7 +30,7 @@ pub struct ActivityHistoryExistingResult {
 
 #[DatabaseResult]
 pub struct ActivityHistoryLastEntryResult {
-    pub timestamp: BigDecimal,
+    pub timestamp: i64,
 }
 
 #[DatabaseResult]
@@ -46,8 +46,8 @@ pub struct NetworkBreakdownResult {
     pub activity_attempts: i64,
     pub activities_completed_with_clan: i64,
     pub activities_completed: i64,
-    pub percent_with_clan: BigDecimal,
-    pub avg_clan_member_amount: BigDecimal,
+    pub percent_with_clan: f64,
+    pub avg_clan_member_amount: f64,
 }
 
 /// returns a hash map (key = (character_id, instance id), value = record id) of existing records that match the instance ids passed tied to the passed character id
@@ -94,7 +94,7 @@ pub async fn last_activity_timestamp(character_id: CharacterId, pool: &SqlitePoo
     .await;
 
     if let Ok(query) = query {
-        query.timestamp.to_u64().unwrap_or_default()
+        query.timestamp.to_i64().unwrap_or_default()
     } else {
         0
     }
@@ -107,13 +107,12 @@ pub async fn write(values: &[ActivityHistoryRecord], pool: &SqlitePool) {
         return;
     }
 
-    let prepared_statement_pos = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()].join(",");
+    let prepared_statement_pos = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()].join(",");
     let statement = project_str!("queries/activity_history_write.sql", prepared_statement_pos);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
         query_builder = query_builder
-            .bind(data.id)
             .bind(data.membership_id)
             .bind(data.character_id)
             .bind(data.platform_played)
@@ -165,9 +164,9 @@ pub async fn get_recent(pool: &SqlitePool) -> Option<ActivityHistoryRecord> {
 
 pub async fn member(
     membership_id: MembershipId,
-    timestamp_start: u64,
-    timestamp_end: u64,
-    modes: &[i32],
+    timestamp_start: UnixTimestamp,
+    timestamp_end: UnixTimestamp,
+    modes: &[i64],
     pool: &SqlitePool,
 ) -> Vec<ActivityHistoryRecord> {
     let mode_string = if modes.is_empty() {
@@ -199,9 +198,9 @@ pub async fn member(
 }
 
 pub async fn missing_instance_data(
-    start_timestamp: u64,
-    end_timestamp: u64,
-    amount: u64,
+    start_timestamp: UnixTimestamp,
+    end_timestamp: UnixTimestamp,
+    amount: i64,
     pool: &SqlitePool,
 ) -> Vec<InstanceId> {
     let query = sqlx::query_file_as!(
@@ -226,9 +225,9 @@ pub async fn missing_instance_data(
 }
 
 pub async fn network_breakdown(
-    modes: &[i32],
-    timestamp_start: u64,
-    timestamp_end: u64,
+    modes: &[i64],
+    timestamp_start: UnixTimestamp,
+    timestamp_end: UnixTimestamp,
     pool: &SqlitePool,
 ) -> HashMap<i64, NetworkBreakdownResult> {
     let mut mode_filter = String::new();

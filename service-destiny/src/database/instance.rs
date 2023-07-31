@@ -2,19 +2,20 @@ use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::types::destiny::InstanceId;
 use levelcrush::{database, types::RecordId};
+use lib_destiny::aliases::ManifestHash;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct InstanceRecord {
     pub instance_id: i64,
-    pub occurred_at: u64,
-    pub starting_phase_index: i32,
-    pub started_from_beginning: i8,
-    pub activity_hash: u32,
-    pub activity_director_hash: u32,
-    pub is_private: i8,
-    pub completed: i8,
+    pub occurred_at: i64,
+    pub starting_phase_index: i64,
+    pub started_from_beginning: i64,
+    pub activity_hash: ManifestHash,
+    pub activity_director_hash: ManifestHash,
+    pub is_private: i64,
+    pub completed: i64,
     pub completion_reasons: String,
 }
 
@@ -22,15 +23,15 @@ pub struct InstanceRecord {
 pub struct InstanceMemberRecord {
     pub instance_id: i64,
     pub membership_id: i64,
-    pub platform: i32,
+    pub platform: i64,
     pub character_id: i64,
     pub class_name: String,
-    pub class_hash: u32,
-    pub emblem_hash: u32,
-    pub light_level: i32,
+    pub class_hash: ManifestHash,
+    pub emblem_hash: ManifestHash,
+    pub light_level: i64,
     pub clan_name: String,
     pub clan_tag: String,
-    pub completed: i8,
+    pub completed: i64,
     pub completion_reason: String,
 }
 
@@ -44,8 +45,8 @@ pub struct InstanceGetCharactersResult {
 #[DatabaseResult]
 pub struct InstanceMissingProfileResult {
     pub membership_id: i64,
-    pub platform: i32,
-    pub timestamp: u64,
+    pub platform: i64,
+    pub timestamp: i64,
 }
 
 /// g et
@@ -89,9 +90,9 @@ pub async fn get_recent(pool: &SqlitePool) -> Option<InstanceRecord> {
 }
 
 pub async fn get_members_missing_profile(
-    start_date: u64,
-    end_date: u64,
-    limit: u64,
+    start_date: i64,
+    end_date: i64,
+    limit: i64,
     pool: &SqlitePool,
 ) -> Vec<InstanceMissingProfileResult> {
     let query = sqlx::query_file_as!(
@@ -163,7 +164,6 @@ pub async fn multi_get_members(instance_ids: &[InstanceId], pool: &SqlitePool) -
 pub async fn write(record: &InstanceRecord, pool: &SqlitePool) {
     let query = sqlx::query_file!(
         "queries/instance_write.sql",
-        record.id,
         record.instance_id,
         record.occurred_at,
         record.starting_phase_index,
@@ -189,14 +189,13 @@ pub async fn write_members(values: &[InstanceMemberRecord], pool: &SqlitePool) {
         return;
     }
     // for every value we have in values, we need to have a patching VALUES() group
-    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()].join(",");
+    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()].join(",");
 
     let statement = project_str!("queries/instance_members_write.sql", query_parameters);
     let mut query_builder = sqlx::query(statement.as_str());
 
     for value in values.iter() {
         query_builder = query_builder
-            .bind(value.id)
             .bind(value.instance_id)
             .bind(value.membership_id)
             .bind(value.platform)

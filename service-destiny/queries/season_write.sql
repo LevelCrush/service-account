@@ -1,5 +1,4 @@
-INSERT INTO seasons (
-    `id`,
+INSERT INTO manifest_seasons (
     `hash`,
     `name`,
     `pass_hash`,
@@ -11,9 +10,10 @@ INSERT INTO seasons (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE 
-    `name` = VALUES(`name`),
-    `starts_at` = VALUES(`starts_at`),
-    `ends_at` = VALUES(`ends_at`),
-    `updated_at` = VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+ON CONFLICT(`hash`) 
+DO UPDATE SET 
+    `name` = excluded.`name`,
+    `starts_at` = excluded.`starts_at`,
+    `ends_at` = excluded.`ends_at`,
+    `updated_at` = excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`

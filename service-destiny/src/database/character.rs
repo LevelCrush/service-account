@@ -6,16 +6,16 @@ use sqlx::SqlitePool;
 #[DatabaseRecord]
 pub struct CharacterRecord {
     pub membership_id: i64,
-    pub platform: i32,
+    pub platform: i64,
     pub character_id: i64,
-    pub class_hash: u32,
-    pub light: i32,
-    pub last_played_at: u64,
-    pub emblem_hash: u32,
+    pub class_hash: i64,
+    pub light: i64,
+    pub last_played_at: i64,
+    pub emblem_hash: i64,
     pub emblem_url: String,
     pub emblem_background_url: String,
-    pub minutes_played_session: u32,
-    pub minutes_played_lifetime: u32,
+    pub minutes_played_session: i64,
+    pub minutes_played_lifetime: i64,
 }
 
 #[DatabaseResult]
@@ -23,7 +23,7 @@ pub struct CharacterStatusRecord {
     pub id: RecordId,
     pub character_id: i64,
     pub membership_id: i64,
-    pub platform: i32,
+    pub platform: i64,
     pub seconds_since_update: i64,
 }
 
@@ -62,7 +62,7 @@ pub async fn create(character: CharacterRecord, database: &SqlitePool) -> Record
     .await;
 
     if let Ok(query) = query {
-        query.last_insert_id() as RecordId
+        query.last_insert_rowid() as RecordId
     } else {
         database::log_error(query);
         -1

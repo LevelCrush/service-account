@@ -98,28 +98,12 @@ pub async fn write_snapshot(
 /// NOTE: If in the instance that a user has an inactive linked account (not primary) and it finds it way into our system
 /// we will only return the member record that has been most recently played
 pub async fn get_by_bungie_name(bungie_name: &str, pool: &SqlitePool) -> Option<MemberResult> {
-    let query = sqlx::query_file!("queries/member_get_by_bungie.sql", bungie_name)
+    let query = sqlx::query_file_as!(MemberResult, "queries/member_get_by_bungie.sql", bungie_name)
         .fetch_optional(pool)
         .await;
 
-    if let Ok(Some(record)) = query {
-        // there has to be a better then forcing a map on sqlx like this when types mismatch
-        // try_from is not **currently** working for me, maybe I'm doing something wrong
-        // for now this works
-        Some(MemberResult {
-            membership_id: record.membership_id,
-            platform: record.platform,
-            last_played_at: record.last_played_at,
-            display_name: record.display_name,
-            updated_at: record.updated_at,
-            display_name_global: record.display_name_global,
-            clan_group_id: record.clan_group_id,
-            clan_group_role: record.clan_group_role as i8,
-            clan_call_sign: record.clan_call_sign,
-            clan_joined_at: record.clan_joined_at.to_u64().unwrap_or_default(),
-            clan_is_network: record.clan_is_network as i8,
-            clan_name: record.clan_name,
-        })
+    if let Ok(record) = query {
+        record
     } else {
         database::log_error(query);
         None
@@ -127,28 +111,12 @@ pub async fn get_by_bungie_name(bungie_name: &str, pool: &SqlitePool) -> Option<
 }
 
 pub async fn get(membership_id: i64, pool: &SqlitePool) -> Option<MemberResult> {
-    let query = sqlx::query_file!("queries/member_get.sql", membership_id)
+    let query = sqlx::query_file_as!(MemberResult, "queries/member_get.sql", membership_id)
         .fetch_optional(pool)
         .await;
 
-    if let Ok(Some(record)) = query {
-        // there has to be a better then forcing a map on sqlx like this when types mismatch
-        // try_from is not **currently** working for me, maybe I'm doing something wrong
-        // for now this works
-        Some(MemberResult {
-            membership_id: record.membership_id,
-            platform: record.platform,
-            last_played_at: record.last_played_at,
-            display_name: record.display_name,
-            updated_at: record.updated_at,
-            display_name_global: record.display_name_global,
-            clan_group_id: record.clan_group_id,
-            clan_group_role: record.clan_group_role as i8,
-            clan_call_sign: record.clan_call_sign,
-            clan_joined_at: record.clan_joined_at.to_u64().unwrap_or_default(),
-            clan_is_network: record.clan_is_network as i8,
-            clan_name: record.clan_name,
-        })
+    if let Ok(record) = query {
+        record
     } else {
         database::log_error(query);
         None
@@ -163,28 +131,12 @@ pub async fn multi_get(membership_ids: &[i64], pool: &SqlitePool) -> Vec<MemberR
     let prepared_pos = vec!["?"; membership_ids.len()].join(",");
 
     let statement = project_str!("queries/member_multi_get.sql", prepared_pos);
-    let mut query_builder = sqlx::query(&statement);
+    let mut query_builder = sqlx::query_as::<_, MemberResult>(&statement);
     for membership_id in membership_ids.iter() {
         query_builder = query_builder.bind(membership_id);
     }
 
-    let query = query_builder
-        .map(|row: SqliteRow| MemberResult {
-            membership_id: row.get("membership_id"),
-            platform: row.get("platform"),
-            last_played_at: row.get("last_played_at"),
-            display_name: row.get("display_name"),
-            display_name_global: row.get("display_name_global"),
-            updated_at: row.get("updated_at"),
-            clan_group_id: row.get("clan_group_id"),
-            clan_call_sign: row.get("clan_call_sign"),
-            clan_joined_at: row.get::<BigDecimal, _>("clan_joined_at").to_i64().unwrap_or_default(),
-            clan_group_role: row.get("clan_group_role"),
-            clan_is_network: row.get("clan_is_network"),
-            clan_name: row.get("clan_name"),
-        })
-        .fetch_all(pool)
-        .await;
+    let query = query_builder.fetch_all(pool).await;
 
     if let Ok(records) = query {
         // there has to be a better then forcing a map on sqlx like this when types mismatch
@@ -280,7 +232,8 @@ pub async fn search<T: Into<String>>(display_name: T, offset: u32, limit: u32, p
     let normal_name = display_name.into();
     let escaped = normal_name.replace('%', "\\%").replace('_', "\\_");
     let wildcard_search = format!("%{}%", escaped);
-    let query = sqlx::query_file!(
+    let query = sqlx::query_file_as!(
+        MemberResult,
         "queries/member_search.sql",
         wildcard_search,
         wildcard_search,
@@ -291,26 +244,7 @@ pub async fn search<T: Into<String>>(display_name: T, offset: u32, limit: u32, p
     .await;
 
     if let Ok(query) = query {
-        // there has to be a better then forcing a map on sqlx like this when types mismatch
-        // try_from is not **currently** working for me, maybe I'm doing something wrong
-        // for now this works
         query
-            .into_iter()
-            .map(|record| MemberResult {
-                membership_id: record.membership_id,
-                platform: record.platform,
-                last_played_at: record.last_played_at,
-                updated_at: record.updated_at,
-                display_name: record.display_name,
-                display_name_global: record.display_name_global,
-                clan_group_id: record.clan_group_id,
-                clan_group_role: record.clan_group_role as i8,
-                clan_call_sign: record.clan_call_sign,
-                clan_joined_at: record.clan_joined_at.to_u64().unwrap_or_default(),
-                clan_is_network: record.clan_is_network as i8,
-                clan_name: record.clan_name,
-            })
-            .collect::<Vec<MemberResult>>()
     } else {
         database::log_error(query);
         Vec::new()

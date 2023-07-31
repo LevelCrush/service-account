@@ -6,11 +6,11 @@ use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct ClassRecord {
-    pub hash: u32,
-    pub index: u32,
+    pub hash: i64,
+    pub index: i64,
 
     #[sqlx(rename = "type")]
-    pub class_type: u8,
+    pub class_type: i64,
 
     pub name: String,
 }
@@ -18,7 +18,7 @@ pub struct ClassRecord {
 #[DatabaseResult]
 pub struct ClassSearchResult {
     pub id: RecordId,
-    pub hash: u32,
+    pub hash: ManifestHash,
 }
 
 pub async fn exists_bulk(hashes: &[ManifestHash], pool: &SqlitePool) -> HashMap<ManifestHash, RecordId> {
@@ -52,15 +52,13 @@ pub async fn write(values: &[ClassRecord], pool: &SqlitePool) {
         return;
     }
     // for every value we have in values, we need to have a patching VALUES() group
-    let query_parameters = vec!["(?,?,?,?,?,?,?,?)"; values.len()];
-
+    let query_parameters = vec!["(?,?,?,?,?,?,?)"; values.len()];
     let query_parameters = query_parameters.join(", ");
     let statement = project_str!("queries/class_write.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
         query_builder = query_builder
-            .bind(data.id)
             .bind(data.hash)
             .bind(data.index)
             .bind(data.class_type)

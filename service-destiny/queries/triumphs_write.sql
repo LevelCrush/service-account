@@ -1,5 +1,4 @@
-INSERT INTO triumphs (
-    `id`,
+INSERT INTO manifest_triumphs (
     `hash`,
     `name`,
     `description`,
@@ -11,10 +10,11 @@ INSERT INTO triumphs (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE
-    `name` = VALUES(`name`),
-    `description` = VALUES(`description`),
-    `title` = VALUES(`title`),
-    `is_title` = VALUES(`is_title`),
-    `gilded` = VALUES(`gilded`),
-    `updated_at` = VALUES(`created_at`)
+ON CONFLICT(`hash`) 
+DO UPDATE SET 
+    `name` = excluded.`name`,
+    `description` = excluded.`description`,
+    `title` = excluded.`title`,
+    `is_title` = excluded.`is_title`,
+    `gilded` = excluded.`gilded`,
+    `updated_at` = excluded.`created_at`

@@ -1,4 +1,4 @@
 SELECT
     *
-FROM triumphs
-WHERE triumphs.hash IN ({})
+FROM manifest_triumphs
+WHERE manifest_triumphs.hash IN ({})

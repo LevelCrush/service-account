@@ -51,7 +51,7 @@ pub async fn write(values: &[ActivityTypeRecord], pool: &SqlitePool) {
         return;
     }
     // for every value we have in values, we need to have a patching VALUES() group
-    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?)"; values.len()];
+    let query_parameters = vec!["(?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
     let statement = project_str!("queries/activity_types_write.sql", query_parameters);
@@ -59,7 +59,6 @@ pub async fn write(values: &[ActivityTypeRecord], pool: &SqlitePool) {
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
         query_builder = query_builder
-            .bind(data.id)
             .bind(data.hash)
             .bind(data.name.as_str())
             .bind(data.description.as_str())

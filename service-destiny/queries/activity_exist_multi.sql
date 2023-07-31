@@ -1,5 +1,5 @@
 SELECT 
     activities.id,
     activities.hash
-FROM activities
+FROM manifest_activities AS activities
 WHERE activities.hash IN ({})

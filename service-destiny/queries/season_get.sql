@@ -1,4 +1,4 @@
 SELECT 
     *
-FROM seasons 
-WHERE seasons.number = ?
+FROM manifest_seasons 
+WHERE manifest_seasons.number = ?

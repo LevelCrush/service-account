@@ -1,5 +1,5 @@
 INSERT INTO member_activity_stats (
-    `id`,
+
     `membership_id`,
     `character_id`,
     `instance_id`,
@@ -11,8 +11,9 @@ INSERT INTO member_activity_stats (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE 
-    `value` = VALUES(`value`),
-    `value_display` = VALUES(`value_display`),
-    `updated_at` = VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+ON CONFLICT(`membership_id`,`character_id`,`instance_id`) 
+DO UPDATE SET
+    `value` = excluded.`value`,
+    `value_display` = excluded.`value_display`,
+    `updated_at` = excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`

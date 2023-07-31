@@ -15,16 +15,16 @@ pub struct ClanRecord {
     pub motto: String,
     pub about: String,
     pub call_sign: String,
-    pub is_network: i8,
+    pub is_network: i64,
 }
 
 #[DatabaseRecord]
 pub struct ClanMemberRecord {
     pub group_id: i64,
-    pub group_role: u8,
+    pub group_role: i64,
     pub membership_id: i64,
-    pub platform: i32,
-    pub joined_at: u64,
+    pub platform: i64,
+    pub joined_at: i64,
 }
 
 #[DatabaseResult]
@@ -41,9 +41,9 @@ pub struct ClanInfoResult {
     pub motto: String,
     pub about: String,
     pub call_sign: String,
-    pub is_network: i8,
+    pub is_network: i64,
     pub member_count: i64,
-    pub updated_at: u64,
+    pub updated_at: i64,
 }
 
 /// gets a HashMap of existing member ids for the  target clan
@@ -101,6 +101,7 @@ pub async fn find_by_membership(membership_ids: &[MembershipId], pool: &SqlitePo
 
 /// insert a clan member into the table
 pub async fn add_member(member: ClanMemberRecord, pool: &SqlitePool) -> RecordId {
+    let timestamp = unix_timestamp();
     let query = sqlx::query_file!(
         "queries/clan_add_member.sql",
         member.group_id,
@@ -108,13 +109,13 @@ pub async fn add_member(member: ClanMemberRecord, pool: &SqlitePool) -> RecordId
         member.membership_id,
         member.platform,
         member.joined_at,
-        unix_timestamp()
+        timestamp,
     )
     .execute(pool)
     .await;
 
     if let Ok(query) = query {
-        query.last_insert_id() as RecordId
+        query.last_insert_rowid() as RecordId
     } else {
         database::log_error(query);
         -1
@@ -293,7 +294,7 @@ pub async fn create(clan: ClanRecord, pool: &SqlitePool) -> RecordId {
     .await;
 
     if let Ok(query) = query {
-        query.last_insert_id() as RecordId
+        query.last_insert_rowid() as RecordId
     } else {
         database::log_error(query);
         -1

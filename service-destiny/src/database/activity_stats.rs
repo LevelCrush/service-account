@@ -79,13 +79,12 @@ pub async fn write(values: &[ActivityStatRecord], pool: &SqlitePool) {
         return;
     }
 
-    let query_parameters = vec!["(?,?,?, ?,?,?,?,?,?,?)"; values.len()].join(",");
+    let query_parameters = vec!["(?,?, ?,?,?,?,?,?,?)"; values.len()].join(",");
     let statement = project_str!("queries/activity_stats_insert.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for record in values.iter() {
         query_builder = query_builder
-            .bind(record.id)
             .bind(record.membership_id)
             .bind(record.character_id)
             .bind(record.instance_id)

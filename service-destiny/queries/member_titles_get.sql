@@ -9,9 +9,9 @@ seals AS (
         triumphs.hash,
         triumphs.title,
         triumphs.gilded
-    FROM triumphs
+    FROM manifest_triumphs AS triumphs
     WHERE triumphs.is_title = 1
-), # grab all seals (titles)
+), /*grab all seals (titles) */
 
 member_seals_gilded AS (
     SELECT
@@ -23,8 +23,8 @@ member_seals_gilded AS (
     FROM member_triumphs
     INNER JOIN seals ON member_triumphs.hash = seals.hash
     INNER JOIN target_member ON member_triumphs.membership_id = target_member.membership_id
-    AND seals.gilded = 1 # looking for seals that have a gilded version
-    AND member_triumphs.times_completed > 0 # and our member has completed it > 0 which means they have gilded at some point
+    AND seals.gilded = 1 /* looking for seals that have a gilded version */
+    AND member_triumphs.times_completed > 0 /* and our member has completed it > 0 which means they have gilded at some point */
 ),
 member_seals AS (
     SELECT
@@ -36,10 +36,11 @@ member_seals AS (
     FROM member_triumphs
     INNER JOIN seals ON member_triumphs.hash = seals.hash
     INNER JOIN target_member ON member_triumphs.membership_id = target_member.membership_id
-    AND seals.gilded = 0 # looking for seals that dont have a gilded version
+    AND seals.gilded = 0 /*# looking for seals that dont have a gilded version */
 )
-# The below will merge all the gilded versions with the non gilded versions by Title.
-# There can be multiple versions of the same title, they just have slightly different objectives but they are still the same Title regardless
+/*The below will merge all the gilded versions with the non gilded versions by Title.
+There can be multiple versions of the same title, they just have slightly different objectives but they are still the same Title regardless
+*/
 SELECT
     member_seals.membership_id,
     member_seals.title,
