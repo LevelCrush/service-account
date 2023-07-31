@@ -107,22 +107,30 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         roster_members.extend(group_roster.iter());
     }
 
-    let task_pool = TaskPool::new(8);
+    let workers_allowed = 30;
+    let task_pool = TaskPool::new(workers_allowed);
     for (membership_id, membership_platform) in roster_members.into_iter() {
         let state_clone = app_state.clone();
+        let task_pool_clone = task_pool.clone();
         task_pool.queue(Box::new(move || {
             Box::pin(async move {
+
                 let characters = task::profile(membership_id, membership_platform, &state_clone).await;
                 if let Ok(characters) = characters {
                     for character in characters.into_iter() {
                         tracing::info!("Scanning activities for {membership_id} and {character}");
                         let instances = task::activities(membership_id, membership_platform,character,&state_clone).await;
                         if let Ok(instances) = instances {
-                        tracing::info!("Now crawling {} total instances for {membership_id} and {character}", instances.len());
-                            let instance_data_result = task::instance_data(&instances, &state_clone).await;
-                            if let Err(instance_err) = instance_data_result {
-                                tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
-                            }
+                            tracing::info!("Now crawling {} total instances for {membership_id} and {character}", instances.len());
+                            let sub_state_clone = state_clone.clone();
+                            tracing::info!("Queing instance crawls for {membership_id} and {character}");
+                            task_pool_clone.queue(Box::new(move || { Box::pin(async move {
+                                let instance_data_result = task::instance_data(&instances, &sub_state_clone).await;
+                                if let Err(instance_err) = instance_data_result {
+                                    tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
+                                }
+                            })})).await;
+                            
                         } else if let Err(instances_err) = instances {
                             tracing::error!("Error fetching activities for Member {membership_id} and character {character}:\n{instances_err}");
                         }
