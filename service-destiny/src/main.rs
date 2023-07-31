@@ -27,6 +27,7 @@ enum Job {
     NetworkCrawl,
     InstanceCrawl,
     InstanceProfiles,
+    Reset,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -60,6 +61,7 @@ async fn main() {
         Job::NetworkCrawl => jobs::clan::crawl_network().await,
         Job::InstanceCrawl => jobs::activity::crawl_instances(&args.args).await,
         Job::InstanceProfiles => jobs::activity::instance_member_profiles(&args.args).await,
+        Job::Reset => jobs::reset::run().await,
     };
 
     if let Err(err) = result {

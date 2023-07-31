@@ -4,3 +4,4 @@ pub mod manifest;
 pub mod member;
 pub mod server;
 pub mod task;
+pub mod reset;
