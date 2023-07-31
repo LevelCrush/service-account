@@ -67,13 +67,13 @@ impl TaskManagerData {
 }
 
 #[derive(Clone)]
-pub struct TaskManager {
+pub struct TaskPool {
     data: Arc<RwLock<TaskManagerData>>,
 }
 
-impl TaskManager {
-    pub fn new(max_allowed: usize) -> TaskManager {
-        TaskManager {
+impl TaskPool {
+    pub fn new(max_allowed: usize) -> TaskPool {
+        TaskPool {
             data: Arc::new(RwLock::new(TaskManagerData::new(max_allowed))),
         }
     }

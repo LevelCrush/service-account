@@ -6,7 +6,7 @@ use levelcrush::types::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::retry_lock::RetryLock;
-use levelcrush::task_manager::TaskManager;
+use levelcrush::task_manager::TaskPool;
 use levelcrush::{cache::MemoryCache, database};
 
 use crate::database::activity_history::NetworkBreakdownResult;
@@ -55,9 +55,9 @@ pub struct AppState {
     pub leaderboards: MemoryCache<Vec<LeaderboardEntryResult>>,
     pub ranks: MemoryCache<Vec<LeaderboardEntryResult>>,
     pub seasons: MemoryCache<Vec<SeasonRecord>>,
-    pub tasks: TaskManager,
+    pub tasks: TaskPool,
     // also used by member reports
-    pub priority_tasks: TaskManager,
+    pub priority_tasks: TaskPool,
     // also used by member reports
     pub locks: RetryLock,
 }
@@ -90,8 +90,8 @@ impl AppState {
             bungie: BungieClient::new(bungie_api_key),
             cache: MemoryCache::new(), // cache for 24 hours (a members profile does not update this often, except for last login at and character)      }
             task_running: MemoryCache::new(),
-            tasks: TaskManager::new(max_task_workers),
-            priority_tasks: TaskManager::new(priority_task_workers),
+            tasks: TaskPool::new(max_task_workers),
+            priority_tasks: TaskPool::new(priority_task_workers),
             locks: RetryLock::new(10, Duration::from_secs(60)),
         }
     }
