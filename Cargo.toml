@@ -5,7 +5,6 @@ members = [
     "./lib-destiny-rs",
     "./service-accounts",
     "./service-destiny",
-    "./service-discord",
 ]
 
 [workspace.dependencies]
