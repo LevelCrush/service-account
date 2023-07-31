@@ -41,7 +41,7 @@ pub async fn raids(display_name: &str, pool: &SqlitePool) -> Vec<LeaderboardEntr
     }
 }
 
-pub async fn pvp_based(display_name: &str, modes: &[i32], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
+pub async fn pvp_based(display_name: &str, modes: &[i64], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     if modes.is_empty() {
         return Vec::new();
     }
@@ -65,7 +65,7 @@ pub async fn pvp_based(display_name: &str, modes: &[i32], pool: &SqlitePool) -> 
     }
 }
 
-pub async fn generic(display_name: &str, modes: &[i32], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
+pub async fn generic(display_name: &str, modes: &[i64], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     if modes.is_empty() {
         return Vec::new();
     }

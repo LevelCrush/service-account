@@ -83,8 +83,8 @@ pub async fn run() -> anyhow::Result<()> {
                     let group_modes = group
                         .value
                         .split(',')
-                        .map(|v| DestinyActivityModeType::from(v) as i32)
-                        .collect::<Vec<i32>>();
+                        .map(|v| DestinyActivityModeType::from(v) as i64)
+                        .collect::<Vec<i64>>();
                     (
                         group_modes.clone(),
                         if group.name.to_lowercase().contains("pvp") {
