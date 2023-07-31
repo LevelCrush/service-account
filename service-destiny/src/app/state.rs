@@ -2,6 +2,7 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use std::time::Duration;
 
+use levelcrush::types::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::retry_lock::RetryLock;
@@ -48,7 +49,7 @@ pub struct AppState {
     // safe to clone, underlying implementation uses handles/arc
     pub cache: MemoryCache<CacheItem>,
     // memory cache uses Arc's internally. Safe to clone
-    pub task_running: MemoryCache<u64>,
+    pub task_running: MemoryCache<UnixTimestamp>,
     // keep track whenever we started these task, at the moment only used by member reports
     pub settings: MemoryCache<Setting>,
     pub leaderboards: MemoryCache<Vec<LeaderboardEntryResult>>,

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use levelcrush::types::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::cache::{CacheDuration, CacheValue};
@@ -25,9 +26,9 @@ const CACHE_KEY_NETWORK_CLANS_ROSTER: &str = "network_clans_roster||main";
 const CACHE_KEY_CLAN_INFO_MEMBERSHIP: &str = "clan_info_membership||";
 const CACHE_KEY_NETWORK_BREAKDOWN: &str = "activity_breakdown||network";
 
-const UPDATE_CLAN_INTERVAL: u64 = 86400;
+const UPDATE_CLAN_INTERVAL: i64 = 86400;
 // 24 hours
-const UPDATE_CLAN_NETWORK_INTERVAL: u64 = 3600; // 1 hour
+const UPDATE_CLAN_NETWORK_INTERVAL: i64 = 3600; // 1 hour
 
 pub async fn from_membership(
     membership_id: MembershipId,
@@ -356,9 +357,9 @@ pub async fn get_by_slug(slug: &str, state: &mut AppState) -> Option<ClanInfoRes
 ///
 /// Note: Feeding a value of 0 to timestamp_end will make it pull the current unix timestamp
 pub async fn network_breakdown(
-    modes: &[i32],
-    timestamp_start: u64,
-    timestamp_end: u64,
+    modes: &[i64],
+    timestamp_start: UnixTimestamp,
+    timestamp_end: UnixTimestamp,
     state: &mut AppState,
 ) -> HashMap<i64, NetworkBreakdownResult> {
     let mode_str = modes.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",");

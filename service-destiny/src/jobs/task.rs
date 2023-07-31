@@ -11,13 +11,13 @@ use crate::{
 
 pub struct ProfileSearchResults {
     pub membership_id: i64,
-    pub membership_type: i32,
+    pub membership_type: i64,
     pub bungie_name: String,
     pub characters: Vec<i64>,
 }
 
 /// handles fetching profile information and then syncing it
-pub async fn profile(membership_id: i64, membership_type: i32, state: &AppState) -> anyhow::Result<Vec<i64>> {
+pub async fn profile(membership_id: i64, membership_type: i64, state: &AppState) -> anyhow::Result<Vec<i64>> {
     tracing::info!("Getting profile information");
     let profile_response = if membership_type <= 0 {
         tracing::info!("Missing membership type for: {} doing additional query", membership_id);
@@ -30,7 +30,7 @@ pub async fn profile(membership_id: i64, membership_type: i32, state: &AppState)
                 target_membership,
                 profile.membership_type as i32
             );
-            lib_destiny::api::member::profile(target_membership, profile.membership_type as i32, &state.bungie).await?
+            lib_destiny::api::member::profile(target_membership, profile.membership_type as i64, &state.bungie).await?
         } else {
             None
         }
@@ -68,7 +68,7 @@ pub async fn profile_search(bungie_name: &str, state: &AppState) -> anyhow::Resu
     if let Some(api_result) = api_result {
         tracing::info!("Found user info!");
         let membership_id = api_result.membership_id.parse::<i64>().unwrap_or_default();
-        let membership_type = api_result.membership_type as i32;
+        let membership_type = api_result.membership_type as i64;
 
         // get profile information and sync
         let characters = profile(membership_id, membership_type, state).await?;
@@ -129,8 +129,8 @@ pub async fn activities(
 }
 
 /// exclusively request clan information
-/// returns a Hash map  that represents (key = membership_id: i64, value = membership_type: i32)
-pub async fn clan_roster(group_id: i64, state: &AppState) -> anyhow::Result<HashMap<i64, i32>> {
+/// returns a Hash map  that represents (key = membership_id: i64, value = membership_type: i64)
+pub async fn clan_roster(group_id: i64, state: &AppState) -> anyhow::Result<HashMap<i64, i64>> {
     tracing::info!("Requesting group information for: {}", group_id);
     let api_response = lib_destiny::api::clan::roster(group_id, &state.bungie).await?;
     if let Some(api_response) = api_response {
@@ -158,7 +158,7 @@ pub async fn clan_info(group_id: i64, state: &AppState) -> anyhow::Result<()> {
 /// query bungie database and then sync
 pub async fn clan_info_by_membership(
     membership_id: i64,
-    membership_type: i32,
+    membership_type: i64,
     state: &AppState,
 ) -> anyhow::Result<i64> {
     tracing::info!(

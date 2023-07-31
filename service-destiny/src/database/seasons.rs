@@ -15,7 +15,7 @@ pub struct SeasonRecord {
     pub ends_at: i64,
 }
 
-pub async fn get(number: i32, pool: &SqlitePool) -> Option<SeasonRecord> {
+pub async fn get(number: i64, pool: &SqlitePool) -> Option<SeasonRecord> {
     let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get.sql", number)
         .fetch_optional(pool)
         .await;

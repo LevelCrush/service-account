@@ -70,7 +70,7 @@ pub async fn crawl_instances(args: &[String]) -> anyhow::Result<()> {
         let missing_instances = database::activity_history::missing_instance_data(
             start_timestamp,
             end_timestamp,
-            total_instances as u64,
+            total_instances as i64,
             &state.database,
         )
         .await;
@@ -128,7 +128,7 @@ pub async fn instance_member_profiles(args: &[String]) -> anyhow::Result<()> {
         let need_profiles = database::instance::get_members_missing_profile(
             start_timestamp,
             end_timestamp,
-            amount as u64,
+            amount as i64,
             &state.database,
         )
         .await;

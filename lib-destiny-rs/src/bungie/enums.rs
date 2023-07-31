@@ -1471,8 +1471,8 @@ impl From<&str> for DestinyActivityModeType {
     }
 }
 
-impl From<i32> for DestinyActivityModeType {
-    fn from(input: i32) -> Self {
+impl From<i64> for DestinyActivityModeType {
+    fn from(input: i64) -> Self {
         match input {
             0 => DestinyActivityModeType::None,
             2 => DestinyActivityModeType::Story,
