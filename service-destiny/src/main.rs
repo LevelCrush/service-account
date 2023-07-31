@@ -28,6 +28,7 @@ enum Job {
     InstanceCrawl,
     InstanceProfiles,
     Reset,
+    Purge,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -62,6 +63,7 @@ async fn main() {
         Job::InstanceCrawl => jobs::activity::crawl_instances(&args.args).await,
         Job::InstanceProfiles => jobs::activity::instance_member_profiles(&args.args).await,
         Job::Reset => jobs::reset::run().await,
+        Job::Purge => jobs::purge::run().await,
     };
 
     if let Err(err) = result {

@@ -1,33 +1,33 @@
-drop table clan_members;
+drop table if exists clan_members;
 
-drop table clans;
+drop table if exists clans;
 
-drop table instance_members;
+drop table if exists instance_members;
 
-drop table instances;
+drop table if exists instances;
 
-drop table manifest_activities;
+drop table if exists manifest_activities;
 
-drop table manifest_activity_types;
+drop table if exists manifest_activity_types;
 
-drop table manifest_classes;
+drop table if exists manifest_classes;
 
-drop table manifest_seasons;
+drop table if exists manifest_seasons;
 
-drop table manifest_triumphs;
+drop table if exists manifest_triumphs;
 
-drop table member_activities;
+drop table if exists member_activities;
 
-drop table member_activity_stats;
+drop table if exists member_activity_stats;
 
-drop table member_characters;
+drop table if exists member_characters;
 
-drop table member_snapshots;
+drop table if exists member_snapshots;
 
-drop table member_triumphs;
+drop table if exists member_triumphs;
 
-drop table members;
+drop table if exists members;
 
-drop table setting_modes;
+drop table if exists setting_modes;
 
 

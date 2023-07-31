@@ -1,4 +1,4 @@
-create table clan_members
+create table if not exists clan_members
 (
     id            integer not null
         constraint clan_members_pk
@@ -16,22 +16,22 @@ create table clan_members
 )
     strict;
 
-create index clan_members_group_id_group_role_index
+create index if not exists clan_members_group_id_group_role_index
     on clan_members (group_id, group_role);
 
-create index clan_members_group_id_index
+create index if not exists clan_members_group_id_index
     on clan_members (group_id);
 
-create index clan_members_group_role_index
+create index if not exists clan_members_group_role_index
     on clan_members (group_role);
 
-create index clan_members_joined_at_index
+create index if not exists clan_members_joined_at_index
     on clan_members (joined_at);
 
-create index clan_members_membership_id_index
+create index if not exists clan_members_membership_id_index
     on clan_members (membership_id);
 
-create table clans
+create table if not exists clans
 (
     id         integer not null
         constraint clans_pk
@@ -51,19 +51,19 @@ create table clans
 )
     strict;
 
-create index clans_group_id_index
+create index if not exists clans_group_id_index
     on clans (group_id);
 
-create index clans_is_network_index
+create index if not exists clans_is_network_index
     on clans (is_network);
 
-create index clans_name_index
+create index if not exists clans_name_index
     on clans (name);
 
-create index clans_slug_index
+create index if not exists clans_slug_index
     on clans (slug);
 
-create table instance_members
+create table if not exists instance_members
 (
     id                integer not null
         constraint instance_members_pk
@@ -88,52 +88,52 @@ create table instance_members
 )
     strict;
 
-create index instance_members_character_id_completed_index
+create index if not exists instance_members_character_id_completed_index
     on instance_members (character_id, completed);
 
-create index instance_members_character_id_index
+create index if not exists instance_members_character_id_index
     on instance_members (character_id);
 
-create index instance_members_class_hash_index
+create index if not exists instance_members_class_hash_index
     on instance_members (class_hash);
 
-create index instance_members_class_name_completed_index
+create index if not exists instance_members_class_name_completed_index
     on instance_members (class_name, completed);
 
-create index instance_members_class_name_index
+create index if not exists instance_members_class_name_index
     on instance_members (class_name);
 
-create index instance_members_completed_index
+create index if not exists instance_members_completed_index
     on instance_members (completed);
 
-create index instance_members_completion_reason_index
+create index if not exists instance_members_completion_reason_index
     on instance_members (completion_reason);
 
-create index instance_members_emblem_hash_index
+create index if not exists instance_members_emblem_hash_index
     on instance_members (emblem_hash);
 
-create index instance_members_instance_id_completed_index
+create index if not exists instance_members_instance_id_completed_index
     on instance_members (instance_id, completed);
 
-create index instance_members_instance_id_completed_membership_id_index
+create index if not exists instance_members_instance_id_completed_membership_id_index
     on instance_members (instance_id, completed, membership_id);
 
-create index instance_members_instance_id_completed_membership_id_index2
+create index if not exists instance_members_instance_id_completed_membership_id_index2
     on instance_members (instance_id, completed, membership_id);
 
-create index instance_members_instance_id_index
+create index if not exists instance_members_instance_id_index
     on instance_members (instance_id);
 
-create index instance_members_membership_id_completed_index
+create index if not exists instance_members_membership_id_completed_index
     on instance_members (membership_id, completed);
 
-create index instance_members_membership_id_index
+create index if not exists instance_members_membership_id_index
     on instance_members (membership_id);
 
-create index instance_members_platform_index
+create index if not exists instance_members_platform_index
     on instance_members (platform);
 
-create table instances
+create table if not exists instances
 (
     id                     integer not null
         constraint instances_pk
@@ -155,43 +155,43 @@ create table instances
 )
     strict;
 
-create index instances_activity_director_hash_index
+create index if not exists instances_activity_director_hash_index
     on instances (activity_director_hash);
 
-create index instances_activity_hash_index
+create index if not exists instances_activity_hash_index
     on instances (activity_hash);
 
-create index instances_competed_index
+create index if not exists instances_competed_index
     on instances (completed);
 
-create index instances_completion_reasons_index
+create index if not exists instances_completion_reasons_index
     on instances (completion_reasons);
 
-create index instances_completion_reasons_instance_id_index
+create index if not exists instances_completion_reasons_instance_id_index
     on instances (completion_reasons, instance_id);
 
-create index instances_instance_id_competed_index
+create index if not exists instances_instance_id_competed_index
     on instances (instance_id, completed);
 
-create index instances_instance_id_index
+create index if not exists instances_instance_id_index
     on instances (instance_id);
 
-create index instances_instance_id_started_from_beginning_index
+create index if not exists instances_instance_id_started_from_beginning_index
     on instances (instance_id, started_from_beginning);
 
-create index instances_is_private_index
+create index if not exists instances_is_private_index
     on instances (is_private);
 
-create index instances_occurred_at_index
+create index if not exists instances_occurred_at_index
     on instances (occurred_at);
 
-create index instances_started_from_beginning_index
+create index if not exists instances_started_from_beginning_index
     on instances (started_from_beginning);
 
-create index instances_starting_phase_index_index
+create index if not exists instances_starting_phase_index_index
     on instances (starting_phase_index);
 
-create table manifest_activities
+create table if not exists manifest_activities
 (
     id                     integer not null
         constraint manifest_activities_pk
@@ -216,25 +216,25 @@ create table manifest_activities
 )
     strict;
 
-create index manifest_activities_activity_type_index
+create index if not exists manifest_activities_activity_type_index
     on manifest_activities (activity_type);
 
-create index manifest_activities_hash_index
+create index if not exists manifest_activities_hash_index
     on manifest_activities (hash);
 
-create index manifest_activities_index_index
+create index if not exists manifest_activities_index_index
     on manifest_activities ("index");
 
-create index manifest_activities_is_pvp_index
+create index if not exists manifest_activities_is_pvp_index
     on manifest_activities (is_pvp);
 
-create index manifest_activities_matchmaking_enabled_index
+create index if not exists manifest_activities_matchmaking_enabled_index
     on manifest_activities (matchmaking_enabled);
 
-create index manifest_activities_name_index
+create index if not exists manifest_activities_name_index
     on manifest_activities (name);
 
-create table manifest_activity_types
+create table if not exists manifest_activity_types
 (
     id          integer not null
         constraint manifest_activity_types_pk
@@ -252,7 +252,7 @@ create table manifest_activity_types
 )
     strict;
 
-create table manifest_classes
+create table if not exists manifest_classes
 (
     id         integer not null
         constraint manifest_classes_pk
@@ -269,13 +269,13 @@ create table manifest_classes
 )
     strict;
 
-create index manifest_classes_index_index
+create index if not exists manifest_classes_index_index
     on manifest_classes ("index");
 
-create index manifest_classes_type_index
+create index if not exists manifest_classes_type_index
     on manifest_classes (type);
 
-create table manifest_seasons
+create table if not exists manifest_seasons
 (
     id         integer not null
         constraint manifest_seasons_pk
@@ -294,16 +294,16 @@ create table manifest_seasons
 )
     strict;
 
-create index manifest_seasons_hash_index
+create index if not exists manifest_seasons_hash_index
     on manifest_seasons (hash);
 
-create index manifest_seasons_name_index
+create index if not exists manifest_seasons_name_index
     on manifest_seasons (name);
 
-create index manifest_seasons_number_index
+create index if not exists manifest_seasons_number_index
     on manifest_seasons (number);
 
-create table manifest_triumphs
+create table if not exists manifest_triumphs
 (
     id          integer not null
         constraint manifest_triumphs_pk
@@ -322,22 +322,22 @@ create table manifest_triumphs
 )
     strict;
 
-create index manifest_triumphs_gilded_index
+create index if not exists manifest_triumphs_gilded_index
     on manifest_triumphs (gilded);
 
-create index manifest_triumphs_hash_index
+create index if not exists manifest_triumphs_hash_index
     on manifest_triumphs (hash);
 
-create index manifest_triumphs_is_title_index
+create index if not exists manifest_triumphs_is_title_index
     on manifest_triumphs (is_title);
 
-create index manifest_triumphs_name_index
+create index if not exists manifest_triumphs_name_index
     on manifest_triumphs (name);
 
-create index manifest_triumphs_title_index
+create index if not exists manifest_triumphs_title_index
     on manifest_triumphs (title);
 
-create table member_activities
+create table if not exists member_activities
 (
     id                     integer not null
         constraint member_activities_pk
@@ -360,40 +360,40 @@ create table member_activities
 )
     strict;
 
-create index member_activities_activity_hash_director_index
+create index if not exists member_activities_activity_hash_director_index
     on member_activities (activity_hash_director);
 
-create index member_activities_activity_hash_index
+create index if not exists member_activities_activity_hash_index
     on member_activities (activity_hash);
 
-create index member_activities_character_id_index
+create index if not exists member_activities_character_id_index
     on member_activities (character_id);
 
-create index member_activities_instance_id_index
+create index if not exists member_activities_instance_id_index
     on member_activities (instance_id);
 
-create index member_activities_membership_id_index
+create index if not exists member_activities_membership_id_index
     on member_activities (membership_id);
 
-create index member_activities_membership_id_instance_id_index
+create index if not exists member_activities_membership_id_instance_id_index
     on member_activities (membership_id, instance_id);
 
-create index member_activities_mode_index
+create index if not exists member_activities_mode_index
     on member_activities (mode);
 
-create index member_activities_modes_index
+create index if not exists member_activities_modes_index
     on member_activities (modes);
 
-create index member_activities_occurred_at_index
+create index if not exists member_activities_occurred_at_index
     on member_activities (occurred_at);
 
-create index member_activities_platform_played_index
+create index if not exists member_activities_platform_played_index
     on member_activities (platform_played);
 
-create index member_activities_private_index
+create index if not exists member_activities_private_index
     on member_activities (private);
 
-create table member_activity_stats
+create table if not exists member_activity_stats
 (
     id            integer not null
         constraint member_activity_stats_pk
@@ -412,31 +412,31 @@ create table member_activity_stats
 )
     strict;
 
-create index member_activity_stats_character_id_index
+create index if not exists member_activity_stats_character_id_index
     on member_activity_stats (character_id);
 
-create index member_activity_stats_instance_id_index
+create index if not exists member_activity_stats_instance_id_index
     on member_activity_stats (instance_id);
 
-create index member_activity_stats_membership_id_index
+create index if not exists member_activity_stats_membership_id_index
     on member_activity_stats (membership_id);
 
-create index member_activity_stats_membership_id_instance_id_index
+create index if not exists member_activity_stats_membership_id_instance_id_index
     on member_activity_stats (membership_id, instance_id);
 
-create index member_activity_stats_membership_id_instance_id_name_index
+create index if not exists member_activity_stats_membership_id_instance_id_name_index
     on member_activity_stats (membership_id, instance_id, name);
 
-create index member_activity_stats_name_index
+create index if not exists member_activity_stats_name_index
     on member_activity_stats (name);
 
-create index member_activity_stats_value_display_index
+create index if not exists member_activity_stats_value_display_index
     on member_activity_stats (value_display);
 
-create index member_activity_stats_value_index
+create index if not exists member_activity_stats_value_index
     on member_activity_stats (value);
 
-create table member_characters
+create table if not exists member_characters
 (
     id                      integer not null
         constraint member_characters_pk
@@ -462,28 +462,28 @@ create table member_characters
 )
     strict;
 
-create index member_characters_character_id_index
+create index if not exists member_characters_character_id_index
     on member_characters (character_id);
 
-create index member_characters_class_hash_index
+create index if not exists member_characters_class_hash_index
     on member_characters (class_hash);
 
-create index member_characters_emblem_background_url_index
+create index if not exists member_characters_emblem_background_url_index
     on member_characters (emblem_background_url);
 
-create index member_characters_emblem_hash_index
+create index if not exists member_characters_emblem_hash_index
     on member_characters (emblem_hash);
 
-create index member_characters_emblem_url_index
+create index if not exists member_characters_emblem_url_index
     on member_characters (emblem_url);
 
-create index member_characters_membership_id_index
+create index if not exists member_characters_membership_id_index
     on member_characters (membership_id);
 
-create index member_characters_platform_index
+create index if not exists member_characters_platform_index
     on member_characters (platform);
 
-create table member_snapshots
+create table if not exists member_snapshots
 (
     id            INTEGER not null
         constraint member_snapshots_pk
@@ -500,16 +500,16 @@ create table member_snapshots
 )
     strict;
 
-create index member_snapshots_membership_id_index
+create index if not exists member_snapshots_membership_id_index
     on member_snapshots (membership_id);
 
-create index member_snapshots_snapshot_name_index
+create index if not exists member_snapshots_snapshot_name_index
     on member_snapshots (snapshot_name);
 
-create index member_snapshots_version_index
+create index if not exists member_snapshots_version_index
     on member_snapshots (version);
 
-create table member_triumphs
+create table if not exists member_triumphs
 (
     id              INTEGER not null
         constraint member_triumphs_pk
@@ -526,19 +526,19 @@ create table member_triumphs
 )
     strict;
 
-create index member_triumphs_hash_index
+create index if not exists member_triumphs_hash_index
     on member_triumphs (hash);
 
-create index member_triumphs_membership_id_index
+create index if not exists member_triumphs_membership_id_index
     on member_triumphs (membership_id);
 
-create index member_triumphs_state_index
+create index if not exists member_triumphs_state_index
     on member_triumphs (state);
 
-create index member_triumphs_times_completed_index
+create index if not exists member_triumphs_times_completed_index
     on member_triumphs (times_completed);
 
-create table members
+create table if not exists members
 (
     id                     INTEGER not null
         constraint members_pk
@@ -558,19 +558,19 @@ create table members
 )
     strict;
 
-create index members_display_name_global_index
+create index if not exists members_display_name_global_index
     on members (display_name_global);
 
-create index members_display_name_index
+create index if not exists members_display_name_index
     on members (display_name);
 
-create index members_last_played_at_index
+create index if not exists members_last_played_at_index
     on members (last_played_at);
 
-create index members_platform_index
+create index if not exists members_platform_index
     on members (platform);
 
-create table setting_modes
+create table if not exists setting_modes
 (
     id          integer not null
         constraint setting_modes_pk
@@ -589,13 +589,13 @@ create table setting_modes
 )
     strict;
 
-create index setting_modes_dashboard_index
+create index if not exists setting_modes_dashboard_index
     on setting_modes (dashboard);
 
-create index setting_modes_leaderboard_index
+create index if not exists setting_modes_leaderboard_index
     on setting_modes (leaderboard);
 
-create index setting_modes_order_index
+create index if not exists setting_modes_order_index
     on setting_modes ("order");
 
 
