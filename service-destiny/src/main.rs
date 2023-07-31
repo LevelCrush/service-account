@@ -59,7 +59,7 @@ async fn main() {
         Job::MemberActivity => jobs::activity::history(&args.args).await,
         Job::MemberCrawl => jobs::member::crawl_profile(&args.args).await,
         Job::MemberCrawlDeep => jobs::member::crawl_profile_deep(&args.args).await,
-        Job::NetworkCrawl => jobs::clan::crawl_network().await,
+        Job::NetworkCrawl => jobs::clan::crawl_network2().await,
         Job::InstanceCrawl => jobs::activity::crawl_instances(&args.args).await,
         Job::InstanceProfiles => jobs::activity::instance_member_profiles(&args.args).await,
         Job::Reset => jobs::reset::run().await,
