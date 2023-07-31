@@ -96,41 +96,18 @@ pub async fn stats(
     values: &[DestinyHistoricalStatsPeriodGroup],
     pool: &SqlitePool,
 ) {
-    // pass 1 loop through our values and get the instance id's directly and store them off
-    let instance_ids = {
-        // best case of every activity history we get is going to be unique and we need to allocate
-        let mut temp_hash = HashSet::with_capacity(values.len());
-        for activity_history in values.iter() {
-            temp_hash.insert(
-                activity_history
-                    .details
-                    .instance_id
-                    .parse::<InstanceId>()
-                    .unwrap_or_default(),
-            );
-        }
-        temp_hash.into_iter().collect::<Vec<i64>>()
-    };
-
-    let existing_stats = database::activity_stats::existing(character_id, &instance_ids, pool).await;
-
     let mut records = Vec::new();
     for stat_group in values.iter() {
         let instance_id = stat_group.details.instance_id.parse::<InstanceId>().unwrap_or_default();
 
-        let record_id = match existing_stats.get(&instance_id) {
-            Some(record) => *record,
-            _ => 0,
-        };
-
         for (_, stat) in stat_group.values.iter() {
             records.push(ActivityStatRecord {
-                id: record_id,
-                membership_id: membership_id,
-                character_id: character_id,
+                id: 0,
+                membership_id,
+                character_id,
                 activity_hash: stat_group.details.reference_id,
                 activity_hash_director: stat_group.details.director_activity_hash,
-                instance_id: instance_id,
+                instance_id,
                 name: stat.stat_id.clone(),
                 value: stat.basic.value,
                 value_display: stat.basic.display_value.clone(),
@@ -155,14 +132,7 @@ pub async fn instance(
     // parse instance id from the api
     let instance_id = data.details.instance_id.parse::<MembershipId>().unwrap_or_default();
 
-    tracing::info!("Looking for instance in db: {}", instance_id);
-    let existing_instance = database::instance::get(instance_id, pool).await;
-    let record_id = match existing_instance {
-        Some(record) => record.id,
-        _ => 0,
-    };
-
-    let existing_instance_characters = database::instance::get_members(instance_id, pool).await;
+    tracing::info!("Syncing activity history for: {}", instance_id);
 
     // scan through data to determin
     let mut activity_completed = false;
@@ -192,11 +162,6 @@ pub async fn instance(
             _ => "",
         };
 
-        let instance_character_record = match existing_instance_characters.get(&character_id) {
-            Some(party_record) => party_record.id,
-            _ => 0,
-        };
-
         instance_member_records.push(InstanceMemberRecord {
             instance_id,
             membership_id,
@@ -213,7 +178,7 @@ pub async fn instance(
             created_at: unix_timestamp(),
             updated_at: 0,
             deleted_at: 0,
-            id: instance_character_record,
+            id: 0,
         });
 
         // if at least one player completed, mark the activity as completed.
@@ -236,8 +201,8 @@ pub async fn instance(
     }
 
     let completed_reasons = completion_reasons
-        .iter()
-        .map(|(reason, _)| reason.to_string())
+        .keys()
+        .map(|reason| reason.to_string())
         .collect::<Vec<String>>()
         .join(",");
 
@@ -254,7 +219,7 @@ pub async fn instance(
         created_at: unix_timestamp(),
         updated_at: 0,
         deleted_at: 0,
-        id: record_id,
+        id: 0,
     };
 
     // write instance

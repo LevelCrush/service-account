@@ -1,6 +1,5 @@
 INSERT INTO member_activities 
 (
-    `id`,
     `membership_id`,
     `character_id`,
     `platform_played`,

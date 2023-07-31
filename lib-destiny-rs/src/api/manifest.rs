@@ -49,9 +49,15 @@ impl DestinyManifest {
 
         if !class_content_path.is_empty() {
             let endpoint = format!("https://bungie.net{}", class_content_path);
-            let response = bungie.get(&endpoint).send::<T>().await?;
-            let definitions = response.response.unwrap_or_default();
-            Ok(definitions)
+            let response = bungie.http_client.get(&endpoint).send().await?;
+            let body = response.text().await?;
+            let decoded = serde_json::from_str::<T>(&body);
+            if let Ok(definitions) = decoded {
+                Ok(definitions)
+            } else {
+                let err = decoded.err().unwrap();
+                Err(anyhow!("{endpoint} had an error || {err}\n{body}"))
+            }
         } else {
             Err(anyhow!("No definitions could be retrieved"))
         }

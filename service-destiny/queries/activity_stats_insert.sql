@@ -11,7 +11,7 @@ INSERT INTO member_activity_stats (
     `deleted_at`
 )
 VALUES {}
-ON CONFLICT(`membership_id`,`character_id`,`instance_id`) 
+ON CONFLICT(`membership_id`,`character_id`,`instance_id`,`name`) 
 DO UPDATE SET
     `value` = excluded.`value`,
     `value_display` = excluded.`value_display`,

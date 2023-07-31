@@ -1,5 +1,4 @@
 INSERT INTO member_triumphs (
-    `id`,
     `hash`,
     `membership_id`,
     `state`,

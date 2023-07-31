@@ -3,6 +3,7 @@ pub mod enums;
 pub mod schemas;
 use crate::bungie::enums::{DestinyComponentType, DestinyRouteParam, PlatformErrorCodes};
 use levelcrush::anyhow;
+use levelcrush::anyhow::anyhow;
 use levelcrush::macros::ExternalAPIResponse;
 use levelcrush::serde;
 use levelcrush::tokio;
@@ -179,8 +180,10 @@ where
             endpoint = format!("{}?{}", endpoint, queries);
         }
 
-        // construct final endpoint
-        endpoint = format!("https://www.bungie.net/Platform{}", endpoint);
+        // construct final endpoint if we need to
+        if !endpoint.contains("http") {
+            endpoint = format!("https://www.bungie.net/Platform{}", endpoint);
+        }
 
         let api_key = self.bungie_api_key.clone();
         let mut request = self
@@ -210,8 +213,14 @@ where
 
         // send the request now that we are done building it
         let request = request.send().await?;
-        let response = request.json::<BungieResponse<T>>().await?;
-        Ok(response)
+        let raw = request.text().await?;
+        let response = serde_json::from_str::<BungieResponse<T>>(&raw);
+        if let Ok(response) = response {
+            Ok(response)
+        } else {
+            let err = response.err().unwrap();
+            Err(anyhow!("{endpoint}: {err}:\n{raw}"))
+        }
     }
 
     /// sends the request off to bungie.net and handles retries for throttles
@@ -233,7 +242,7 @@ where
 
 #[derive(Clone, Debug)]
 pub struct BungieClient {
-    http_client: Client,
+    pub http_client: Client,
     bungie_api_key: String,
 }
 
