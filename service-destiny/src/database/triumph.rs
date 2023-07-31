@@ -82,7 +82,7 @@ pub async fn read(hashes: &[ManifestHash], pool: &SqlitePool) -> HashMap<Manifes
 }
 
 pub async fn write(records: &[TriumphRecord], pool: &SqlitePool) {
-    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
+    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/triumphs_write.sql", prepared_pos);
 

@@ -16,4 +16,5 @@ DO UPDATE SET
     `starts_at` = excluded.`starts_at`,
     `ends_at` = excluded.`ends_at`,
     `updated_at` = excluded.`created_at`,
-    `deleted_at` = excluded.`deleted_at`
+    `deleted_at` = excluded.`deleted_at`,
+    `pass_hash` = excluded.`pass_hash`

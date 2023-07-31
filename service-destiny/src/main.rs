@@ -10,7 +10,7 @@ mod sync;
 use clap::Parser;
 
 // use the tokio install that we are using with our level crush library
-use levelcrush::tokio;
+use levelcrush::{tokio, tracing};
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum Job {
@@ -46,7 +46,7 @@ async fn main() {
     // parse command line arguments
     let args = Args::parse();
 
-    match args.job {
+    let result = match args.job {
         Job::Server => jobs::server::run().await,
         Job::SyncManifest => jobs::manifest::run().await,
         Job::ClanInfo => jobs::clan::info(&args.args).await,
@@ -61,4 +61,8 @@ async fn main() {
         Job::InstanceCrawl => jobs::activity::crawl_instances(&args.args).await,
         Job::InstanceProfiles => jobs::activity::instance_member_profiles(&args.args).await,
     };
+
+    if let Err(err) = result {
+        tracing::error!("An error was encountered during the job:\r\n{}", err);
+    }
 }
