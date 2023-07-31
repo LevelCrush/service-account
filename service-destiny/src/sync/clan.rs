@@ -99,9 +99,9 @@ pub async fn roster(
         };
 
         let record = ClanMemberRecord {
-            group_id: group_id,
-            group_role: member.member_type as u8,
-            membership_id: membership_id,
+            group_id,
+            group_role: member.member_type as i64,
+            membership_id,
             platform: membership_type,
             joined_at: member.join_date.timestamp() as UnixTimestamp,
             created_at: unix_timestamp(),

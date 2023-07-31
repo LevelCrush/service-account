@@ -44,9 +44,6 @@ pub async fn history(
         temp_hash.into_iter().collect::<Vec<i64>>()
     };
 
-    //
-    let existing_history = database::activity_history::existing(character_id, &instance_ids, pool).await;
-
     // now loop through the history and genereate records
     let records = values
         .iter()
@@ -59,19 +56,14 @@ pub async fn history(
                 .parse::<InstanceId>()
                 .unwrap_or_default();
 
-            let record_id = match existing_history.get(&(character_id, instance_id)) {
-                Some(id) => *id,
-                _ => 0,
-            };
-
             ActivityHistoryRecord {
-                id: record_id,
-                membership_id: membership_id,
-                character_id: character_id,
-                instance_id: instance_id,
-                activity_hash: activity_history.details.reference_id,
-                activity_hash_director: activity_history.details.director_activity_hash,
-                mode: activity_history.details.mode as i32,
+                id: 0,
+                membership_id,
+                character_id,
+                instance_id,
+                activity_hash: activity_history.details.reference_id as i64,
+                activity_hash_director: activity_history.details.director_activity_hash as i64,
+                mode: activity_history.details.mode as i64,
                 modes: activity_history
                     .details
                     .modes
@@ -79,9 +71,9 @@ pub async fn history(
                     .map(|m| (*m as i32).to_string())
                     .collect::<Vec<String>>()
                     .join(","),
-                platform_played: activity_history.details.membership_type,
-                private: activity_history.details.is_private as i8,
-                occurred_at: activity_history.period.timestamp() as u64,
+                platform_played: activity_history.details.membership_type as i64,
+                private: activity_history.details.is_private as i64,
+                occurred_at: activity_history.period.timestamp() as i64,
                 created_at: unix_timestamp(),
                 updated_at: 0,
                 deleted_at: 0,
@@ -211,12 +203,12 @@ pub async fn instance(
             character_id,
             platform: membership_type,
             class_name: instance_data.player.character_class.clone(),
-            class_hash: instance_data.player.class_hash,
-            emblem_hash: instance_data.player.emblem_hash,
-            light_level: instance_data.player.light_level,
+            class_hash: instance_data.player.class_hash as i64,
+            emblem_hash: instance_data.player.emblem_hash as i64,
+            light_level: instance_data.player.light_level as i64,
             clan_name: instance_data.player.clan_name.clone(),
             clan_tag: instance_data.player.clan_tag.clone(),
-            completed: player_completed as i8,
+            completed: player_completed as i64,
             completion_reason: complete_reason_str.to_string(),
             created_at: unix_timestamp(),
             updated_at: 0,
@@ -252,12 +244,12 @@ pub async fn instance(
     let instance_record = InstanceRecord {
         instance_id,
         occurred_at: data.period.timestamp() as UnixTimestamp,
-        starting_phase_index: data.starting_phase_index.unwrap_or_default(),
-        started_from_beginning: data.started_from_beginning.unwrap_or_default() as i8,
-        activity_hash: data.details.reference_id,
-        activity_director_hash: data.details.director_activity_hash,
-        is_private: data.details.is_private as i8,
-        completed: activity_completed as i8,
+        starting_phase_index: data.starting_phase_index.unwrap_or_default() as i64,
+        started_from_beginning: data.started_from_beginning.unwrap_or_default() as i64,
+        activity_hash: data.details.reference_id as i64,
+        activity_director_hash: data.details.director_activity_hash as i64,
+        is_private: data.details.is_private as i64,
+        completed: activity_completed as i64,
         completion_reasons: completed_reasons,
         created_at: unix_timestamp(),
         updated_at: 0,

@@ -6,8 +6,8 @@ use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct ActivityTypeRecord {
-    pub hash: u32,
-    pub index: u32,
+    pub hash: i64,
+    pub index: i64,
     pub name: String,
     pub description: String,
     pub icon_url: String,
@@ -16,10 +16,10 @@ pub struct ActivityTypeRecord {
 #[DatabaseResult]
 pub struct ActivityTypeSearchResult {
     pub id: RecordId,
-    pub hash: u32,
+    pub hash: i64,
 }
 
-pub async fn exists_bulk(hashes: &[u32], pool: &SqlitePool) -> HashMap<u32, RecordId> {
+pub async fn exists_bulk(hashes: &[i64], pool: &SqlitePool) -> HashMap<i64, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
