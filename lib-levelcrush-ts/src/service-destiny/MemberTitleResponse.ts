@@ -2,4 +2,4 @@
 import type { MemberClanInformation } from "./MemberClanInformation";
 import type { MemberTitle } from "./MemberTitle";
 
-export interface MemberTitleResponse { display_name: string, display_name_platform: string, membership_id: string, membership_platform: number, timestamp_last_played: number, raid_report: string, clan?: MemberClanInformation, titles: Array<MemberTitle>, }
+export interface MemberTitleResponse { display_name: string, display_name_platform: string, membership_id: string, membership_platform: bigint, timestamp_last_played: number, raid_report: string, clan?: MemberClanInformation, titles: Array<MemberTitle>, }

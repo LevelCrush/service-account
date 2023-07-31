@@ -1,13 +1,13 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::{database, types::RecordId};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct ActivityTypeRecord {
-    pub hash: u32,
-    pub index: u32,
+    pub hash: i64,
+    pub index: i64,
     pub name: String,
     pub description: String,
     pub icon_url: String,
@@ -16,10 +16,10 @@ pub struct ActivityTypeRecord {
 #[DatabaseResult]
 pub struct ActivityTypeSearchResult {
     pub id: RecordId,
-    pub hash: u32,
+    pub hash: i64,
 }
 
-pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, RecordId> {
+pub async fn exists_bulk(hashes: &[i64], pool: &SqlitePool) -> HashMap<i64, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -46,12 +46,12 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, Recor
 }
 
 /// Send a bulk amount of activity type records to the database , insert when not found and update when found
-pub async fn write(values: &[ActivityTypeRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityTypeRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
     // for every value we have in values, we need to have a patching VALUES() group
-    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?)"; values.len()];
+    let query_parameters = vec!["(?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
     let statement = project_str!("queries/activity_types_write.sql", query_parameters);
@@ -59,7 +59,6 @@ pub async fn write(values: &[ActivityTypeRecord], pool: &MySqlPool) {
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
         query_builder = query_builder
-            .bind(data.id)
             .bind(data.hash)
             .bind(data.name.as_str())
             .bind(data.description.as_str())

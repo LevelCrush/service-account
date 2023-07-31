@@ -1,5 +1,4 @@
 INSERT INTO instance_members (
-    `id`,
     `instance_id`,
     `membership_id`,
     `platform`,
@@ -17,14 +16,15 @@ INSERT INTO instance_members (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE
-    `class_hash` = VALUES(`class_hash`),
-    `class_name` = VALUES(`class_name`),
-    `emblem_hash` = VALUES(`emblem_hash`),
-    `light_level` = VALUES(`light_level`),
-    `clan_name` = VALUES(`clan_name`),
-    `clan_tag` = VALUES(`clan_tag`),
-    `completed` = VALUES(`completed`),
-    `completion_reason` = VALUES(`completion_reason`),
-    `updated_at` = VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+ON CONFLICT(`instance_id`,`membership_id`,`character_id`)
+DO UPDATE SET
+    `class_hash` = excluded.`class_hash`,
+    `class_name` = excluded.`class_name`,
+    `emblem_hash` = excluded.`emblem_hash`,
+    `light_level` = excluded.`light_level`,
+    `clan_name` = excluded.`clan_name`,
+    `clan_tag` = excluded.`clan_tag`,
+    `completed` = excluded.`completed`,
+    `completion_reason` = excluded.`completion_reason`,
+    `updated_at` = excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`

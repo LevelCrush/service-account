@@ -6,9 +6,9 @@ use levelcrush::types::{
     destiny::CharacterId, destiny::MembershipId, destiny::MembershipType, RecordId, UnixTimestamp,
 };
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
-pub async fn single(character: &DestinyCharacterComponent, database: &MySqlPool) -> RecordId {
+pub async fn single(character: &DestinyCharacterComponent, database: &SqlitePool) -> RecordId {
     let membership_id = character.membership_id.parse::<MembershipId>().unwrap_or_default();
     let membership_type = character.membership_type as MembershipType;
 
@@ -17,14 +17,14 @@ pub async fn single(character: &DestinyCharacterComponent, database: &MySqlPool)
         membership_id,
         platform: membership_type,
         character_id: character.character_id.parse::<CharacterId>().unwrap_or_default(),
-        class_hash: character.class_hash,
-        light: character.light,
+        class_hash: character.class_hash as i64,
+        light: character.light as i64,
         last_played_at: character.last_played.timestamp() as UnixTimestamp,
-        emblem_hash: character.emblem_hash,
+        emblem_hash: character.emblem_hash as i64,
         emblem_url: character.emblem_path.clone(),
         emblem_background_url: character.emblem_background_path.clone(),
-        minutes_played_session: character.minutes_played_session.parse::<u32>().unwrap_or_default(),
-        minutes_played_lifetime: character.minutes_played_total.parse::<u32>().unwrap_or_default(),
+        minutes_played_session: character.minutes_played_session.parse::<i64>().unwrap_or_default(),
+        minutes_played_lifetime: character.minutes_played_total.parse::<i64>().unwrap_or_default(),
         created_at: 0,
         updated_at: 0,
         deleted_at: 0,
@@ -51,7 +51,7 @@ pub async fn single(character: &DestinyCharacterComponent, database: &MySqlPool)
     }
 }
 
-pub async fn multiple(characters: &[DestinyCharacterComponent], database: &MySqlPool) {
+pub async fn multiple(characters: &[DestinyCharacterComponent], database: &SqlitePool) {
     let mut character_futures = Vec::with_capacity(characters.len());
     for character in characters.iter() {
         character_futures.push(single(character, database));

@@ -1,4 +1,4 @@
 SELECT 
     *
-FROM seasons
-WHERE seasons.hash IN ({})
+FROM manifest_seasons
+WHERE manifest_seasons.hash IN ({})

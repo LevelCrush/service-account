@@ -1,14 +1,14 @@
 use sqlx::{
-    mysql::{MySqlConnectOptions, MySqlPoolOptions},
-    ConnectOptions, MySqlPool,
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    ConnectOptions, SqlitePool,
 };
 use std::{str::FromStr, time::Duration};
 use tracing::log::LevelFilter;
 
 /// connects to the application database based off .env specific variables
-pub async fn connect() -> MySqlPool {
+pub async fn connect() -> SqlitePool {
     let database_url = std::env::var("DATABASE_URL").unwrap_or_default();
-    let mut database_options: MySqlConnectOptions = MySqlConnectOptions::from_str(database_url.as_str()).unwrap();
+    let mut database_options = SqliteConnectOptions::from_str(database_url.as_str()).unwrap();
     database_options = database_options.log_statements(LevelFilter::Off);
     database_options = database_options.log_slow_statements(LevelFilter::Warn, Duration::from_secs(5));
 
@@ -22,7 +22,7 @@ pub async fn connect() -> MySqlPool {
         max_connections
     );
 
-    MySqlPoolOptions::new()
+    SqlitePoolOptions::new()
         .max_connections(max_connections)
         .connect_with(database_options)
         .await
@@ -30,7 +30,7 @@ pub async fn connect() -> MySqlPool {
 
     // connect to database
     /*
-    MySqlPool::connect_with(database_options)
+    SqlitePool::connect_with(database_options)
         .await
         .expect("Could not make database connection") */
 }
@@ -51,6 +51,10 @@ pub fn need_retry<T>(query: &Result<T, sqlx::Error>) -> bool {
         }
     }
 
+    false
+
+    /* the below code was originally for mysql
+    TODO: figure out sqlite equivalent
     if let Some(code) = code {
         let code = code.into_owned();
         tracing::error!("SQL Code Detected: {}", code);
@@ -63,4 +67,5 @@ pub fn need_retry<T>(query: &Result<T, sqlx::Error>) -> bool {
     } else {
         false
     }
+    */
 }

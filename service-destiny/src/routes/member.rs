@@ -71,8 +71,8 @@ async fn season_report(
         let modes = if let Some(input_modes) = report_queries.modes {
             input_modes
                 .split(',')
-                .map(|v| v.parse::<i32>().unwrap_or_default())
-                .collect::<Vec<i32>>()
+                .map(|v| v.parse::<i64>().unwrap_or_default())
+                .collect::<Vec<i64>>()
         } else {
             Vec::new()
         };
@@ -80,7 +80,7 @@ async fn season_report(
         let (task_started, report) = app::report::member::season(
             bungie_name,
             &modes,
-            season.parse::<i32>().unwrap_or_default(),
+            season.parse::<i64>().unwrap_or_default(),
             member.clan_is_network == 1,
             &mut state,
         )
@@ -116,8 +116,8 @@ async fn lifetime_report(
         let modes = if let Some(input_modes) = report_queries.modes {
             input_modes
                 .split(',')
-                .map(|v| v.parse::<i32>().unwrap_or_default())
-                .collect::<Vec<i32>>()
+                .map(|v| v.parse::<i64>().unwrap_or_default())
+                .collect::<Vec<i64>>()
         } else {
             Vec::new()
         };

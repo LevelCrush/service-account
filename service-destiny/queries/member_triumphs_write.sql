@@ -1,5 +1,4 @@
 INSERT INTO member_triumphs (
-    `id`,
     `hash`,
     `membership_id`,
     `state`,
@@ -9,7 +8,8 @@ INSERT INTO member_triumphs (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE
-    `state` = VALUES(`state`),
-    `times_completed` = VALUES(`times_completed`),
-    `updated_at` = VALUES(`created_at`)
+ON CONFLICT(`hash`,`membership_id`)
+DO UPDATE SET 
+    `state` = excluded.`state`,
+    `times_completed` = excluded.`times_completed`,
+    `updated_at` = excluded.`created_at`

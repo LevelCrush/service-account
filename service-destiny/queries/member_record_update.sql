@@ -1,10 +1,10 @@
 UPDATE members 
 SET
-    members.platform = ?,
-    members.display_name = ?,
-    members.display_name_global = ?,
-    members.guardian_rank_current = ?,
-    members.guardian_rank_lifetime = ?,
-    members.last_played_at = ?,
-    members.updated_at = ? 
+    platform = ?,
+    display_name = ?,
+    display_name_global = ?,
+    guardian_rank_current = ?,
+    guardian_rank_lifetime = ?,
+    last_played_at = ?,
+    updated_at = ? 
 WHERE members.id = ?

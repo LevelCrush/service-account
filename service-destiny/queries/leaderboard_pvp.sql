@@ -1,33 +1,4 @@
 WITH
-linked_bungies AS
-(
-  SELECT
-        bungie_platform_data.account AS account,
-        bungie_platform_data.platform AS platform,
-        bungie_platform_data.value AS membership_id
-  FROM `levelcrush_accounts`.account_platforms  AS account_platforms
-  INNER JOIN `levelcrush_accounts`.`account_platform_data` AS bungie_platform_data ON
-        account_platforms.account = bungie_platform_data.account  AND
-        account_platforms.id  = bungie_platform_data.platform AND
-        bungie_platform_data.key = 'primary_membership_id'
-  WHERE account_platforms.platform = 'bungie'
-),
-linked_discords AS
-(
-    SELECT
-        linked_bungies.account,
-        discord_platform_data.platform,
-        linked_bungies.membership_id,
-        discord_platform_data.value AS discord_display_name
-    FROM linked_bungies
-    INNER JOIN `levelcrush_accounts`.account_platforms AS discord_platform ON
-        linked_bungies.account = discord_platform.account AND
-        discord_platform.platform = 'discord'
-    INNER JOIN `levelcrush_accounts`.account_platform_data AS discord_platform_data ON
-        discord_platform.account = discord_platform_data.account AND
-        discord_platform.id = discord_platform_data.platform  AND
-        discord_platform_data.key = 'display_name'
-),
 target_members AS (
     SELECT
         members.*
@@ -60,7 +31,7 @@ match_standings AS (
 ),
 leaderboard AS (
     SELECT
-        COALESCE(linked_discords.discord_display_name, target_members.display_name_global) AS display_name,
+        target_members.display_name_global AS display_name,
         /*SUM(match_standings.had_victory = 1) / SUM(match_standings.had_victory = 0) AS wl_ratio, */ /* win/loss ratio */
         (SUM(match_standings.had_victory = 1) / COUNT(DISTINCT match_standings.instance_id) * 100) AS win_rate,
        /* SUM(match_standings.had_victory) AS wins,
@@ -68,9 +39,7 @@ leaderboard AS (
         COUNT(DISTINCT match_standings.instance_id) AS total_matches
     FROM target_members
     LEFT JOIN match_standings ON target_members.membership_id = match_standings.membership_id
-    LEFT JOIN linked_bungies ON target_members.membership_id = linked_bungies.membership_id
-    LEFT JOIN linked_discords ON linked_bungies.account = linked_discords.account
-    GROUP BY target_members.display_name_global, target_members.membership_id, linked_discords.discord_display_name
+    GROUP BY target_members.display_name_global, target_members.membership_id
 ),
 leaderboard_standings AS (
     SELECT

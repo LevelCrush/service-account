@@ -1,6 +1,5 @@
 INSERT INTO member_snapshots
 (
-    `id`,
     `membership_id`,
     `snapshot_name`,
     `version`,
@@ -9,7 +8,8 @@ INSERT INTO member_snapshots
     `updated_at`,
     `deleted_at`
 )
-VALUES (0, ?, ?, ?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE 
-    `data` = VALUES(`data`),
-    `updated_at` = VALUES(`created_at`)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT(`membership_id`,`snapshot_name`,`version`)
+DO UPDATE SET 
+    `data` = excluded.`data`,
+    `updated_at` = excluded.created_at

@@ -1,25 +1,26 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::{database, types::destiny::MembershipId};
-use sqlx::MySqlPool;
+use lib_destiny::aliases::ManifestHash;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct TriumphRecord {
-    pub hash: u32,
+    pub hash: ManifestHash,
     pub name: String,
     pub description: String,
     pub title: String,
-    pub is_title: i8,
-    pub gilded: i8,
+    pub is_title: i64,
+    pub gilded: i64,
 }
 
 #[DatabaseRecord]
 pub struct MemberTriumphRecord {
     pub membership_id: MembershipId,
-    pub hash: u32,
-    pub state: i32,
-    pub times_completed: i32,
+    pub hash: ManifestHash,
+    pub state: i64,
+    pub times_completed: i64,
 }
 
 #[DatabaseResult]
@@ -34,9 +35,9 @@ pub struct TriumphTitleResult {
 
 pub async fn member_read(
     membership_id: MembershipId,
-    hashes: &[u32],
-    pool: &MySqlPool,
-) -> HashMap<u32, MemberTriumphRecord> {
+    hashes: &[ManifestHash],
+    pool: &SqlitePool,
+) -> HashMap<ManifestHash, MemberTriumphRecord> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -58,7 +59,7 @@ pub async fn member_read(
     }
 }
 
-pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, TriumphRecord> {
+pub async fn read(hashes: &[ManifestHash], pool: &SqlitePool) -> HashMap<ManifestHash, TriumphRecord> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -80,15 +81,14 @@ pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, TriumphRecor
     }
 }
 
-pub async fn write(records: &[TriumphRecord], pool: &MySqlPool) {
-    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
+pub async fn write(records: &[TriumphRecord], pool: &SqlitePool) {
+    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/triumphs_write.sql", prepared_pos);
 
     let mut query_builder = sqlx::query(&statement);
     for record in records.iter() {
         query_builder = query_builder
-            .bind(record.id)
             .bind(record.hash)
             .bind(record.name.clone())
             .bind(record.description.clone())
@@ -104,15 +104,14 @@ pub async fn write(records: &[TriumphRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn member_write(records: &[MemberTriumphRecord], pool: &MySqlPool) {
-    let prepared_pos = vec!["(?,?,?,?,?,?,?,?)"; records.len()].join(",");
+pub async fn member_write(records: &[MemberTriumphRecord], pool: &SqlitePool) {
+    let prepared_pos = vec!["(?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/member_triumphs_write.sql", prepared_pos);
 
     let mut query_builder = sqlx::query(&statement);
     for record in records.iter() {
         query_builder = query_builder
-            .bind(record.id)
             .bind(record.hash)
             .bind(record.membership_id)
             .bind(record.state)
@@ -126,7 +125,7 @@ pub async fn member_write(records: &[MemberTriumphRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn member_titles(membership_id: MembershipId, pool: &MySqlPool) -> Vec<TriumphTitleResult> {
+pub async fn member_titles(membership_id: MembershipId, pool: &SqlitePool) -> Vec<TriumphTitleResult> {
     let query = sqlx::query_file_as!(TriumphTitleResult, "queries/member_titles_get.sql", membership_id)
         .fetch_all(pool)
         .await;

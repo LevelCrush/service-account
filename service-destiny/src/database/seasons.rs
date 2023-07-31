@@ -1,20 +1,21 @@
 use levelcrush::database;
 use levelcrush::macros::DatabaseRecord;
 use levelcrush::project_str;
-use sqlx::MySqlPool;
+use lib_destiny::aliases::ManifestHash;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct SeasonRecord {
-    pub hash: u32,
+    pub hash: ManifestHash,
     pub name: String,
-    pub pass_hash: u32,
-    pub number: i32,
-    pub starts_at: u64,
-    pub ends_at: u64,
+    pub pass_hash: ManifestHash,
+    pub number: i64,
+    pub starts_at: i64,
+    pub ends_at: i64,
 }
 
-pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
+pub async fn get(number: i64, pool: &SqlitePool) -> Option<SeasonRecord> {
     let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get.sql", number)
         .fetch_optional(pool)
         .await;
@@ -27,7 +28,7 @@ pub async fn get(number: i32, pool: &MySqlPool) -> Option<SeasonRecord> {
     }
 }
 
-pub async fn get_all_active(pool: &MySqlPool) -> Vec<SeasonRecord> {
+pub async fn get_all_active(pool: &SqlitePool) -> Vec<SeasonRecord> {
     let query = sqlx::query_file_as!(SeasonRecord, "queries/season_get_all_active.sql")
         .fetch_all(pool)
         .await;
@@ -40,7 +41,7 @@ pub async fn get_all_active(pool: &MySqlPool) -> Vec<SeasonRecord> {
     }
 }
 
-pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord> {
+pub async fn read(hashes: &[u32], pool: &SqlitePool) -> HashMap<i64, SeasonRecord> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -63,17 +64,16 @@ pub async fn read(hashes: &[u32], pool: &MySqlPool) -> HashMap<u32, SeasonRecord
     }
 }
 
-pub async fn write(records: &[SeasonRecord], pool: &MySqlPool) {
+pub async fn write(records: &[SeasonRecord], pool: &SqlitePool) {
     //
 
-    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
+    let prepared_pos = vec!["(?,?,?,?,?,?,?,?,?)"; records.len()].join(",");
 
     let statement = project_str!("queries/season_write.sql", prepared_pos);
 
     let mut query_builder = sqlx::query(&statement);
     for record in records.iter() {
         query_builder = query_builder
-            .bind(record.id)
             .bind(record.hash)
             .bind(record.name.as_str())
             .bind(record.pass_hash)

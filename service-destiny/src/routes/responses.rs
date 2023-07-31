@@ -103,7 +103,7 @@ impl MemberResponse {
                     member_count: None,
                 },
                 timestamp_join_date: result.clan_joined_at.to_u64().unwrap_or_default(),
-                role: result.clan_group_role,
+                role: result.clan_group_role as i8,
             })
         } else {
             None
@@ -210,7 +210,7 @@ impl DestinySeason {
     pub fn from_db(record: SeasonRecord) -> DestinySeason {
         DestinySeason {
             name: record.name,
-            number: record.number,
+            number: record.number as i32,
             starts_at: record.starts_at,
             ends_at: record.ends_at,
         }

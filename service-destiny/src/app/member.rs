@@ -1,4 +1,5 @@
-use sqlx::MySqlPool;
+use levelcrush::types::UnixTimestamp;
+use sqlx::SqlitePool;
 
 use levelcrush::cache::CacheValue;
 use levelcrush::futures::future::join_all;
@@ -17,8 +18,8 @@ use crate::{database, jobs, sync};
 /// max seconds to allow before pulling fresh data
 const CACHE_KEY_BUNGIE_NAME: &str = "member_bn||";
 const CACHE_KEY_MEMBERSHIP_ID: &str = "member_membership_id||";
-const UPDATE_PROFILE_INTERVAL: u64 = 86400;
-const UPDATE_ACTIVITY_INTERVAL: u64 = 86400;
+const UPDATE_PROFILE_INTERVAL: i64 = 86400;
+const UPDATE_ACTIVITY_INTERVAL: i64 = 86400;
 // one day
 const CACHE_KEY_ACTIVITIES: &str = "member_activities||";
 const CACHE_KEY_MEMBER_SEARCH: &str = "search_members||";
@@ -26,7 +27,7 @@ const CACHE_KEY_MEMBER_SEARCH_COUNT: &str = "search_members_count||";
 const CACHE_KEY_TITLE: &str = "member_titles||";
 
 /// determine by the provided timestmap if the profile needs to be refreshed.
-fn profile_needs_refresh(timestamp: u64) -> bool {
+fn profile_needs_refresh(timestamp: i64) -> bool {
     let timestamp_now = unix_timestamp();
     let time_since_update = timestamp_now - timestamp;
     time_since_update >= UPDATE_PROFILE_INTERVAL
@@ -35,7 +36,7 @@ fn profile_needs_refresh(timestamp: u64) -> bool {
 /// exclusively handles syncing a direct profile response from the bungie api
 pub async fn profile_api_sync(
     profile_response: Option<DestinyProfileResponse>,
-    database: &MySqlPool,
+    database: &SqlitePool,
 ) -> Option<MemberRecord> {
     let mut db_record = None;
     let mut profile_component = None;
@@ -119,7 +120,7 @@ pub async fn profile(membership_id: i64, state: &mut AppState) -> Option<MemberR
         let user_card = lib_destiny::api::member::memberships_by_id(membership_id, &state.bungie).await;
         if let Ok(Some(user_card)) = user_card {
             let profile_response =
-                lib_destiny::api::member::profile(membership_id, user_card.membership_type as i32, &state.bungie).await;
+                lib_destiny::api::member::profile(membership_id, user_card.membership_type as i64, &state.bungie).await;
 
             if let Ok(profile_response) = profile_response {
                 profile_api_sync(profile_response, &state.database).await;
@@ -131,10 +132,8 @@ pub async fn profile(membership_id: i64, state: &mut AppState) -> Option<MemberR
                 let err = profile_response.err().unwrap();
                 tracing::error!("Profile Response: {} ", err);
             }
-        } else {
-            if let Err(user_card) = user_card {
-                tracing::error!("Could not get membership {}; Error: {}", membership_id, user_card);
-            }
+        } else if let Err(user_card) = user_card {
+            tracing::error!("Could not get membership {}; Error: {}", membership_id, user_card);
         }
     }
 
@@ -181,7 +180,7 @@ pub async fn by_bungie_name(bungie_name: &str, state: &mut AppState) -> Option<M
         if let Ok(Some(api_result)) = &api_result {
             tracing::info!("Found user info!: {}", bungie_name);
             let membership_id = api_result.membership_id.parse::<i64>().unwrap_or_default();
-            let membership_type = api_result.membership_type as i32;
+            let membership_type = api_result.membership_type as i64;
 
             tracing::info!("Getting profile information for {}", bungie_name);
             let profile_response =
@@ -199,10 +198,8 @@ pub async fn by_bungie_name(bungie_name: &str, state: &mut AppState) -> Option<M
                 let err = profile_response.err().unwrap();
                 tracing::error!("Profile Response Err: {}", err);
             }
-        } else {
-            if let Err(err) = api_result {
-                tracing::error!("Unable to search member: {}", err);
-            }
+        } else if let Err(err) = api_result {
+            tracing::error!("Unable to search member: {}", err);
         }
     }
 
@@ -298,9 +295,9 @@ pub async fn titles(membership_id: MembershipId, state: &mut AppState) -> Vec<Tr
 
 pub async fn activities(
     membership_id: MembershipId,
-    timestamp_start: u64,
-    timestamp_end: u64,
-    modes: &[i32],
+    timestamp_start: UnixTimestamp,
+    timestamp_end: UnixTimestamp,
+    modes: &[i64],
     state: &mut AppState,
 ) -> Vec<ActivityHistoryRecord> {
     let mut call_api = false;

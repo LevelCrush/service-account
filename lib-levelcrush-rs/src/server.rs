@@ -1,23 +1,17 @@
 use crate::util::unix_timestamp;
-
-#[cfg(feature = "session")]
-use {
-    axum_sessions::async_session::MemoryStore,
-    axum_sessions::{SameSite, SessionLayer},
-};
-
-use axum::{
-    error_handling::HandleErrorLayer, extract::State, http::StatusCode, response::IntoResponse, BoxError, Json, Router,
-};
-use sqlx::MySqlPool;
+use axum::{error_handling::HandleErrorLayer, http::StatusCode, response::IntoResponse, BoxError, Json, Router};
 use std::{net::SocketAddr, time::Duration};
 use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
 use ts_rs::TS;
-
 #[cfg(feature = "cors")]
 use {
     axum::http::{HeaderValue, Method},
     tower_http::cors::{AllowOrigin, CorsLayer},
+};
+#[cfg(feature = "session")]
+use {
+    axum_sessions::async_session::MemoryStore,
+    axum_sessions::{SameSite, SessionLayer},
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
@@ -50,8 +44,8 @@ pub struct APIResponse<T: serde::ser::Serialize> {
     success: bool,
     response: Option<T>,
     errors: Vec<APIResponseError>,
-    requested_at: u64,
-    completed_at: u64,
+    requested_at: i64,
+    completed_at: i64,
 }
 
 impl<T: serde::ser::Serialize> APIResponse<T> {
@@ -98,7 +92,6 @@ async fn setup_session_layer() -> SessionLayer<MemoryStore> {
 pub struct Server {
     port: u16,
     allow_session: bool,
-    session_db: Option<MySqlPool>,
     allow_cors: bool,
     rate_limit: bool,
     rate_limit_num: u64,
@@ -112,7 +105,6 @@ impl Server {
             port,
             allow_session: false,
             allow_cors: false,
-            session_db: None,
             rate_limit: false,
             rate_limit_num: 1,
             rate_limit_per: Duration::from_secs(60),
@@ -139,14 +131,6 @@ impl Server {
     #[cfg(feature = "session")]
     pub fn enable_session(mut self) -> Self {
         self.allow_session = true;
-        self
-    }
-
-    /// turn on the session layer
-    #[cfg(all(feature = "session", feature = "database"))]
-    pub fn enable_session_db(mut self, pool: MySqlPool) -> Self {
-        self.allow_session = true;
-        self.session_db = Some(pool);
         self
     }
 

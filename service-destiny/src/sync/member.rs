@@ -6,15 +6,15 @@ use levelcrush::tracing;
 use levelcrush::types::destiny::MembershipId;
 use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 const CHUNK_SIZE_TRIUMPH: usize = 500;
 
 /// sync a profile
-pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) -> RecordId {
+pub async fn profile(profile: &DestinyProfileComponent, database: &SqlitePool) -> RecordId {
     let user_card = &profile.user_info;
     let membership_id = user_card.membership_id.parse::<i64>().unwrap_or_default();
-    let membership_type = user_card.membership_type as i32;
+    let membership_type = user_card.membership_type as i64;
     let global_display_name = format!(
         "{}#{:0>4}",
         user_card.global_display_name, user_card.global_display_name_code
@@ -32,9 +32,9 @@ pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) ->
         platform: membership_type,
         display_name: user_card.display_name.clone(),
         display_name_global: global_display_name,
-        guardian_rank_current: profile.guardian_rank_current,
-        guardian_rank_lifetime: profile.guardian_rank_lifetime,
-        last_played_at: profile.date_last_played.timestamp() as u64,
+        guardian_rank_current: profile.guardian_rank_current as i64,
+        guardian_rank_lifetime: profile.guardian_rank_lifetime as i64,
+        last_played_at: profile.date_last_played.timestamp() as i64,
         created_at: 0,
         updated_at: 0,
         deleted_at: 0,
@@ -70,29 +70,17 @@ pub async fn profile(profile: &DestinyProfileComponent, database: &MySqlPool) ->
     }
 }
 
-pub async fn triumphs(membership_id: MembershipId, data: &DestinyRecordComponentMap, pool: &MySqlPool) {
-    let hashes = data
-        .iter()
-        .map(|(hash, _)| hash.parse::<u32>().unwrap_or_default())
-        .collect::<Vec<u32>>();
-
-    let existing = database::triumph::member_read(membership_id, &hashes, pool).await;
-
+pub async fn triumphs(membership_id: MembershipId, data: &DestinyRecordComponentMap, pool: &SqlitePool) {
     let records = data
         .iter()
         .map(|(hash, triumph)| {
-            let hash = hash.parse::<u32>().unwrap_or_default();
-            let record_id = match existing.get(&hash) {
-                Some(record) => record.id,
-                _ => 0,
-            };
-
+            let hash = hash.parse::<i64>().unwrap_or_default();
             MemberTriumphRecord {
-                id: record_id,
+                id: 0,
                 membership_id,
                 hash,
-                state: triumph.state,
-                times_completed: triumph.completed_count,
+                state: triumph.state as i64,
+                times_completed: triumph.completed_count as i64,
                 created_at: unix_timestamp(),
                 updated_at: 0,
                 deleted_at: 0,

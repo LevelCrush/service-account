@@ -1,12 +1,12 @@
 use levelcrush::{database, proc_macros::DatabaseResult, project_str, BigDecimal};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 use super::leaderboard::LeaderboardEntryResult;
 
 /// query the database and get rank info by
 /// at the moment this just gets **everyone** in the network clans
 /// this works for now but will need to be adjusted later for sure
-pub async fn titles(display_name: &str, pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
+pub async fn titles(display_name: &str, pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     let query: Result<Vec<LeaderboardEntryResult>, sqlx::Error> = sqlx::query_file_as!(
         LeaderboardEntryResult,
         "queries/leaderboard_titles_rank.sql",
@@ -24,7 +24,7 @@ pub async fn titles(display_name: &str, pool: &MySqlPool) -> Vec<LeaderboardEntr
 }
 
 /// gets a leaderboard for raids
-pub async fn raids(display_name: &str, pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
+pub async fn raids(display_name: &str, pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     let query = sqlx::query_file_as!(
         LeaderboardEntryResult,
         "queries/leaderboard_raids_rank.sql",
@@ -41,7 +41,7 @@ pub async fn raids(display_name: &str, pool: &MySqlPool) -> Vec<LeaderboardEntry
     }
 }
 
-pub async fn pvp_based(display_name: &str, modes: &[i32], pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
+pub async fn pvp_based(display_name: &str, modes: &[i64], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     if modes.is_empty() {
         return Vec::new();
     }
@@ -65,7 +65,7 @@ pub async fn pvp_based(display_name: &str, modes: &[i32], pool: &MySqlPool) -> V
     }
 }
 
-pub async fn generic(display_name: &str, modes: &[i32], pool: &MySqlPool) -> Vec<LeaderboardEntryResult> {
+pub async fn generic(display_name: &str, modes: &[i64], pool: &SqlitePool) -> Vec<LeaderboardEntryResult> {
     if modes.is_empty() {
         return Vec::new();
     }

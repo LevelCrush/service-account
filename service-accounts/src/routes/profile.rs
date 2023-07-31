@@ -51,7 +51,7 @@ pub async fn challenge_view(
     Json(response)
 }
 
-fn generate_challenge(display_name: &str, admin: i8) -> String {
+fn generate_challenge(display_name: &str, admin: i64) -> String {
     let uuid = Uuid::new_v4().to_string();
     let challenge_digest = md5::compute(format!("{}{}{}{}", unix_timestamp(), display_name, admin, uuid));
     format!("{:x}", challenge_digest)

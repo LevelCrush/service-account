@@ -13,7 +13,8 @@ instance_member_count AS (
     GROUP BY target_activities.instance_id
 )
 SELECT
-    target_activities.instance_id
+    /* this coalesce is a waste, but is required by sqlx for proper typing for some reason */
+    COALESCE(target_activities.instance_id,0) AS instance_id 
 FROM target_activities
 INNER JOIN instance_member_count ON target_activities.instance_id = instance_member_count.instance_id
 WHERE instance_member_count.instance_members = 0

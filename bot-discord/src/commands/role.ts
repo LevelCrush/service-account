@@ -7,8 +7,6 @@ import {
     ApplicationCommandOptionChoiceData,
 } from 'discord.js';
 import { Command } from './base_command';
-import type { APIResponse } from '@levelcrush';
-import { role_allow, role_deny } from '../api/settings';
 
 const COMMAND_NAME = 'role';
 
@@ -45,30 +43,6 @@ export const RoleCommand = {
                         .setDescription('The role you want to remove')
                         .setRequired(true)
                         .setAutocomplete(true),
-                ),
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName('deny')
-                .setDescription("Don't allow a role to be assigned to you")
-                .addStringOption((option) =>
-                    option
-                        .setName('role')
-                        .setDescription('The role you want to never receive')
-                        .setAutocomplete(true)
-                        .setRequired(true),
-                ),
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName('allow')
-                .setDescription('Allow a role the potential to be assigned to you')
-                .addStringOption((option) =>
-                    option
-                        .setName('role')
-                        .setDescription('The role you want the potential to receive')
-                        .setAutocomplete(true)
-                        .setRequired(true),
                 ),
         ),
 
@@ -109,21 +83,7 @@ export const RoleCommand = {
             return;
         }
 
-        if (subcommand === 'deny') {
-            await role_deny(interaction.guildId || '0', interaction.user.id, role.name);
-            await interaction.followUp({
-                content: 'From now on, you will not be able to receive the @' + role.name + ' role',
-                ephemeral: true,
-            });
-            interaction.client.emit('role_deny', interaction.guildId || '', interaction.user.id, role);
-        } else if (subcommand === 'allow') {
-            await role_allow(interaction.guildId || '0', interaction.user.id, role.name);
-            await interaction.followUp({
-                content: 'From now on, you will able to receive the @' + role.name + ' role',
-                ephemeral: true,
-            });
-            interaction.client.emit('role_allow', interaction.guildId || '', interaction.user.id, role);
-        } else if (interaction.guild && subcommand === 'add') {
+        if (interaction.guild && subcommand === 'add') {
             try {
                 await interaction.guild.members.addRole({
                     user: interaction.user.id,

@@ -24,11 +24,11 @@ pub enum CacheDuration {
     Day,
     Persistant,
     /// whatever custom duration in seconds we need it to be
-    Custom(u64),
+    Custom(i64),
 }
 
 impl CacheDuration {
-    pub const fn u64(&self) -> u64 {
+    pub const fn i64(&self) -> i64 {
         match self {
             CacheDuration::Minute => 60,          // 1 minute
             CacheDuration::FiveMinutes => 300,    // 5 minutes
@@ -37,7 +37,7 @@ impl CacheDuration {
             CacheDuration::OneHour => 3600,       // 1 hour
             CacheDuration::HalfDay => 43200,      // 12 hours
             CacheDuration::Day => 86400,          // 24 hours,
-            CacheDuration::Persistant => u64::MAX,
+            CacheDuration::Persistant => i64::MAX,
             CacheDuration::Custom(seconds) => *seconds,
         }
     }
@@ -53,8 +53,8 @@ where
     data: CacheValueData<T>,
     duration: CacheDuration,
     duration_max: CacheDuration,
-    timestamp_created: u64,
-    timestamp_accessed: u64,
+    timestamp_created: i64,
+    timestamp_accessed: i64,
 }
 
 impl<T> CacheValue<T>
@@ -95,7 +95,7 @@ where
     /// look is simliar to access, except it does not require a mutable call, which means the last access timestamp will not be updated
     /// which means it does not need a "write" operation to get to this point. So it will be faster.
     pub fn look(&self) -> Option<CacheValueData<T>> {
-        if unix_timestamp() - self.timestamp_created > self.duration_max.u64() {
+        if unix_timestamp() - self.timestamp_created > self.duration_max.i64() {
             None
         } else {
             Some(self.data.clone())
@@ -108,7 +108,7 @@ where
     pub fn access(&mut self) -> Option<CacheValueData<T>> {
         self.timestamp_accessed = unix_timestamp();
 
-        if self.timestamp_accessed - self.timestamp_created > self.duration_max.u64() {
+        if self.timestamp_accessed - self.timestamp_created > self.duration_max.i64() {
             None
         } else {
             Some(self.data.clone())
@@ -153,7 +153,7 @@ where
             reader
                 .iter()
                 .filter_map(|(key, value)| {
-                    let target_max_duration = value.duration.u64();
+                    let target_max_duration = value.duration.i64();
                     if now - value.timestamp_accessed > target_max_duration {
                         Some(key.clone())
                     } else {

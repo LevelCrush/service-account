@@ -1,5 +1,4 @@
 INSERT INTO instances (
-    `id`,
     `instance_id`,
     `occurred_at`,
     `starting_phase_index`,
@@ -13,15 +12,16 @@ INSERT INTO instances (
     `updated_at`,
     `deleted_at`
 )
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-ON DUPLICATE KEY UPDATE 
-    `occurred_at` = VALUES(`occurred_at`),
-    `starting_phase_index` = VALUES(`starting_phase_index`),
-    `started_from_beginning` = VALUES(`started_from_beginning`),
-    `activity_hash` = VALUES(`activity_hash`),
-    `activity_director_hash` = VALUES(`activity_director_hash`),
-    `is_private` = VALUES(`is_private`),
-    `completed` = VALUES(`completed`),
-    `completion_reasons` = VALUES(`completion_reasons`),
-    `updated_at` =  VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+ON CONFLICT(`instance_id`)
+DO UPDATE SET
+    `occurred_at` = excluded.`occurred_at`,
+    `starting_phase_index` = excluded.`starting_phase_index`,
+    `started_from_beginning` = excluded.`started_from_beginning`,
+    `activity_hash` = excluded.`activity_hash`,
+    `activity_director_hash` = excluded.`activity_director_hash`,
+    `is_private` = excluded.`is_private`,
+    `completed` = excluded.`completed`,
+    `completion_reasons` = excluded.`completion_reasons`,
+    `updated_at` =  excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`

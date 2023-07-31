@@ -27,7 +27,7 @@ use ts_rs::TS;
 use levelcrush::tokio;
 
 const CACHE_DURATION_REPORT: CacheDuration = CacheDuration::HalfDay;
-const VERSION_MEMBER_REPORT_CURRENT: u8 = 0;
+const VERSION_MEMBER_REPORT_CURRENT: i64 = 0;
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
@@ -53,7 +53,7 @@ pub struct MemberReportStats {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct MemberConstructionReport {
-    pub version: u8,
+    pub version: i64,
     pub stats_pve: MemberReportStats,
     pub stats_pvp: MemberReportStats,
     pub stats_gambit: MemberReportStats,
@@ -64,7 +64,7 @@ pub struct MemberConstructionReport {
     pub activity_attempts: u64,
     pub activity_attempts_with_clan: u64,
     pub activity_completions: u64,
-    pub activity_modes: HashMap<i32, u64>,
+    pub activity_modes: HashMap<i64, i64>,
     pub instance_timestamps: HashSet<(InstanceId, UnixTimestamp)>,
     pub instance_members_profiles: HashMap<MembershipId, MemberResult>,
     pub instance_members: HashMap<MembershipId, u64>,
@@ -80,7 +80,7 @@ pub struct MemberReportActivityMode {
     pub mode: String,
 
     #[ts(type = "number")]
-    pub count: u64,
+    pub count: i64,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default, TS)]
@@ -116,7 +116,7 @@ pub struct MemberReportSearchQuery {
 #[derive(serde::Serialize, Clone, Debug, Default, TS)]
 #[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct MemberReport {
-    pub version: u8,
+    pub version: i64,
 
     pub membership_id: String,
     pub snapshot_range: String,
@@ -387,8 +387,8 @@ async fn merge_reports(
 
 pub async fn season<T: Into<String>>(
     bungie_name: T,
-    modes: &[i32],
-    season: i32,
+    modes: &[i64],
+    season: i64,
     priority: bool,
     state: &mut AppState,
 ) -> (UnixTimestamp, Option<MemberReport>) {
@@ -427,7 +427,7 @@ pub async fn season<T: Into<String>>(
                     Box::pin(async move {
                         let max_snapshotable_season = std::env::var("REPORT_SEASON_MAX")
                             .unwrap_or_default()
-                            .parse::<i32>()
+                            .parse::<i64>()
                             .unwrap_or(20);
 
                         let season = database::seasons::get(season, &thread_app_state.database).await;
@@ -436,7 +436,7 @@ pub async fn season<T: Into<String>>(
                             _ => (0, 0, -1),
                         };
 
-                        let end_timestamp: u64 = if season_number > max_snapshotable_season {
+                        let end_timestamp = if season_number > max_snapshotable_season {
                             unix_timestamp()
                         } else {
                             season_end
@@ -536,10 +536,10 @@ pub async fn season<T: Into<String>>(
 /// generates a lifetime report of activities/completions/etc
 pub async fn lifetime<T: Into<String>>(
     bungie_name: T,
-    modes: &[i32],
+    modes: &[i64],
     priority: bool,
     state: &mut AppState,
-) -> (u64, Option<MemberReport>) {
+) -> (UnixTimestamp, Option<MemberReport>) {
     let bungie_name = bungie_name.into();
     let modes = modes.to_vec();
     let mut thread_app_state = state.clone();
@@ -609,8 +609,8 @@ pub async fn lifetime<T: Into<String>>(
                             tracing::info!("Date Range: {} to {}", start_datetime, end_datetime);
                             let report = construct(
                                 bungie_name.clone(),
-                                start_datetime.timestamp() as u64,
-                                end_datetime.timestamp() as u64,
+                                start_datetime.timestamp(),
+                                end_datetime.timestamp(),
                                 &modes,
                                 &mut thread_app_state,
                             )
@@ -778,9 +778,9 @@ async fn get_stats(membership_id: MembershipId, instance_ids: &[InstanceId], sta
 
 async fn construct<T: Into<String>>(
     bungie_name: T,
-    timestamp_start: u64,
-    timestamp_end: u64,
-    modes: &[i32],
+    timestamp_start: UnixTimestamp,
+    timestamp_end: UnixTimestamp,
+    modes: &[i64],
     state: &mut AppState,
 ) -> Option<MemberConstructionReport> {
     let bungie_name = bungie_name.into();

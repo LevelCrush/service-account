@@ -30,21 +30,35 @@ pub async fn run() -> anyhow::Result<()> {
         tracing::info!("Updating manifest");
 
         // at the same time, make a external request to the class definitions and activity definitions urls that were provided by the destiny manifest
+        tracing::info!("Fetching class definitions");
         let class_definitions = manifest.get_class_definition(client.clone()).await?;
+
+        tracing::info!("Syncing class definitions");
+        sync::definition::classes(&class_definitions, &database).await;
+
+        tracing::info!("Fetching activity definitions");
         let activity_definitions = manifest.get_activity_definitions(client.clone()).await?;
+
+        tracing::info!("Syncing activity definitions");
+        sync::definition::activities(&activity_definitions, &database).await;
+
+        tracing::info!("Fetching activity type definitions");
         let activity_type_definitions = manifest.get_activity_type_definitions(client.clone()).await?;
+
+        tracing::info!("Syncing activity type definitions");
+        sync::definition::activity_types(&activity_type_definitions, &database).await;
+
+        tracing::info!("Fetching season definitions");
         let season_definitions = manifest.get_season_definitions(client.clone()).await?;
+
+        tracing::info!("Syncing season definitions");
+        sync::definition::seasons(&season_definitions, &database).await;
+
+        tracing::info!("Fetching triumph record definitions");
         let records_definitions = manifest.get_record_definition(client.clone()).await?;
 
-        // start syncing definitions
-        tracing::info!("Syncing activity type definitions");
-        tokio::join!(
-            sync::definition::classes(&class_definitions, &database),
-            sync::definition::activity_types(&activity_type_definitions, &database),
-            sync::definition::activities(&activity_definitions, &database),
-            sync::definition::seasons(&season_definitions, &database),
-            sync::definition::records(&records_definitions, &database)
-        );
+        tracing::info!("Syncing triumph definitions");
+        sync::definition::records(&records_definitions, &database).await;
     }
     Ok(())
 }

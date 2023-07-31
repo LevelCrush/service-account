@@ -1,6 +1,6 @@
 /// Generates a unix timestamp
-pub fn unix_timestamp() -> u64 {
-    chrono::Utc::now().timestamp() as u64
+pub fn unix_timestamp() -> i64 {
+    chrono::Utc::now().timestamp()
 }
 
 pub fn slugify(input: &str) -> String {

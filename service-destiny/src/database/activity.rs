@@ -1,48 +1,48 @@
-use levelcrush::macros::{DatabaseRecord, DatabaseResult, DatabaseResultSerde};
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::types::destiny::InstanceId;
 use levelcrush::types::{destiny::ManifestHash, RecordId};
 use levelcrush::{database, BigDecimal};
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
 pub struct ActivityRecord {
-    pub activity_type: u32,
+    pub activity_type: i64,
     pub name: String,
     pub description: String,
     pub image_url: String,
-    pub fireteam_min_size: u32,
-    pub fireteam_max_size: u32,
-    pub max_players: u32,
+    pub fireteam_min_size: i64,
+    pub fireteam_max_size: i64,
+    pub max_players: i64,
     pub requires_guardian_oath: bool,
     pub is_pvp: bool,
     pub matchmaking_enabled: bool,
-    pub hash: u32,
-    pub index: u32,
+    pub hash: i64,
+    pub index: i64,
 }
 
 #[DatabaseResult]
 pub struct ActivitySearchResult {
     pub id: RecordId,
-    pub hash: u32,
+    pub hash: i64,
 }
 
-#[DatabaseResultSerde]
+#[DatabaseResult]
 pub struct ActivityInstanceResult {
     pub activity_name: String,
     pub activity_description: String,
-    pub activity_hash: u32,
+    pub activity_hash: i64,
     pub director_activity_name: String,
     pub director_activity_description: String,
-    pub director_activity_hash: u32,
+    pub director_activity_hash: i64,
     pub total: i64,
-    pub total_completed: BigDecimal,
+    pub total_completed: i64,
 }
 
-/// sends a set of u32 hashes into a query to check for existence.
-/// Returns a HashMap<u32, i32> which represents HashMap<hash,record_id>
-pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<ManifestHash, RecordId> {
+/// sends a set of i64 hashes into a query to check for existence.
+/// Returns a HashMap<i64, i32> which represents HashMap<hash,record_id>
+pub async fn exists_bulk(hashes: &[i64], pool: &SqlitePool) -> HashMap<ManifestHash, RecordId> {
     if hashes.is_empty() {
         return HashMap::new();
     }
@@ -68,12 +68,12 @@ pub async fn exists_bulk(hashes: &[u32], pool: &MySqlPool) -> HashMap<ManifestHa
 
     results
 }
-pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
     // for every value we have in values, we need to have a patching VALUES() group
-    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()];
+    let query_parameters = vec!["(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; values.len()];
 
     let query_parameters = query_parameters.join(", ");
     let statement = project_str!("queries/activity_write.sql", query_parameters);
@@ -81,7 +81,6 @@ pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
     let mut query_builder = sqlx::query(statement.as_str());
     for data in values.iter() {
         query_builder = query_builder
-            .bind(data.id)
             .bind(data.hash)
             .bind(data.index)
             .bind(data.activity_type)
@@ -103,7 +102,7 @@ pub async fn write(values: &[ActivityRecord], pool: &MySqlPool) {
     database::log_error(query);
 }
 
-pub async fn from_instances(instance_ids: &[InstanceId], pool: &MySqlPool) -> Vec<ActivityInstanceResult> {
+pub async fn from_instances(instance_ids: &[InstanceId], pool: &SqlitePool) -> Vec<ActivityInstanceResult> {
     if instance_ids.is_empty() {
         return Vec::new();
     }

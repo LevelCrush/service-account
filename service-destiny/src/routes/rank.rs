@@ -53,8 +53,8 @@ async fn rank_generic(
                     group_mode
                         .value
                         .split(',')
-                        .map(|v| v.parse::<i32>().unwrap_or_default())
-                        .collect::<Vec<i32>>(),
+                        .map(|v| v.parse::<i64>().unwrap_or_default())
+                        .collect::<Vec<i64>>(),
                 );
                 break 'group_mode;
             }
@@ -67,7 +67,7 @@ async fn rank_generic(
             let activity_mode = DestinyActivityModeType::from(activity.as_str());
             match activity_mode {
                 DestinyActivityModeType::Unknown => None,
-                target_mode => Some(vec![target_mode as i32]),
+                target_mode => Some(vec![target_mode as i64]),
             }
         }
     }

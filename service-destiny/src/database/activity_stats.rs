@@ -3,7 +3,7 @@ use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
 use levelcrush::types::destiny::{CharacterId, InstanceId};
 use levelcrush::types::RecordId;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -41,7 +41,7 @@ pub enum StatFilter {
 pub async fn existing(
     character_id: CharacterId,
     instance_ids: &[InstanceId],
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> HashMap<i64, RecordId> {
     // make sure we have instance ids otherwise return now
     if instance_ids.is_empty() {
@@ -74,18 +74,17 @@ pub async fn existing(
     results
 }
 
-pub async fn write(values: &[ActivityStatRecord], pool: &MySqlPool) {
+pub async fn write(values: &[ActivityStatRecord], pool: &SqlitePool) {
     if values.is_empty() {
         return;
     }
 
-    let query_parameters = vec!["(?,?,?, ?,?,?,?,?,?,?)"; values.len()].join(",");
+    let query_parameters = vec!["(?,?, ?,?,?,?,?,?,?)"; values.len()].join(",");
     let statement = project_str!("queries/activity_stats_insert.sql", query_parameters);
 
     let mut query_builder = sqlx::query(statement.as_str());
     for record in values.iter() {
         query_builder = query_builder
-            .bind(record.id)
             .bind(record.membership_id)
             .bind(record.character_id)
             .bind(record.instance_id)
@@ -107,7 +106,7 @@ pub async fn get_instances(
     membership_id: i64,
     instance_ids: &[InstanceId],
     value_filter: StatFilter,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Vec<ActivityStatResult> {
     if instance_ids.is_empty() {
         return Vec::new();

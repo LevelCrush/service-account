@@ -1,5 +1,4 @@
-INSERT INTO activities (
-    `id`, 
+INSERT INTO manifest_activities (
     `hash`, 
     `index`, 
     `activity_type`,
@@ -17,9 +16,11 @@ INSERT INTO activities (
     `deleted_at`
 )
 VALUES {}
-ON DUPLICATE KEY UPDATE
-    `name` = VALUES(`name`),
-    `description` = VALUES(`description`),
-    `image_url` = VALUES(`image_url`),
-    `updated_at` = VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+ON CONFLICT(`hash`) 
+DO UPDATE SET 
+    `name` = excluded.`name`,
+    `description` = excluded.`description`,
+    `image_url` = excluded.`image_url`,
+    `updated_at` = excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`,
+    `index` = excluded.`index`

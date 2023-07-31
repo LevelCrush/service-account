@@ -51,7 +51,7 @@ The library provides a implementation to quickly spin up a [Axum](https://github
 
 ### Database Pool
 
-The library will help spin up a MySqlPool based on supplied settings from a .env file located relative to the project. I opted to go with [sqlx](https://github.com/launchbadge/sqlx) for this over a ORM.
+The library will help spin up a SqlitePool based on supplied settings from a .env file located relative to the project. I opted to go with [sqlx](https://github.com/launchbadge/sqlx) for this over a ORM.
 
 ### Utility
 

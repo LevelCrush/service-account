@@ -1,9 +1,10 @@
-INSERT INTO activity_types (`id`, `hash`, `name`, `description`, `icon_url`, `index`,`created_at`, `updated_at`, `deleted_at`)
+INSERT INTO manifest_activity_types (`hash`, `name`, `description`, `icon_url`, `index`,`created_at`, `updated_at`, `deleted_at`)
 VALUES {}
-ON DUPLICATE KEY UPDATE
-    `name` = VALUES(`name`),
-    `description` = VALUES(`description`),
-    `icon_url` = VALUES(`icon_url`),
-    `index` = VALUES(`index`),
-    `updated_at` = VALUES(`created_at`),
-    `deleted_at` = VALUES(`deleted_at`)
+ON CONFLICT(`hash`) 
+DO UPDATE SET 
+    `name` = excluded.`name`,
+    `description` = excluded.`description`,
+    `icon_url` = excluded.`icon_url`,
+    `index` = excluded.`index`,
+    `updated_at` = excluded.`created_at`,
+    `deleted_at` = excluded.`deleted_at`
