@@ -7,7 +7,8 @@ use levelcrush::tracing;
 use levelcrush::types::destiny::InstanceId;
 
 use crate::app::state::AppState;
-use crate::database;
+use crate::env::AppVariable;
+use crate::{database, env};
 use crate::jobs::task;
 
 pub async fn info(args: &[String]) -> anyhow::Result<()> {
@@ -107,11 +108,13 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         roster_members.extend(group_roster.iter());
     }
 
-    let workers_allowed = 30;
+    let workers_allowed = env::get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
+    tracing::warn!("Max Workers Per Pool: {workers_allowed}");
     let task_pool = TaskPool::new(workers_allowed);
+    let instance_task_pool = TaskPool::new(workers_allowed);
     for (membership_id, membership_platform) in roster_members.into_iter() {
         let state_clone = app_state.clone();
-        let task_pool_clone = task_pool.clone();
+        let instance_task_pool_clone = instance_task_pool.clone();
         task_pool.queue(Box::new(move || {
             Box::pin(async move {
 
@@ -124,7 +127,7 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
                             tracing::info!("Now crawling {} total instances for {membership_id} and {character}", instances.len());
                             let sub_state_clone = state_clone.clone();
                             tracing::info!("Queing instance crawls for {membership_id} and {character}");
-                            task_pool_clone.queue(Box::new(move || { Box::pin(async move {
+                            instance_task_pool_clone.queue(Box::new(move || { Box::pin(async move {
                                 let instance_data_result = task::instance_data(&instances, &sub_state_clone).await;
                                 if let Err(instance_err) = instance_data_result {
                                     tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
@@ -143,9 +146,10 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         })).await;
     }
 
-    while !task_pool.is_empty().await {
+    while !task_pool.is_empty().await || !instance_task_pool.is_empty().await {
         task_pool.step().await;
-        levelcrush::tokio::time::sleep(Duration::from_secs(1)).await;
+        instance_task_pool.step().await;
+        levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
     }   
 
     tracing::info!("Done network crawling");
