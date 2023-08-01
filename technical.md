@@ -11,9 +11,6 @@ The following services can be found here
 - [Website](./website)
 - [Service-Destiny](./service-destiny)
 - [Service-Accounts](./service-accounts)
-- [Service-Feed](./service-feed)
-- [Service-Automations](./service-automations)
-- [Service-Assets](./service-assets)
 
 There are an additional three libraries defined here that are also stored and used between the above services.
 
@@ -59,9 +56,9 @@ The library also provides some utility functioinality and implementations. Utili
 
 - `unix_timestamp()`: Uses `chrono` crate to generate a unix timestamp. [View Code](./lib-levelcrush-rs/src/util.rs)
 - `MemoryCache<T>`: Thread safe + Async supported way to have a persistent in memory cache. Can work across multiple threads if neccessary with read/write support and provides a way to attach a `Duration` to the cached value to support expiration/pruning. [View Code](./lib-levelcrush-rs/src/cache.rs)
-- `TaskManager`: Implements task pooling by using Tokio's `JoinHandle<T>`. This can be configured to run a certain amount of task at once (created by spawning a task with `tokio::spawn`). `TaskManager` is thread safe. At the moment, for sake of simplicity, `TaskManager` does not store the results of the task that are run. These are meant to be indepdendent long running functions that should execute at the same time, that end using some other medium to store / fetch data.
-  An example in use can be found in the `service-destiny` app, when we are requesting a member report. The member report can take a very long time, rather then holding up the web request, a task is thrown onto the `TaskManager` and then handled in the background. The actual results are stored in the respective `MemoryCache<T>` to fetch the results when the member report is checked again.
-  [View Code](./lib-levelcrush-rs/src/task_manager.rs)
+- `TaskPool`: Implements task pooling by using Tokio's `JoinHandle<T>`. This can be configured to run a certain amount of task at once (created by spawning a task with `tokio::spawn`). `TaskManager` is thread safe. At the moment, for sake of simplicity, `TaskPool` does not store the results of the task that are run. These are meant to be indepdendent long running functions that should execute at the same time, that end using some other medium to store / fetch data.
+  An example in use can be found in the `service-destiny` app, when we are requesting a member report. The member report can take a very long time, rather then holding up the web request, a task is thrown onto the `TaskPool` and then handled in the background. The actual results are stored in the respective `MemoryCache<T>` to fetch the results when the member report is checked again.
+  [View Code](./lib-levelcrush-rs/src/task_pool.rs)
 - `RetryLock`: Similiar to a mutex, except the application decides when to unlock/lock it. Good for request that tend to **write** data to the database/make external api calls and you don't want to flood the app with too many causing a deadlock. An example can be found by visiting this [link](./service-accounts/src/routes/profile.rs) where it is used by the `service-accounts` app and it locks the user request from multiple profile request at once (Until cached). Since the `/profile/json` route is intended to be hit **many** times, it is possible for the same user to request and have us fetching/writing the same data numerous times causing too many database queries to go out/writing to the session, which can cause deadlocks. This utility limits those request and only stalls it for the user tied to the session. So other users are not held back. In the event of a `RetryLock` stalling too long, the lock is automatically released letting the operation to take place as a precaution. This duration/retry amount is configurable. [View Code](./lib-levelcrush-rs/src/retry_lock.rs)
 
 # Lib-LevelCrush-Macros-Rs
@@ -86,8 +83,7 @@ There is a [tsconfig.lib.json](./tsconfig.lib.json) at the root of the workspace
 
 # Database Schema
 
-The schema for the database can be found here: [schema.sql](./database/schema.sql).
-There is no additional data attached to this schema.sql of of course.
+The sqlite schema's for each service can be found inside their respective directories.
 
 # Docker
 

@@ -6,7 +6,7 @@ use levelcrush::types::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::retry_lock::RetryLock;
-use levelcrush::task_manager::TaskPool;
+use levelcrush::task_pool::TaskPool;
 use levelcrush::{cache::MemoryCache, database};
 
 use crate::database::activity_history::NetworkBreakdownResult;

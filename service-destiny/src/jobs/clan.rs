@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use levelcrush::anyhow;
-use levelcrush::task_manager::TaskPool;
+use levelcrush::task_pool::TaskPool;
 use levelcrush::tracing;
 use levelcrush::types::destiny::InstanceId;
 
