@@ -79,7 +79,7 @@ create table if not exists instance_members
     clan_name         TEXT    not null,
     clan_tag          TEXT    not null,
     completed         integer not null,
-    completion_reason integer not null,
+    completion_reason TEXT not null,
     created_at        integer not null,
     updated_at        integer not null,
     deleted_at        integer not null,

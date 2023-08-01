@@ -22,7 +22,7 @@ pub mod database;
 pub mod macros;
 pub mod queries;
 pub mod retry_lock;
-pub mod task_manager;
+pub mod task_pool;
 pub mod types;
 pub mod util;
 

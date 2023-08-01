@@ -1,11 +1,14 @@
 use std::collections::{HashMap, HashSet};
+use std::time::Duration;
 
 use levelcrush::anyhow;
+use levelcrush::task_pool::TaskPool;
 use levelcrush::tracing;
 use levelcrush::types::destiny::InstanceId;
 
 use crate::app::state::AppState;
-use crate::database;
+use crate::env::AppVariable;
+use crate::{database, env};
 use crate::jobs::task;
 
 pub async fn info(args: &[String]) -> anyhow::Result<()> {
@@ -79,6 +82,77 @@ pub async fn crawl_non_network() -> anyhow::Result<()> {
     let app_state = AppState::new().await;
     let groups = database::clan::get_non_network(&app_state.database).await;
     crawl(&groups, &app_state).await?;
+
+    Ok(())
+}
+
+/// an improved version of the crawler that uses the task pool
+pub async fn crawl_network2() -> anyhow::Result<()> {
+    tracing::info!("crawling clan network");
+    tracing::info!("Setting up app state");
+
+    let app_state = AppState::new().await;
+
+    tracing::info!("Getting in network clans");
+    let groups = database::clan::get_network(&app_state.database).await;
+
+    let mut roster_members = HashMap::new();
+    for group in groups.iter() {
+        let group_id = *group;
+
+        // crawl clan info
+        task::clan_info(group_id, &app_state).await?;
+
+        // merger rosters
+        let group_roster = task::clan_roster(group_id, &app_state).await?;
+        roster_members.extend(group_roster.iter());
+    }
+
+    let workers_allowed = env::get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
+    tracing::warn!("Max Workers Per Pool: {workers_allowed}");
+    let task_pool = TaskPool::new(workers_allowed);
+    let instance_task_pool = TaskPool::new(workers_allowed);
+    for (membership_id, membership_platform) in roster_members.into_iter() {
+        let state_clone = app_state.clone();
+        let instance_task_pool_clone = instance_task_pool.clone();
+        task_pool.queue(Box::new(move || {
+            Box::pin(async move {
+
+                let characters = task::profile(membership_id, membership_platform, &state_clone).await;
+                if let Ok(characters) = characters {
+                    for character in characters.into_iter() {
+                        tracing::info!("Scanning activities for {membership_id} and {character}");
+                        let instances = task::activities(membership_id, membership_platform,character,&state_clone).await;
+                        if let Ok(instances) = instances {
+                            tracing::info!("Now crawling {} total instances for {membership_id} and {character}", instances.len());
+                            let sub_state_clone = state_clone.clone();
+                            tracing::info!("Queing instance crawls for {membership_id} and {character}");
+                            instance_task_pool_clone.queue(Box::new(move || { Box::pin(async move {
+                                let instance_data_result = task::instance_data(&instances, &sub_state_clone).await;
+                                if let Err(instance_err) = instance_data_result {
+                                    tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
+                                }
+                            })})).await;
+                            
+                        } else if let Err(instances_err) = instances {
+                            tracing::error!("Error fetching activities for Member {membership_id} and character {character}:\n{instances_err}");
+                        }
+                       
+                    }
+                } else if let Err(character_err) = characters {
+                    tracing::error!("Error fetching characters from the api\nMembership:{membership_id}|{membership_platform}\nError:{character_err}");
+                }
+            })
+        })).await;
+    }
+
+    while !task_pool.is_empty().await || !instance_task_pool.is_empty().await {
+        task_pool.step().await;
+        instance_task_pool.step().await;
+        levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
+    }   
+
+    tracing::info!("Done network crawling");
 
     Ok(())
 }

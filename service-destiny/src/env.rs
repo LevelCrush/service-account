@@ -13,6 +13,8 @@ pub enum AppVariable {
 
     // bungie api key
     BungieAPIKey,
+
+    CrawlWorkers,
 }
 
 impl From<AppVariable> for &'static str {
@@ -24,6 +26,7 @@ impl From<AppVariable> for &'static str {
             AppVariable::DatabaseUrl => "DATABASE_URL",
             AppVariable::DangerAppInvalidCerts => "DANGER_APP_INVALID_CERTS",
             AppVariable::BungieAPIKey => "BUNGIE_API_KEY",
+            AppVariable::CrawlWorkers => "CRAWL_WORKERS",
         }
     }
 }

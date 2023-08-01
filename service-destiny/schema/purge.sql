@@ -30,4 +30,5 @@ drop table if exists members;
 
 drop table if exists setting_modes;
 
+VACUUM;
 
