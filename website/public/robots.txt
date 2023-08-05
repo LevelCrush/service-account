@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://levelcrush.local
-
-# Sitemaps
-Sitemap: https://levelcrush.local/sitemap.xml
