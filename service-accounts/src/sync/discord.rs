@@ -22,9 +22,8 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &SqlitePool) -> Opt
     let discord_user_id = discord_user.id.unwrap_or_default();
     let mut account =
         database::platform::match_account(discord_user_id.clone(), AccountPlatformType::Discord, pool).await;
-    let mut new_account = false;
     let mut sync_result = MemberSyncResult::default();
-    if account.is_none() {
+    let new_account = if account.is_none() {
         // new account
         // no account found. Let's create an account first
         let timestamp = unix_timestamp();
@@ -41,10 +40,10 @@ pub async fn member(discord_user: DiscordUserResponse, pool: &SqlitePool) -> Opt
         tracing::info!("Creating account");
         account = database::account::create(token_seed, token_secret_seed, pool).await;
 
-        new_account = true;
+        true
     } else {
-        new_account = false;
-    }
+        false
+    };
 
     let mut account_platform = None;
     if let Some(account) = account {
