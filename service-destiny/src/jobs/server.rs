@@ -152,17 +152,17 @@ pub async fn run() -> anyhow::Result<()> {
     let server_task = tokio::spawn(async move {
         Server::new(server_port)
             .enable_cors()
-            //   .enable_rate_limit(rate_limit, Duration::from_secs(rate_limit_per), rate_limit_buffer)
             .run(routes::router(), app_state)
             .await;
     });
 
     // run both  concurrently
-    (_, _, _, _, _) = tokio::join!(
+    (_, _, _, _, _, _) = tokio::join!(
         server_task,
         cache_task,
         task_manager,
         settings_updater,
+        seasons_updater,
         leaderboard_updater
     );
 
