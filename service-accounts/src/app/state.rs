@@ -1,7 +1,7 @@
 use crate::{
     database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView, sync::discord::MemberSyncResult,
 };
-use levelcrush::{alias::UnixTimestamp, cache::MemoryCache, database, retry_lock::RetryLock, uuid::Uuid};
+use levelcrush::{alias::UnixTimestamp, cache::MemoryCache, database, retry_lock::RetryLock, tracing, uuid::Uuid};
 use sqlx::SqlitePool;
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -25,7 +25,9 @@ impl AppState {
             .parse::<u32>()
             .unwrap_or(1);
 
+        tracing::info!("Connecting to database with {max_connections} connection(s)");
         let database = database::connect(crate::database::DATABASE_URL, max_connections).await;
+        tracing::info!("Connection to database established");
 
         let http_client = reqwest::ClientBuilder::new()
             .build()

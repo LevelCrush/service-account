@@ -32,9 +32,13 @@ struct Args {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
+    tracing::info!("Merging .env into process enviorment settings");
     levelcrush::env();
 
+    tracing::info!("Parsing command line arguments");
     let args = Args::parse();
+
+    tracing::info!("Running job");
     let result = match args.job {
         Job::Server => server::run().await,
         Job::DiscordUpdate => jobs::discord::run(&args.args).await,
