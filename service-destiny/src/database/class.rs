@@ -1,5 +1,5 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
-use levelcrush::types::{destiny::ManifestHash, RecordId};
+use levelcrush::alias::{destiny::ManifestHash, RecordId};
 use levelcrush::{database, project_str};
 use sqlx::SqlitePool;
 use std::collections::HashMap;

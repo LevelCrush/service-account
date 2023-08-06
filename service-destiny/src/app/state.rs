@@ -2,7 +2,7 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use levelcrush::types::UnixTimestamp;
+use levelcrush::alias::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::retry_lock::RetryLock;

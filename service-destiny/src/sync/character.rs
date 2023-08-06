@@ -2,7 +2,7 @@ use crate::bungie::schemas::DestinyCharacterComponent;
 use crate::database;
 use crate::database::character::CharacterRecord;
 use levelcrush::futures;
-use levelcrush::types::{
+use levelcrush::alias::{
     destiny::CharacterId, destiny::MembershipId, destiny::MembershipType, RecordId, UnixTimestamp,
 };
 use levelcrush::util::unix_timestamp;

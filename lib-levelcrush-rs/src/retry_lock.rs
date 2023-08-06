@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     cache::{CacheValue, MemoryCache},
-    types::UnixTimestamp,
+    alias::UnixTimestamp,
     util::unix_timestamp,
 };
 

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use levelcrush::types::UnixTimestamp;
+use levelcrush::alias::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::tokio;
-use levelcrush::types::destiny::{GroupId, MembershipId, MembershipType};
+use levelcrush::alias::destiny::{GroupId, MembershipId, MembershipType};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{futures, tracing};
 

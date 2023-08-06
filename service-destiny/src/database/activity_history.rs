@@ -1,9 +1,9 @@
 use levelcrush::bigdecimal::{BigDecimal, ToPrimitive};
 //use levelcrush::sqlx::types::BigDecimal;
 
+use levelcrush::alias::destiny::MembershipId;
+use levelcrush::alias::{destiny::CharacterId, destiny::InstanceId, RecordId, UnixTimestamp};
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
-use levelcrush::types::destiny::MembershipId;
-use levelcrush::types::{destiny::CharacterId, destiny::InstanceId, RecordId, UnixTimestamp};
 use levelcrush::{database, tracing};
 use levelcrush::{project_str, SqlitePool};
 use std::collections::HashMap;

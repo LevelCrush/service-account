@@ -1,5 +1,5 @@
 use levelcrush::anyhow;
-use levelcrush::types::UnixTimestamp;
+use levelcrush::alias::UnixTimestamp;
 
 use crate::aliases::*;
 use crate::bungie::enums::DestinyRouteParam;

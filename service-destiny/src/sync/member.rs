@@ -3,8 +3,8 @@ use crate::database;
 use crate::database::member::MemberRecord;
 use crate::database::triumph::MemberTriumphRecord;
 use levelcrush::tracing;
-use levelcrush::types::destiny::MembershipId;
-use levelcrush::types::RecordId;
+use levelcrush::alias::destiny::MembershipId;
+use levelcrush::alias::RecordId;
 use levelcrush::util::unix_timestamp;
 use sqlx::SqlitePool;
 

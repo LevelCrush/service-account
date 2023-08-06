@@ -1,11 +1,11 @@
-use levelcrush::types::UnixTimestamp;
+use levelcrush::alias::UnixTimestamp;
 use sqlx::SqlitePool;
 
 use levelcrush::cache::CacheValue;
 use levelcrush::futures::future::join_all;
 use levelcrush::tokio;
 use levelcrush::tracing;
-use levelcrush::types::destiny::MembershipId;
+use levelcrush::alias::destiny::MembershipId;
 use levelcrush::util::unix_timestamp;
 
 use crate::app::state::{AppState, CacheItem};

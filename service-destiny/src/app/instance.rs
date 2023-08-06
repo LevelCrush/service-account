@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use levelcrush::{
     cache::CacheValue,
-    types::destiny::{CharacterId, InstanceId, MembershipId, MembershipType},
+    alias::destiny::{CharacterId, InstanceId, MembershipId, MembershipType},
 };
 use lib_destiny::bungie::schemas::DestinyPostGameCarnageReportData;
 

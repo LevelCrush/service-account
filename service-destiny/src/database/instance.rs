@@ -1,7 +1,7 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
-use levelcrush::types::destiny::InstanceId;
-use levelcrush::{database, types::RecordId};
+use levelcrush::alias::destiny::InstanceId;
+use levelcrush::{database, alias::RecordId};
 use lib_destiny::aliases::ManifestHash;
 use sqlx::SqlitePool;
 use std::collections::HashMap;

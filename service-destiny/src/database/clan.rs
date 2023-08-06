@@ -1,5 +1,5 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
-use levelcrush::types::{destiny::GroupId, destiny::MembershipId, RecordId};
+use levelcrush::alias::{destiny::GroupId, destiny::MembershipId, RecordId};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{database, project_str};
 use sqlx::SqlitePool;

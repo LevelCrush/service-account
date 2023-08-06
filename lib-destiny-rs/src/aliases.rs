@@ -1,1 +1,1 @@
-pub use levelcrush::types::destiny::*;
+pub use levelcrush::alias::destiny::*;

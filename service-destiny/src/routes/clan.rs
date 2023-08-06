@@ -6,7 +6,7 @@ use crate::routes::responses::MemberResponse;
 use axum::extract::{Path, State};
 use axum::routing::get;
 use axum::{Json, Router};
-use levelcrush::types::destiny::GroupId;
+use levelcrush::alias::destiny::GroupId;
 use levelcrush::{axum, tracing};
 
 pub fn router() -> Router<AppState> {

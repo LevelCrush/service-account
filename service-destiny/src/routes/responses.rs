@@ -2,7 +2,7 @@ use ts_rs::TS;
 
 use levelcrush::bigdecimal::ToPrimitive;
 use levelcrush::server::{APIResponse, PaginationResponse};
-use levelcrush::types::{destiny::MembershipType, UnixTimestamp};
+use levelcrush::alias::{destiny::MembershipType, UnixTimestamp};
 
 use crate::app::report::member::MemberReport;
 use crate::database::activity_history::NetworkBreakdownResult;

@@ -9,7 +9,7 @@ use crate::{
 };
 use levelcrush::tracing;
 use levelcrush::{
-    types::{destiny::CharacterId, destiny::InstanceId, destiny::MembershipId, destiny::MembershipType, UnixTimestamp},
+    alias::{destiny::CharacterId, destiny::InstanceId, destiny::MembershipId, destiny::MembershipType, UnixTimestamp},
     util::unix_timestamp,
     SqlitePool,
 };

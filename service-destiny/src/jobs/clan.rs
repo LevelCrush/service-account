@@ -4,7 +4,7 @@ use std::time::Duration;
 use levelcrush::anyhow;
 use levelcrush::task_pool::TaskPool;
 use levelcrush::tracing;
-use levelcrush::types::destiny::InstanceId;
+use levelcrush::alias::destiny::InstanceId;
 
 use crate::app::state::AppState;
 use crate::env::AppVariable;

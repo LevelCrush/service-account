@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use levelcrush::anyhow;
 use levelcrush::tracing;
-use levelcrush::types::destiny::{CharacterId, InstanceId, MembershipId, MembershipType};
+use levelcrush::alias::destiny::{CharacterId, InstanceId, MembershipId, MembershipType};
 
 use crate::{
     app::{self, state::AppState},
