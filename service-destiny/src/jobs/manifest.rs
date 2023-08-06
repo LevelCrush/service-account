@@ -16,7 +16,7 @@ pub async fn run() -> anyhow::Result<()> {
 
     // connect to our database
     tracing::info!("Connecting to database");
-    let database = database::connect().await;
+    let database = database::connect("destiny.sqlite", 1).await;
 
     tracing::info!("Fetching new manifest");
 

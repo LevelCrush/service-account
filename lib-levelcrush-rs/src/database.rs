@@ -6,16 +6,11 @@ use std::{str::FromStr, time::Duration};
 use tracing::log::LevelFilter;
 
 /// connects to the application database based off .env specific variables
-pub async fn connect() -> SqlitePool {
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_default();
+pub async fn connect<T: Into<String>>(database_url: T, max_connections: u32) -> SqlitePool {
+    let database_url = database_url.into();
     let mut database_options = SqliteConnectOptions::from_str(database_url.as_str()).unwrap();
     database_options = database_options.log_statements(LevelFilter::Off);
     database_options = database_options.log_slow_statements(LevelFilter::Warn, Duration::from_secs(5));
-
-    let max_connections = std::env::var("DATABASE_CONNECTIONS_MAX")
-        .unwrap_or_default()
-        .parse::<u32>()
-        .unwrap_or(10);
 
     tracing::info!(
         "Allowing a maximum of {} total connections to the database",

@@ -67,7 +67,12 @@ impl AppState {
     ///
     /// Note: This will create a new database pool as well as a new bungie client
     pub async fn new() -> AppState {
-        let database = database::connect().await;
+        let max_connections = std::env::var("DATABASE_CONNECTIONS_MAX")
+            .unwrap_or_default()
+            .parse::<u32>()
+            .unwrap_or(1);
+
+        let database = database::connect(crate::database::DATABASE_URL, max_connections).await;
 
         let max_task_workers = std::env::var("TASK_WORKERS")
             .unwrap_or_default()

@@ -12,3 +12,5 @@ pub mod rank;
 pub mod seasons;
 pub mod setting;
 pub mod triumph;
+
+pub const DATABASE_URL: &str = "sqlite://destiny.sqlite?mode=rwc";
