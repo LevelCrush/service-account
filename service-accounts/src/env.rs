@@ -35,10 +35,6 @@ pub enum AppVariable {
     BungieApiKey,
     BungieValidateUrl,
 
-    RateLimit,
-    RateLimitDuration,
-    RateLimitBuffer,
-
     AccountKey,
 }
 
@@ -66,9 +62,6 @@ impl From<AppVariable> for &'static str {
             AppVariable::ServerFallbackUrl => "SERVER_FALLBACK_URL",
             AppVariable::HostAccounts => "HOST_ACCOUNTS",
             AppVariable::DiscordBotToken => "DISCORD_BOT_TOKEN",
-            AppVariable::RateLimit => "RATE_LIMIT",
-            AppVariable::RateLimitDuration => "RATE_LIMIT_DURATION",
-            AppVariable::RateLimitBuffer => "RATE_LIMIT_BUFFER",
             AppVariable::AccountKey => "ACCOUNT_KEY",
         }
     }
