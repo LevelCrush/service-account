@@ -8,8 +8,8 @@ pub mod responses;
 pub mod search;
 pub mod settings;
 
-use crate::app::state::AppState;
 use levelcrush::axum::Router;
+use lib_destiny::app::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()

@@ -1,8 +1,6 @@
 use super::responses::{
     APIClanInfoResponse, APIMemberTitleResponse, ClanInformation, MemberTitle, MemberTitleResponse, ReportOutput,
 };
-use crate::app;
-use crate::app::state::AppState;
 use crate::routes::responses::{APIMemberResponse, MemberResponse};
 use axum::extract::{Path, State};
 use axum::routing::get;
@@ -11,6 +9,8 @@ use levelcrush::axum;
 use levelcrush::axum::extract::Query;
 use levelcrush::server::APIResponse;
 use levelcrush::tracing;
+use lib_destiny::app;
+use lib_destiny::app::state::AppState;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct ReportQueries {

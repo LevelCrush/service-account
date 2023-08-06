@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{
     member::ReportQueries,
     responses::{
@@ -7,8 +5,6 @@ use super::{
         NetworkActivityClanBreakdown, ReportOutput,
     },
 };
-use crate::app::state::AppState;
-use crate::{app, database};
 use axum::{extract::State, routing::get, Json, Router};
 use levelcrush::{
     axum::{
@@ -18,6 +14,9 @@ use levelcrush::{
     chrono::{self, TimeZone},
     server::APIResponse,
 };
+use lib_destiny::app::state::AppState;
+use lib_destiny::{app, database};
+use std::collections::HashMap;
 
 pub fn router() -> Router<AppState> {
     Router::new()

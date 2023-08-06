@@ -1,12 +1,12 @@
-use crate::app;
-use crate::app::state::AppState;
-use crate::database::seasons::SeasonRecord;
-use crate::database::setting::SettingModeRecord;
 use axum::routing::get;
 use axum::{Json, Router};
 use levelcrush::axum;
 use levelcrush::axum::extract::State;
 use levelcrush::server::APIResponse;
+use lib_destiny::app;
+use lib_destiny::app::state::AppState;
+use lib_destiny::database::seasons::SeasonRecord;
+use lib_destiny::database::setting::SettingModeRecord;
 
 use super::responses::DestinySeason;
 
