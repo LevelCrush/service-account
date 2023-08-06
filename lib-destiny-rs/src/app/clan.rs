@@ -1,14 +1,4 @@
-use std::collections::HashMap;
-
-use levelcrush::alias::UnixTimestamp;
-use sqlx::SqlitePool;
-
-use levelcrush::alias::destiny::{GroupId, MembershipId, MembershipType};
-use levelcrush::cache::{CacheDuration, CacheValue};
-use levelcrush::tokio;
-use levelcrush::util::unix_timestamp;
-use levelcrush::{futures, tracing};
-
+use super::state::CacheItem;
 use crate::app::state::AppState;
 use crate::bungie::schemas::{DestinyGroupResponse, DestinySearchResultOfGroupMember};
 use crate::database::activity_history::NetworkBreakdownResult;
@@ -16,8 +6,14 @@ use crate::database::clan::ClanInfoResult;
 use crate::database::member::MemberResult;
 use crate::jobs::task;
 use crate::{database, sync};
-
-use super::state::CacheItem;
+use levelcrush::alias::destiny::{GroupId, MembershipId, MembershipType};
+use levelcrush::alias::UnixTimestamp;
+use levelcrush::cache::{CacheDuration, CacheValue};
+use levelcrush::tokio;
+use levelcrush::util::unix_timestamp;
+use levelcrush::{futures, tracing};
+use sqlx::SqlitePool;
+use std::collections::HashMap;
 
 const CACHE_KEY_CLAN: &str = "clan_info||";
 pub const CACHE_KEY_CLAN_ROSTER: &str = "clan_roster||";

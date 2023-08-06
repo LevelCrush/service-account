@@ -1,19 +1,17 @@
-use levelcrush::alias::UnixTimestamp;
-use sqlx::SqlitePool;
-
-use levelcrush::alias::destiny::MembershipId;
-use levelcrush::cache::CacheValue;
-use levelcrush::futures::future::join_all;
-use levelcrush::tokio;
-use levelcrush::tracing;
-use levelcrush::util::unix_timestamp;
-
 use crate::app::state::{AppState, CacheItem};
 use crate::bungie::schemas::{DestinyCharacterComponent, DestinyProfileResponse};
 use crate::database::activity_history::ActivityHistoryRecord;
 use crate::database::member::{MemberRecord, MemberResult};
 use crate::database::triumph::TriumphTitleResult;
 use crate::{database, jobs, sync};
+use levelcrush::alias::destiny::MembershipId;
+use levelcrush::alias::UnixTimestamp;
+use levelcrush::cache::CacheValue;
+use levelcrush::futures::future::join_all;
+use levelcrush::tokio;
+use levelcrush::tracing;
+use levelcrush::util::unix_timestamp;
+use sqlx::SqlitePool;
 
 /// max seconds to allow before pulling fresh data
 const CACHE_KEY_BUNGIE_NAME: &str = "member_bn||";

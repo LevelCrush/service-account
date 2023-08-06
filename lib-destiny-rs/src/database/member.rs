@@ -1,6 +1,6 @@
-use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::alias::destiny::MembershipId;
 use levelcrush::alias::RecordId;
+use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
 use levelcrush::{bigdecimal::ToPrimitive, BigDecimal};
 use levelcrush::{database, project_str};

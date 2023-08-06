@@ -1,6 +1,6 @@
+use levelcrush::alias::{destiny::CharacterId, RecordId};
 use levelcrush::database;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
-use levelcrush::alias::{destiny::CharacterId, RecordId};
 use sqlx::SqlitePool;
 
 #[DatabaseRecord]

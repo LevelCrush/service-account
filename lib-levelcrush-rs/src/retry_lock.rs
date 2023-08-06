@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use crate::{
-    cache::{CacheValue, MemoryCache},
     alias::UnixTimestamp,
+    cache::{CacheValue, MemoryCache},
     util::unix_timestamp,
 };
 

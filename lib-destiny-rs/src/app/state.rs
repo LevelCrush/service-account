@@ -1,14 +1,3 @@
-use std::boxed::Box;
-use std::collections::HashMap;
-use std::time::Duration;
-
-use levelcrush::alias::UnixTimestamp;
-use sqlx::SqlitePool;
-
-use levelcrush::retry_lock::RetryLock;
-use levelcrush::task_pool::TaskPool;
-use levelcrush::{cache::MemoryCache, database};
-
 use crate::database::activity_history::NetworkBreakdownResult;
 use crate::database::clan::ClanInfoResult;
 use crate::database::instance::InstanceMemberRecord;
@@ -19,6 +8,14 @@ use crate::database::setting::SettingModeRecord;
 use crate::database::triumph::TriumphTitleResult;
 use crate::env::AppVariable;
 use crate::{bungie::BungieClient, database::activity_history::ActivityHistoryRecord, env};
+use levelcrush::alias::UnixTimestamp;
+use levelcrush::retry_lock::RetryLock;
+use levelcrush::task_pool::TaskPool;
+use levelcrush::{cache::MemoryCache, database};
+use sqlx::SqlitePool;
+use std::boxed::Box;
+use std::collections::HashMap;
+use std::time::Duration;
 
 use super::report::member::MemberReport;
 

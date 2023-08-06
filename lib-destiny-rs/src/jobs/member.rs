@@ -1,9 +1,7 @@
-use std::collections::HashSet;
-
+use crate::{app::state::AppState, jobs::task};
 use levelcrush::anyhow;
 use levelcrush::tracing;
-
-use crate::{app::state::AppState, jobs::task};
+use std::collections::HashSet;
 
 /// always fetch the bungie api and return fresh data when being called as a job
 pub async fn profile(args: &[String]) -> anyhow::Result<()> {

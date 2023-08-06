@@ -1,10 +1,9 @@
-use levelcrush::anyhow;
-use levelcrush::tracing;
-use levelcrush::util::unix_timestamp;
-
 use crate::app::state::AppState;
 use crate::database;
 use crate::jobs::task;
+use levelcrush::anyhow;
+use levelcrush::tracing;
+use levelcrush::util::unix_timestamp;
 
 pub async fn history(args: &[String]) -> anyhow::Result<()> {
     tracing::info!("Running member character activity");

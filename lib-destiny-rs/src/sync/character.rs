@@ -1,10 +1,10 @@
 use crate::bungie::schemas::DestinyCharacterComponent;
 use crate::database;
 use crate::database::character::CharacterRecord;
-use levelcrush::futures;
 use levelcrush::alias::{
     destiny::CharacterId, destiny::MembershipId, destiny::MembershipType, RecordId, UnixTimestamp,
 };
+use levelcrush::futures;
 use levelcrush::util::unix_timestamp;
 use sqlx::SqlitePool;
 

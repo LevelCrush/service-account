@@ -1,12 +1,11 @@
-use levelcrush::anyhow;
-use levelcrush::alias::UnixTimestamp;
-
 use crate::aliases::*;
 use crate::bungie::enums::DestinyRouteParam;
 use crate::bungie::schemas::{
     DestinyActivityHistoryResults, DestinyHistoricalStatsAccountResult, DestinyHistoricalStatsPeriodGroup,
 };
 use crate::bungie::BungieClient;
+use levelcrush::alias::UnixTimestamp;
+use levelcrush::anyhow;
 
 const RESULTS_PER_PAGE: i64 = 250;
 

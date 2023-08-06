@@ -2,7 +2,7 @@ use crate::database::platform::AccountPlatform;
 use levelcrush::database;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
-use levelcrush::{project_str, tracing, alias::RecordId};
+use levelcrush::{alias::RecordId, project_str, tracing};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 

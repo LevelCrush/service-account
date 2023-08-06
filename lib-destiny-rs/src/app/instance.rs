@@ -1,18 +1,15 @@
-use std::collections::HashMap;
-
+use super::state::CacheItem;
 use crate::bungie::schemas::DestinyPostGameCarnageReportData;
-use levelcrush::{
-    alias::destiny::{CharacterId, InstanceId, MembershipId, MembershipType},
-    cache::CacheValue,
-};
-
 use crate::{
     app::state::AppState,
     database::{self, instance::InstanceMemberRecord},
     sync,
 };
-
-use super::state::CacheItem;
+use levelcrush::{
+    alias::destiny::{CharacterId, InstanceId, MembershipId, MembershipType},
+    cache::CacheValue,
+};
+use std::collections::HashMap;
 
 const CACHE_KEY_INSTANCE_MEMBERS: &str = "instance_members||";
 

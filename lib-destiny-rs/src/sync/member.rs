@@ -2,9 +2,9 @@ use crate::bungie::schemas::{DestinyProfileComponent, DestinyRecordComponentMap}
 use crate::database;
 use crate::database::member::MemberRecord;
 use crate::database::triumph::MemberTriumphRecord;
-use levelcrush::tracing;
 use levelcrush::alias::destiny::MembershipId;
 use levelcrush::alias::RecordId;
+use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
 use sqlx::SqlitePool;
 

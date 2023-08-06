@@ -84,7 +84,7 @@ pub struct DestinyClassDefinition {
     pub display_properties: DestinyDisplayProperties,
 
     pub hash: u32,
-    pub index: u32, 
+    pub index: u32,
     pub redacted: bool,
     pub blacklisted: bool,
 }

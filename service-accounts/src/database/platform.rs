@@ -1,7 +1,7 @@
 use crate::database::account::Account;
+use levelcrush::alias::RecordId;
 use levelcrush::database;
 use levelcrush::macros::DatabaseRecord;
-use levelcrush::alias::RecordId;
 use levelcrush::util::unix_timestamp;
 use sqlx::SqlitePool;
 

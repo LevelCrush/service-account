@@ -1,8 +1,8 @@
 use crate::bungie::schemas::{GroupMember, GroupV2};
 use crate::database;
 use crate::database::clan::{ClanMemberRecord, ClanRecord};
-use levelcrush::tracing;
 use levelcrush::alias::{destiny::GroupId, destiny::MembershipId, destiny::MembershipType, UnixTimestamp};
+use levelcrush::tracing;
 use levelcrush::util::{slugify, unix_timestamp};
 use sqlx::SqlitePool;
 use std::collections::HashMap;

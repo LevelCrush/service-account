@@ -1,15 +1,13 @@
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
-
+use crate::app::state::AppState;
+use crate::env::AppVariable;
+use crate::jobs::task;
+use crate::{database, env};
+use levelcrush::alias::destiny::InstanceId;
 use levelcrush::anyhow;
 use levelcrush::task_pool::TaskPool;
 use levelcrush::tracing;
-use levelcrush::alias::destiny::InstanceId;
-
-use crate::app::state::AppState;
-use crate::env::AppVariable;
-use crate::{database, env};
-use crate::jobs::task;
+use std::collections::{HashMap, HashSet};
+use std::time::Duration;
 
 pub async fn info(args: &[String]) -> anyhow::Result<()> {
     tracing::info!("Running job: Clan Info");
@@ -117,7 +115,6 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         let instance_task_pool_clone = instance_task_pool.clone();
         task_pool.queue(Box::new(move || {
             Box::pin(async move {
-
                 let characters = task::profile(membership_id, membership_platform, &state_clone).await;
                 if let Ok(characters) = characters {
                     for character in characters.into_iter() {
@@ -133,11 +130,9 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
                                     tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
                                 }
                             })})).await;
-                            
                         } else if let Err(instances_err) = instances {
                             tracing::error!("Error fetching activities for Member {membership_id} and character {character}:\n{instances_err}");
                         }
-                       
                     }
                 } else if let Err(character_err) = characters {
                     tracing::error!("Error fetching characters from the api\nMembership:{membership_id}|{membership_platform}\nError:{character_err}");
@@ -150,7 +145,7 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         task_pool.step().await;
         instance_task_pool.step().await;
         levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
-    }   
+    }
 
     tracing::info!("Done network crawling");
 

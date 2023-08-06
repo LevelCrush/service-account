@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
+use crate::bungie::enums::{BungieClassType, BungieMembershipType, DestinyActivityModeType};
 use levelcrush::chrono;
 use levelcrush::macros::ExternalAPIResponse;
-
-use crate::bungie::enums::{BungieClassType, BungieMembershipType, DestinyActivityModeType};
+use std::collections::HashMap;
 
 ///This contract supplies basic information commonly used to display a minimal amount of information about a user.
 ///

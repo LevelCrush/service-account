@@ -17,13 +17,13 @@ pub use uuid;
 pub use levelcrush_macros as proc_macros;
 pub use {bigdecimal, bigdecimal::BigDecimal, sqlx, sqlx::Sqlite, sqlx::SqlitePool};
 
+pub mod alias;
 pub mod cache;
 pub mod database;
 pub mod macros;
 pub mod queries;
 pub mod retry_lock;
 pub mod task_pool;
-pub mod alias;
 pub mod util;
 
 #[cfg(feature = "server")]

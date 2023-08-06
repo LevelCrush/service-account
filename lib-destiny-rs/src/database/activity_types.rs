@@ -1,6 +1,6 @@
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::project_str;
-use levelcrush::{database, alias::RecordId};
+use levelcrush::{alias::RecordId, database};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 

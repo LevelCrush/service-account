@@ -1,9 +1,8 @@
-use levelcrush::anyhow;
-
 use crate::aliases::*;
 use crate::bungie::enums::DestinyRouteParam;
 use crate::bungie::schemas::{DestinyGroupResponse, DestinySearchResultOfGroupMember, GetGroupsForMemberResponse};
 use crate::bungie::BungieClient;
+use levelcrush::anyhow;
 
 /// get clan info by querying the bungie api via membership id and type
 pub async fn from_membership(

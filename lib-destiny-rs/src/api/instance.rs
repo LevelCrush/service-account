@@ -1,9 +1,8 @@
-use levelcrush::anyhow;
-
 use crate::aliases::*;
 use crate::bungie::enums::DestinyRouteParam;
 use crate::bungie::schemas::DestinyPostGameCarnageReportData;
 use crate::bungie::BungieClient;
+use levelcrush::anyhow;
 
 /// get the carnage report from the bungie api
 pub async fn carnage_report(
