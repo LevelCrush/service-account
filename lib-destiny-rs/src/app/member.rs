@@ -27,7 +27,7 @@ const CACHE_KEY_MEMBER_SEARCH_COUNT: &str = "search_members_count||";
 const CACHE_KEY_TITLE: &str = "member_titles||";
 
 /// determine by the provided timestmap if the profile needs to be refreshed.
-fn profile_needs_refresh(timestamp: i64) -> bool {
+pub fn profile_needs_refresh(timestamp: i64) -> bool {
     let timestamp_now = unix_timestamp();
     let time_since_update = timestamp_now - timestamp;
     time_since_update >= UPDATE_PROFILE_INTERVAL

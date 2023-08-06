@@ -165,8 +165,14 @@ const CACHE_KEY_SEASON: &str = "member_report||season||";
 async fn coalesce_display_name(member: &mut MemberReportFireteamMember, state: &mut AppState) {
     let membership_id_parse = member.display_name.parse::<i64>();
     if let Ok(membership_id) = membership_id_parse {
-        task::profile(membership_id, 0, &state).await;
-        let result = database::member::get(membership_id, &state.database).await;
+        let mut result = database::member::get(membership_id, &state.database).await;
+        if let Some(db_result) = &result {
+            if crate::app::member::profile_needs_refresh(db_result.updated_at) {
+                let _ = task::profile(membership_id, 0, &state).await;
+                result = database::member::get(membership_id, &state.database).await;
+            }
+        }
+
         if let Some(result) = result {
             member.display_name = if result.display_name_global == "#0000" {
                 result.display_name
@@ -342,7 +348,7 @@ async fn merge_reports(
         activities.push(activity.clone());
     }
 
-    activities.sort_by(|a, b| b.attempts.cmp(&a.attempts));
+    activities.sort_by(|a: &MemberReportActivity, b| b.attempts.cmp(&a.attempts));
 
     tracing::info!(
         "Getting member response for user: {} at id {}",
