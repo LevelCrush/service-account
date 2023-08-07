@@ -1,4 +1,5 @@
 pub mod network;
+pub mod settings;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct ReportQueries {
