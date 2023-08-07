@@ -17,37 +17,25 @@ use levelcrush::bigdecimal::ToPrimitive;
 use levelcrush::cache::CacheDuration;
 use levelcrush::cache::CacheValue;
 use levelcrush::chrono::{self, Datelike, TimeZone, Utc};
+use levelcrush::tokio;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use ts_rs::TS;
-
-use levelcrush::tokio;
 
 const CACHE_DURATION_REPORT: CacheDuration = CacheDuration::HalfDay;
 const VERSION_MEMBER_REPORT_CURRENT: i64 = 0;
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
 pub struct MemberReportStats {
-    #[ts(type = "number")]
     pub kills: u64,
-    #[ts(type = "number")]
     pub deaths: u64,
-    #[ts(type = "number")]
     pub assists: u64,
-    #[ts(type = "number")]
     pub victories: u64,
-    #[ts(type = "number")]
     pub defeats: u64,
-    #[ts(type = "number")]
     pub activities: u64,
-    #[ts(type = "number")]
     pub activity_completions: u64,
-
-    #[ts(type = "number")]
     pub activities_completed_start_to_finish: u64,
 }
 
@@ -74,70 +62,44 @@ pub struct MemberConstructionReport {
     pub activity_definitions: Vec<ActivityInstanceResult>,
 }
 
-#[derive(serde::Serialize, Clone, Debug, Default, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Debug, Default)]
 pub struct MemberReportActivityMode {
     pub mode: String,
-
-    #[ts(type = "number")]
     pub count: i64,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct MemberReportActivity {
-    #[ts(type = "number")]
     pub attempts: u64,
-
-    #[ts(type = "number")]
     pub completions: u64,
-
     pub name: String,
     pub description: String,
 }
 
-#[derive(serde::Serialize, Clone, Debug, Default, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Debug, Default)]
 pub struct MemberReportFireteamMember {
     pub display_name: String,
-
-    #[ts(type = "number")]
     pub activities: u64,
 }
 
-#[derive(serde::Serialize, Clone, Debug, Default, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Debug, Default)]
 pub struct MemberReportSearchQuery {
     pub member: String,
     pub modes: String,
     pub season: String,
 }
 
-#[derive(serde::Serialize, Clone, Debug, Default, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Debug, Default)]
 pub struct MemberReport {
     pub version: i64,
-
     pub membership_id: String,
     pub snapshot_range: String,
-
     pub display_name_global: String,
-
-    #[ts(type = "number")]
     pub last_played_at: UnixTimestamp,
-
-    #[ts(type = "Record<number,number>")]
     pub activity_timestamps: HashMap<InstanceId, UnixTimestamp>,
-
-    #[ts(type = "number")]
     pub activity_attempts: u64,
-
-    #[ts(type = "number")]
     pub activity_attempts_with_clan: u64,
-
-    #[ts(type = "number")]
     pub activity_completions: u64,
-
     pub stats_pve: MemberReportStats,
     pub stats_pvp: MemberReportStats,
     pub stats_gambit: MemberReportStats,
@@ -148,11 +110,7 @@ pub struct MemberReport {
     pub activity_map: HashMap<String, MemberReportActivity>,
     pub frequent_clan_members: Vec<MemberReportFireteamMember>,
     pub frequent_non_clan_members: Vec<MemberReportFireteamMember>,
-
-    #[ts(type = "number")]
     pub total_clan_members: u64,
-
-    #[ts(type = "number")]
     pub total_non_clan_members: u64,
     pub titles: Vec<MemberTitle>,
     pub member: MemberResponse,

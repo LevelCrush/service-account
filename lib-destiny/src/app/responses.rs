@@ -8,11 +8,9 @@ use crate::database::triumph::TriumphTitleResult;
 use levelcrush::alias::{destiny::MembershipType, UnixTimestamp};
 use levelcrush::bigdecimal::ToPrimitive;
 use levelcrush::server::{APIResponse, PaginationResponse};
-use ts_rs::TS;
 
 // clan responses
-#[derive(serde::Serialize, TS, Default, Debug, Clone)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Default, Debug, Clone)]
 pub struct ClanInformation {
     pub group_id: String,
     pub name: String,
@@ -47,19 +45,16 @@ impl ClanInformation {
     }
 }
 
-#[derive(serde::Serialize, TS, Clone, Default, Debug)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Default, Debug)]
 pub struct MemberClanInformation {
     #[serde(flatten)]
     pub info: ClanInformation,
 
-    #[ts(type = "number")]
-    pub timestamp_join_date: u64,
+    pub timestamp_join_date: UnixTimestamp,
     pub role: i8,
 }
 
-#[derive(serde::Serialize, TS, Clone, Debug, Default)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Clone, Debug, Default)]
 pub struct MemberResponse {
     /// bungie global display name
     pub display_name: String,
@@ -75,7 +70,6 @@ pub struct MemberResponse {
     pub membership_platform: MembershipType,
 
     /// the timestamp of the last time this user played
-    #[ts(type = "number")]
     pub timestamp_last_played: UnixTimestamp,
 
     /// link to the users raid report
@@ -100,7 +94,7 @@ impl MemberResponse {
                     slug: None,
                     member_count: None,
                 },
-                timestamp_join_date: result.clan_joined_at.to_u64().unwrap_or_default(),
+                timestamp_join_date: result.clan_joined_at.to_i64().unwrap_or_default(),
                 role: result.clan_group_role as i8,
             })
         } else {
@@ -119,16 +113,14 @@ impl MemberResponse {
     }
 }
 
-#[derive(serde::Serialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize)]
 pub struct ClanResponse {
     #[serde(flatten)]
     pub data: ClanInformation,
     pub roster: Vec<MemberResponse>,
 }
 
-#[derive(serde::Serialize, Default, Clone, Debug, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, Default, Clone, Debug)]
 pub struct MemberTitle {
     pub title: String,
     pub gilded_past: bool,
@@ -147,24 +139,21 @@ impl MemberTitle {
     }
 }
 
-#[derive(serde::Serialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize)]
 pub struct MemberTitleResponse {
     #[serde(flatten)]
     pub member: MemberResponse,
     pub titles: Vec<MemberTitle>,
 }
 
-#[derive(serde::Serialize, TS)]
+#[derive(serde::Serialize)]
 #[serde(untagged)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub enum ReportOutput {
     TaskRunning(UnixTimestamp),
     Report(Box<MemberReport>),
 }
 
-#[derive(serde::Serialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize)]
 pub struct LeaderboardEntry {
     pub display_name: String,
     pub amount: i32,
@@ -183,24 +172,18 @@ impl LeaderboardEntry {
     }
 }
 
-#[derive(serde::Serialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize)]
 pub struct Leaderboard {
     pub name: String,
     pub entries: Vec<LeaderboardEntry>,
     pub description: String,
 }
 
-#[derive(serde::Serialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize)]
 pub struct DestinySeason {
     pub name: String,
     pub number: i32,
-
-    #[ts(type = "number")]
     pub starts_at: UnixTimestamp,
-
-    #[ts(type = "number")]
     pub ends_at: UnixTimestamp,
 }
 
@@ -215,8 +198,7 @@ impl DestinySeason {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct NetworkActivityClanBreakdown {
     pub group_id: String,
     pub name: String,

@@ -2,7 +2,6 @@ use crate::util::unix_timestamp;
 use axum::{error_handling::HandleErrorLayer, http::StatusCode, response::IntoResponse, BoxError, Json, Router};
 use std::{net::SocketAddr, time::Duration};
 use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
-use ts_rs::TS;
 #[cfg(feature = "cors")]
 use {
     axum::http::{HeaderValue, Method},
@@ -14,8 +13,7 @@ use {
     axum_sessions::{SameSite, SessionLayer},
 };
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/server/")]
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
 pub struct PaginationData {
     pub total_results: u32,
     pub total_pages: u32,
@@ -25,21 +23,19 @@ pub struct PaginationData {
     pub term: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
 pub struct PaginationResponse<T: serde::Serialize> {
     pub data: Vec<T>,
     pub pagination: PaginationData,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/server/")]
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
 pub struct APIResponseError {
     pub field: String,
     pub message: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone, TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/server/")]
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, Clone)]
 pub struct APIResponse<T: serde::ser::Serialize> {
     success: bool,
     response: Option<T>,

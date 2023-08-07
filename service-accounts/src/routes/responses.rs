@@ -16,8 +16,7 @@ pub struct DiscordUserResponse {
     pub display_name: Option<String>,
 }
 
-#[derive(serde::Serialize, ts_rs::TS)]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-accounts/")]
+#[derive(serde::Serialize)]
 pub struct LinkGeneratedResponse {
     pub code: String,
 }

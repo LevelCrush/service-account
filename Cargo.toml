@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "./lib-levelcrush-macros-rs",
-    "./lib-levelcrush-rs",
-    "./lib-destiny-rs",
+    "./lib-levelcrush-macros",
+    "./lib-levelcrush",
+    "./lib-destiny",
     "./service-accounts",
     "./service-destiny",
 ]
@@ -31,11 +31,6 @@ anyhow = "1.0.72"
 uuid = { version = "1.4.1", features = ["v4", "fast-rng"] }
 tracing-test = "0.2.4"
 rand = "0.8.5"
-ts-rs = { version = "6.2.1", features = [
-    "serde-compat",
-    "chrono-impl",
-    "bigdecimal-impl",
-], default_features = false }
 futures = "0.3.28"
 reqwest = { version = "0.11.18", features = [
     "json",

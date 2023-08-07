@@ -15,7 +15,7 @@ cors = ["server"]
 default = ["server", "session", "cors"]
 
 [dependencies]
-levelcrush-macros = { path = "../lib-levelcrush-macros-rs" }
+levelcrush-macros = { path = "../lib-levelcrush-macros" }
 
 
 # workspace dependencies
@@ -51,4 +51,3 @@ anyhow = { workspace = true }
 uuid = { workspace = true }
 tracing-test = { workspace = true }
 rand = { workspace = true }
-ts-rs = { workspace = true }

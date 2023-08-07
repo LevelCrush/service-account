@@ -2,7 +2,6 @@ use levelcrush::{database, macros::DatabaseRecord};
 use sqlx::SqlitePool;
 
 #[DatabaseRecord]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-destiny/")]
 pub struct SettingModeRecord {
     pub leaderboard: i64,
     pub dashboard: i64,

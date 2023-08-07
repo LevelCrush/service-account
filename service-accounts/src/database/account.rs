@@ -3,7 +3,6 @@ use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseResult]
-#[ts(export, export_to = "../lib-levelcrush-ts/src/service-accounts/")]
 pub struct AccountLinkedPlatformsResult {
     pub account_token: String,
     pub username: String,
