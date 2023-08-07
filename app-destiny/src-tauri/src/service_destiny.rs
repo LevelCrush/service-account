@@ -1,6 +1,7 @@
 pub mod network;
 pub mod settings;
 pub mod member;
+pub mod clan;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct ReportQueries {

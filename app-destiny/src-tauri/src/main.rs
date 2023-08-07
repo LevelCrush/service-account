@@ -33,7 +33,9 @@ async fn main() {
             service_destiny::member::member_clan,
             service_destiny::member::member_lifetime_report,
             service_destiny::member::member_season_report,
-            service_destiny::member::member_titles
+            service_destiny::member::member_titles,
+            service_destiny::clan::clan_info,
+            service_destiny::clan::clan_roster
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
