@@ -12,7 +12,8 @@ use tauri::State;
 
 use crate::state::LibDestinyState;
 
-pub async fn get_active_seasons(state: State<'_, LibDestinyState>) -> Result<APIResponse<Vec<DestinySeason>>, ()> {
+#[tauri::command]
+pub async fn settings_active_seasons(state: State<'_, LibDestinyState>) -> Result<APIResponse<Vec<DestinySeason>>, ()> {
     let state = state.read().await;
 
     let mut response = APIResponse::new();
@@ -28,7 +29,8 @@ pub async fn get_active_seasons(state: State<'_, LibDestinyState>) -> Result<API
     Ok(response)
 }
 
-pub async fn get_leaderboard_modes(
+#[tauri::command]
+pub async fn settings_leaderboard_modes(
     state: State<'_, LibDestinyState>,
 ) -> Result<APIResponse<Vec<SettingModeRecord>>, ()> {
     let state = state.read().await;
@@ -47,7 +49,10 @@ pub async fn get_leaderboard_modes(
     Ok(response)
 }
 
-pub async fn get_dashboard_modes(state: State<'_, LibDestinyState>) -> Result<APIResponse<Vec<SettingModeRecord>>, ()> {
+#[tauri::command]
+pub async fn settings_dashboard_modes(
+    state: State<'_, LibDestinyState>,
+) -> Result<APIResponse<Vec<SettingModeRecord>>, ()> {
     let state = state.read().await;
 
     let mut response = APIResponse::new();
@@ -64,7 +69,8 @@ pub async fn get_dashboard_modes(state: State<'_, LibDestinyState>) -> Result<AP
     Ok(response)
 }
 
-pub async fn get_modes(state: State<'_, LibDestinyState>) -> Result<APIResponse<Vec<SettingModeRecord>>, ()> {
+#[tauri::command]
+pub async fn settings_modes(state: State<'_, LibDestinyState>) -> Result<APIResponse<Vec<SettingModeRecord>>, ()> {
     let state = state.read().await;
 
     let mut response = APIResponse::new();
