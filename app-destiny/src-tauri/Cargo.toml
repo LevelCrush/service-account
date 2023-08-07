@@ -1,0 +1,30 @@
+[package]
+name = "app-destiny"
+version = "0.0.0"
+description = "A Tauri App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.4", features = [] }
+
+[dependencies]
+tauri = { version = "1.4", features = ["shell-open"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_urlencoded = { workspace = true }
+serde_repr = { workspace = true }
+serde_yaml = { workspace = true }
+
+levelcrush = { path = "../../lib-levelcrush" }
+lib-destiny = { path = "../../lib-destiny" }
+
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
