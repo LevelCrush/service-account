@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-levelcrush = { path = "../lib-levelcrush-rs", features = ["server", "cors", ], default_features = false }
+levelcrush = { path = "../lib-levelcrush-rs", features = [
+    "server",
+    "cors",
+], default_features = false }
 lib_destiny = { path = "../lib-destiny-rs" }
 
 serde = { workspace = true }

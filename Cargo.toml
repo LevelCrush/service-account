@@ -13,6 +13,7 @@ serde = { version = "1.0.171", features = ["derive"] }
 serde_json = { version = "1.0.103" }
 serde_urlencoded = { version = "0.7.1" }
 serde_repr = { version = "0.1.14" }
+serde_yaml = { version = "0.9.25" }
 sqlx = { version = "0.7.1", features = [
     "sqlite",
     "bigdecimal",
