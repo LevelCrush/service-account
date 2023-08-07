@@ -1,12 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::time::Duration;
+pub mod service_destiny;
+pub mod state;
 
 use levelcrush::anyhow;
 use levelcrush::tokio;
+use levelcrush::tokio::sync::RwLock;
 use levelcrush::tracing;
-
+use state::LibDestinyState;
+use std::sync::Mutex;
+use std::time::Duration;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -20,12 +24,22 @@ async fn test1() {
     tracing::info!("Hello World!");
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     levelcrush::env();
 
+    let app_state = lib_destiny::app::state::AppState::new().await;
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .invoke_handler(tauri::generate_handler![test1])
+        .manage(LibDestinyState::new(app_state))
+        .invoke_handler(tauri::generate_handler![
+            service_destiny::network::network_clans,
+            service_destiny::network::network_roster,
+            service_destiny::network::network_breakdown_season,
+            service_destiny::network::network_breakdown_lifetime,
+            service_destiny::network::network_lifetime_report,
+            service_destiny::network::network_season_report
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
