@@ -11,20 +11,10 @@ use levelcrush::tracing;
 use state::LibDestinyState;
 use std::sync::Mutex;
 use std::time::Duration;
+
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
-#[tauri::command]
-async fn test1() {
-    tracing::info!("Waiting 5 seconds");
-    tokio::time::sleep(Duration::from_secs(5)).await;
-    tracing::info!("Hello World!");
-}
-
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() {
     levelcrush::env();
 
@@ -38,7 +28,12 @@ async fn main() {
             service_destiny::network::network_breakdown_season,
             service_destiny::network::network_breakdown_lifetime,
             service_destiny::network::network_lifetime_report,
-            service_destiny::network::network_season_report
+            service_destiny::network::network_season_report,
+            service_destiny::member::member_info,
+            service_destiny::member::member_clan,
+            service_destiny::member::member_lifetime_report,
+            service_destiny::member::member_season_report,
+            service_destiny::member::member_titles
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
