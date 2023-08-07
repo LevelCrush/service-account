@@ -1,9 +1,9 @@
 use crate::database::account::Account;
+use levelcrush::alias::RecordId;
 use levelcrush::database;
 use levelcrush::macros::DatabaseRecord;
-use levelcrush::types::RecordId;
 use levelcrush::util::unix_timestamp;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 
 pub enum AccountPlatformType {
     Discord,
@@ -43,7 +43,7 @@ pub struct NewAccountPlatform {
 }
 
 /// Inserts a new accounts_platform record based on provided information.
-pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Option<AccountPlatform> {
+pub async fn create(new_platform: NewAccountPlatform, pool: &SqlitePool) -> Option<AccountPlatform> {
     let token_seed = format!(
         "{}||{}||{}",
         new_platform.platform,
@@ -51,21 +51,24 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
         unix_timestamp()
     );
     let token = format!("{:x}", md5::compute(token_seed));
+    let platform = new_platform.platform.to_string();
+    let platform_user = new_platform.platform_user;
+    let timestamp = unix_timestamp();
 
     let query_result = sqlx::query_file!(
         "queries/account_platform_insert.sql",
         new_platform.account,
         token,
-        new_platform.platform.to_string(),
-        new_platform.platform_user,
-        unix_timestamp()
+        platform,
+        platform_user,
+        timestamp
     )
     .execute(pool)
     .await;
 
     // attempt to fetch the last inserted platform record
     if let Ok(query_result) = query_result {
-        let last_inserted_id = query_result.last_insert_id();
+        let last_inserted_id = query_result.last_insert_rowid();
         let platform_result = sqlx::query_file_as!(
             AccountPlatform,
             "queries/account_platform_get_by_id.sql",
@@ -90,13 +93,15 @@ pub async fn create(new_platform: NewAccountPlatform, pool: &MySqlPool) -> Optio
 pub async fn from_account(
     account: &Account,
     platform_type: AccountPlatformType,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Option<AccountPlatform> {
+    let platform = platform_type.to_string();
+
     let query_result = sqlx::query_file_as!(
         AccountPlatform,
         "queries/account_platform_from_account.sql",
         account.id,
-        platform_type.to_string()
+        platform
     )
     .fetch_optional(pool)
     .await;
@@ -113,12 +118,13 @@ pub async fn from_account(
 pub async fn match_account(
     platform_user: String,
     platform_type: AccountPlatformType,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Option<Account> {
+    let platform = platform_type.to_string();
     let query_result = sqlx::query_file_as!(
         Account,
         "queries/account_platform_match_account.sql",
-        platform_type.to_string(),
+        platform,
         platform_user
     )
     .fetch_optional(pool)
@@ -136,12 +142,13 @@ pub async fn match_account(
 pub async fn read(
     platform_type: AccountPlatformType,
     platform_user: String,
-    pool: &MySqlPool,
+    pool: &SqlitePool,
 ) -> Option<AccountPlatform> {
+    let platform = platform_type.to_string();
     let query_result = sqlx::query_file_as!(
         AccountPlatform,
         "queries/account_platform_read.sql",
-        platform_type.to_string(),
+        platform,
         platform_user
     )
     .fetch_optional(pool)
@@ -156,7 +163,7 @@ pub async fn read(
 }
 
 /// Update the provied account platform record and returns a new updated account platform record
-pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) -> Option<AccountPlatform> {
+pub async fn update(account_platform: &mut AccountPlatform, pool: &SqlitePool) -> Option<AccountPlatform> {
     // force the platform record to have an updated timestamp of modification
     account_platform.updated_at = unix_timestamp();
 
@@ -188,7 +195,7 @@ pub async fn update(account_platform: &mut AccountPlatform, pool: &MySqlPool) ->
 
 /// Unlink an account platfrom by directly deleting the related data tied to the account platform and then remove the account platform record itself as well
 /// This is a permanent operation
-pub async fn unlink(account_platform: &AccountPlatform, pool: &MySqlPool) {
+pub async fn unlink(account_platform: &AccountPlatform, pool: &SqlitePool) {
     // remove the account platform data first
     sqlx::query_file!("queries/account_platform_data_unlink.sql", account_platform.id)
         .execute(pool)
@@ -202,8 +209,9 @@ pub async fn unlink(account_platform: &AccountPlatform, pool: &MySqlPool) {
         .ok();
 }
 
-pub async fn need_update(platform: AccountPlatformType, limit: u64, pool: &MySqlPool) -> Vec<String> {
-    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform.to_string(), limit)
+pub async fn need_update(platform: AccountPlatformType, limit: i64, pool: &SqlitePool) -> Vec<String> {
+    let platform = platform.to_string();
+    let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform, limit)
         .fetch_all(pool)
         .await;
 

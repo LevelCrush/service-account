@@ -1,13 +1,12 @@
 use super::responses::{APIClanInfoResponse, APIClanRosterResponse, ClanInformation, ClanResponse};
-use crate::app;
-use crate::app::state::AppState;
 use crate::routes::responses::MemberResponse;
-
 use axum::extract::{Path, State};
 use axum::routing::get;
 use axum::{Json, Router};
-use levelcrush::types::destiny::GroupId;
+use levelcrush::alias::destiny::GroupId;
 use levelcrush::{axum, tracing};
+use lib_destiny::app;
+use lib_destiny::app::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()

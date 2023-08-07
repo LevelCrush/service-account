@@ -1,8 +1,9 @@
 use crate::database::platform::AccountPlatform;
+use levelcrush::database;
 use levelcrush::macros::{DatabaseRecord, DatabaseResult};
 use levelcrush::util::unix_timestamp;
-use levelcrush::{project_str, tracing, types::RecordId};
-use sqlx::MySqlPool;
+use levelcrush::{alias::RecordId, project_str, tracing};
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 
 #[DatabaseRecord]
@@ -11,7 +12,6 @@ pub struct AccountPlatformData {
     pub platform: RecordId,
     pub key: String,
     pub value: String,
-    pub value_big: String,
 }
 
 #[DatabaseResult]
@@ -26,7 +26,7 @@ pub struct NewAccountPlatformData {
     pub value: String,
 }
 
-pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &MySqlPool) -> HashMap<String, RecordId> {
+pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &SqlitePool) -> HashMap<String, RecordId> {
     let mut results = HashMap::new();
 
     //sqlx/mysql does not allow us to pass an vector into a prepared statement, so we must manually construct a prepared statement and bind manually
@@ -66,7 +66,7 @@ pub async fn read(account_platform: &AccountPlatform, keys: &[&str], pool: &MySq
     results
 }
 
-pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatformData], pool: &MySqlPool) {
+pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatformData], pool: &SqlitePool) {
     // get all keys we need to work with and at the same time construct a hash map that represents the key/value pairs we want to link
     let mut keys = Vec::new();
     let mut value_map = HashMap::new();
@@ -75,11 +75,10 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
         keys.push(new_data.key.as_str());
         value_map.insert(new_data.key.clone(), index);
 
-        query_parameters.push("(?,?,?,?,?,?,?,?,?,?)");
+        query_parameters.push("(?,?,?,?,?,?,?)");
     }
 
     //  pull in the existing data related to the specified account platform. We will use this to merge and figure out which are new or need to be updated
-    let existing_data = read(account_platform, &keys, pool).await;
 
     let query_parameters = query_parameters.join(", ");
     let insert_statement = format!(
@@ -89,51 +88,19 @@ pub async fn write(account_platform: &AccountPlatform, values: &[NewAccountPlatf
 
     let mut query_builder = sqlx::query(insert_statement.as_str());
 
-    // construct a hash map of all new values that need to be inserted
-    for (key, record_id) in existing_data.iter() {
-        let data_index = value_map.get(key).unwrap();
-        let record = values.get(*data_index).unwrap();
-
-        // make sure to produce a 255 length version of the string if neccessary
-        let mut value_trimmed = String::new();
-        if record.value.len() > 255 {
-            value_trimmed = record.value.clone().get(0..255).unwrap_or_default().to_string();
-        } else {
-            value_trimmed = record.value.clone();
-        }
-
-        if *record_id == 0 {
-            // new record for sure bind parameters to match
-            query_builder = query_builder
-                .bind(0)
-                .bind(account_platform.account)
-                .bind(account_platform.id)
-                .bind(record.key.clone())
-                .bind(value_trimmed)
-                .bind(record.value.parse::<i64>().unwrap_or_default())
-                .bind(record.value.clone())
-                .bind(unix_timestamp())
-                .bind(0)
-                .bind(0);
-        } else {
-            query_builder = query_builder
-                .bind(record_id)
-                .bind(account_platform.account)
-                .bind(account_platform.id)
-                .bind(record.key.clone())
-                .bind(value_trimmed)
-                .bind(record.value.parse::<i64>().unwrap_or_default())
-                .bind(record.value.clone())
-                .bind(0) // our query wont actually pull from the from this if its a duplicate key (which this path is for)
-                .bind(unix_timestamp())
-                .bind(0);
-        }
+    for record in values.iter() {
+        // new record for sure bind parameters to match
+        query_builder = query_builder
+            .bind(account_platform.account)
+            .bind(account_platform.id)
+            .bind(record.key.clone())
+            .bind(record.value.clone())
+            .bind(unix_timestamp())
+            .bind(0)
+            .bind(0);
     }
 
     // finally execute the query to update/insert this data
     let query = query_builder.execute(pool).await;
-    if query.is_err() {
-        let err = query.err().unwrap();
-        tracing::error!("{}", err);
-    }
+    database::log_error(query);
 }

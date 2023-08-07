@@ -7,7 +7,10 @@ node_modules/
 .next/
 dist/
 assets/
-
+Cargo.lock
+*.sqlite
+*.sqlite*
+app.json
 
 # Copied from nextjs project
 

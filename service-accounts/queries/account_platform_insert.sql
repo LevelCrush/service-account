@@ -1,10 +1,2 @@
-INSERT INTO account_platforms
-SET
-    id = NULL,
-    account = ?,
-    token = ?,
-    platform = ?,
-    platform_user = ?,
-    created_at = ?,
-    updated_at = 0,
-    deleted_at = 0
+INSERT INTO account_platforms (id, account, token, platform, platform_user, created_at, updated_at, deleted_at)
+VALUES(NULL,?,?,?,?,?,0,0)

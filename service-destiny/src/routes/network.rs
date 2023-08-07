@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{
     member::ReportQueries,
     responses::{
@@ -7,8 +5,6 @@ use super::{
         NetworkActivityClanBreakdown, ReportOutput,
     },
 };
-use crate::app::state::AppState;
-use crate::{app, database};
 use axum::{extract::State, routing::get, Json, Router};
 use levelcrush::{
     axum::{
@@ -18,6 +14,9 @@ use levelcrush::{
     chrono::{self, TimeZone},
     server::APIResponse,
 };
+use lib_destiny::app::state::AppState;
+use lib_destiny::{app, database};
+use std::collections::HashMap;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -41,13 +40,13 @@ async fn network_breakdown_season(
     let modes = if let Some(input_modes) = report_queries.modes {
         input_modes
             .split(',')
-            .map(|v| v.parse::<i32>().unwrap_or_default())
-            .collect::<Vec<i32>>()
+            .map(|v| v.parse::<i64>().unwrap_or_default())
+            .collect::<Vec<i64>>()
     } else {
         Vec::new()
     };
 
-    let season_input_number = season.parse::<i32>().unwrap_or_default();
+    let season_input_number = season.parse::<i64>().unwrap_or_default();
 
     let season = database::seasons::get(season_input_number, &state.database).await;
     let (season_start, season_end, season_number) = match season {
@@ -79,8 +78,8 @@ async fn network_breakdown_lifetime(
     let modes = if let Some(input_modes) = report_queries.modes {
         input_modes
             .split(',')
-            .map(|v| v.parse::<i32>().unwrap_or_default())
-            .collect::<Vec<i32>>()
+            .map(|v| v.parse::<i64>().unwrap_or_default())
+            .collect::<Vec<i64>>()
     } else {
         Vec::new()
     };
@@ -90,7 +89,7 @@ async fn network_breakdown_lifetime(
         .unwrap_or_default();
     // fetch from db
     let network_breakdown =
-        app::clan::network_breakdown(&modes, destiny2_launch_month_start.timestamp() as u64, 0, &mut state).await;
+        app::clan::network_breakdown(&modes, destiny2_launch_month_start.timestamp(), 0, &mut state).await;
 
     // convert to our response type
     let network_breakdown = network_breakdown
@@ -113,8 +112,8 @@ async fn network_lifetime_report(
     let modes = if let Some(input_modes) = report_queries.modes {
         input_modes
             .split(',')
-            .map(|v| v.parse::<i32>().unwrap_or_default())
-            .collect::<Vec<i32>>()
+            .map(|v| v.parse::<i64>().unwrap_or_default())
+            .collect::<Vec<i64>>()
     } else {
         Vec::new()
     };
@@ -153,8 +152,8 @@ async fn network_season_report(
     let modes = if let Some(input_modes) = report_queries.modes {
         input_modes
             .split(',')
-            .map(|v| v.parse::<i32>().unwrap_or_default())
-            .collect::<Vec<i32>>()
+            .map(|v| v.parse::<i64>().unwrap_or_default())
+            .collect::<Vec<i64>>()
     } else {
         Vec::new()
     };
@@ -165,7 +164,7 @@ async fn network_season_report(
         let (task_started, report) = app::report::member::season(
             member.membership_id.to_string(),
             &modes,
-            season.parse::<i32>().unwrap_or_default(),
+            season.parse::<i64>().unwrap_or_default(),
             true,
             &mut state,
         )
