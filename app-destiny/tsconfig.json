@@ -18,9 +18,10 @@
     "paths": {
       "@website/components/*": ["components/*"],
       "@website/core/*": ["core/*"],
-      "@website/pages/*": ["pages/*"]
+      "@website/pages/*": ["pages/*"],
+      "@ipc/*": ["ipc/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/_app.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/_app.js", "vite.config.ts.backup"],
   "exclude": ["node_modules"]
 }

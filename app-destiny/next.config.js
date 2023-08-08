@@ -5,6 +5,8 @@ module.exports = {
   reactStrictMode: true,
   images: {
     domains: ['assets.levelcrush.com', 'assets.levelcrush.local', 'http.cat'],
+    unoptimized: true,
   },
+
   optimizeFonts: false,
 };

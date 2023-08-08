@@ -31,6 +31,10 @@ export const Routes = [
       },
     ],
   },
+  {
+    url: '/admin/network/lifetime/all',
+    name: 'Network Report',
+  },
 ] as RouteItem[];
 
 export default Routes;

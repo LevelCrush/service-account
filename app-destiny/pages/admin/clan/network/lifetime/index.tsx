@@ -7,7 +7,7 @@ import {
   getDestinySeasons,
   getNetworkClans,
   getNetworkRoster,
-} from '@levelcrush/service-destiny';
+} from '@ipc/service-destiny';
 import ENV from '@website/core/env';
 
 export const getServerSideProps: GetServerSideProps<
@@ -15,10 +15,10 @@ export const getServerSideProps: GetServerSideProps<
 > = async (context) => {
   // fetch our network roster, seasons, destiny game mode groupings
   const [clans, roster, seasons, modes] = await Promise.all([
-    getNetworkClans(ENV.hosts.destiny),
-    getNetworkRoster(ENV.hosts.destiny),
-    getDestinySeasons(ENV.hosts.destiny),
-    getDestinyModeGroups(ENV.hosts.destiny, 'dashboard'),
+    getNetworkClans(),
+    getNetworkRoster(),
+    getDestinySeasons(),
+    getDestinyModeGroups('dashboard'),
   ]);
 
   return {

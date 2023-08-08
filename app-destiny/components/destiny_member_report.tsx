@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  DestinyMemberReport,
-  DestinyMemberReportResponse,
-  DestinyMemberStats,
-} from '@website/core/api_responses';
+  MemberReport,
+  APIResponse,
+  ReportOutput,
+  MemberReportStats,
+} from '../ipc/bindings';
 
 import { H3, H5 } from '@website/components/elements/headings';
 import ENV from '@website/core/env';
@@ -29,7 +30,7 @@ import {
   BarChart,
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
-import { ReportOutput } from '@levelcrush/service-destiny';
+import { getMemberReport } from 'ipc/service-destiny';
 
 export interface MemberReportProps {
   bungie_name: string;
@@ -38,7 +39,7 @@ export interface MemberReportProps {
 }
 
 interface TitleCardProps extends CardProps {
-  titles: DestinyMemberReport['titles'];
+  titles: MemberReport['titles'];
 }
 
 const TitleCard = (prop: TitleCardProps) => {
@@ -91,7 +92,7 @@ const TitleCard = (prop: TitleCardProps) => {
 };
 
 interface FireteamCardProps extends CardProps {
-  members: DestinyMemberReport['frequent_clan_members'];
+  members: MemberReport['frequent_clan_members'];
   season: string;
   mode: string;
   fireteamType: string;
@@ -185,8 +186,8 @@ function stat_type_name(stat_type: string) {
 }
 
 function combineStats(
-  memberReport: DestinyMemberReport,
-  stat: keyof DestinyMemberStats
+  memberReport: MemberReport,
+  stat: keyof MemberReportStats
 ) {
   const combine = [] as StatData[];
   for (const key in memberReport) {
@@ -208,7 +209,7 @@ interface InstanceData {
   occurred_at: number;
 }
 
-function createActivityPeriods(memberReport: DestinyMemberReport) {
+function createActivityPeriods(memberReport: MemberReport) {
   const instance_timestamps = memberReport.activity_timestamps;
 
   const buckets = {} as {
@@ -254,7 +255,7 @@ function createActivityPeriods(memberReport: DestinyMemberReport) {
 }
 
 function renderOverall(
-  memberReport: DestinyMemberReport,
+  memberReport: MemberReport,
   modes: string[],
   props: MemberReportProps
 ) {
@@ -471,7 +472,7 @@ function renderOverall(
 
 export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   const [memberReport, setMemberReport] = useState(
-    null as DestinyMemberReportResponse['response']
+    null as APIResponse<ReportOutput>['response']
   );
 
   const [alreadyLoadedData, setAlreadyLoadedData] = useState(false);
@@ -511,18 +512,12 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
   const fetchReport = async (bungie_name: string, report_type: string) => {
     const modeString = (props.modes || []).join(',');
 
-    const apiResponse = await fetch(
-      ENV.hosts.destiny +
-        '/member/' +
-        encodeURIComponent(bungie_name) +
-        '/report/' +
-        report_type +
-        (modeString.length > 0
-          ? '?modes=' + encodeURIComponent(modeString)
-          : '')
+    const data = await getMemberReport(
+      bungie_name,
+      props.season.toString(),
+      modeString
     );
 
-    const data = (await apiResponse.json()) as DestinyMemberReportResponse;
     const reportOutputType = getReportType(data.response);
     switch (reportOutputType) {
       case 'loading':
@@ -568,7 +563,7 @@ export const DestinyMemberReportComponent = (props: MemberReportProps) => {
     switch (report_output) {
       case 'report':
         // this conversion is fine to do because we know we are already working with an object type
-        const data = memberReport as unknown as DestinyMemberReport;
+        const data = memberReport as unknown as MemberReport;
         return (
           <div
             className={

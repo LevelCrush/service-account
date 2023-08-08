@@ -16,47 +16,14 @@ import DestinyMemberReportComponent from '@website/components/destiny_member_rep
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useEffect, useState } from 'react';
-import { DestinyMemberInformation } from '@website/core/api_responses';
 import ENV from '@website/core/env';
 import {
   DestinyActivityModeGroup,
   getDestinyModeGroups,
   getDestinySeasons,
   getNetworkRoster,
-} from '@levelcrush/service-destiny';
-
-export interface ReportPageSeasonProps {
-  member: string;
-  seasons: number[];
-  target_season: string;
-  target_mode: string;
-  modes: DestinyActivityModeGroup[];
-  roster: DestinyMemberInformation[];
-}
-
-export const revalidate = 600;
-
-export const getServerSideProps: GetServerSideProps<
-  ReportPageSeasonProps
-> = async (context) => {
-  // fetch our network roster, seasons, destiny game mode groupings
-  const [roster, seasons, modes] = await Promise.all([
-    getNetworkRoster(ENV.hosts.destiny),
-    getDestinySeasons(ENV.hosts.destiny),
-    getDestinyModeGroups(ENV.hosts.destiny, 'dashboard'),
-  ]);
-
-  return {
-    props: {
-      seasons: seasons,
-      member: context.query.member as string,
-      target_season: context.query.season as string,
-      target_mode: context.query.modes as string,
-      modes: modes,
-      roster,
-    },
-  };
-};
+} from '@ipc/service-destiny';
+import { MemberResponse } from '@ipc/bindings';
 
 function generate_url(bungie_name: string, season: string, mode: string) {
   return (
@@ -70,100 +37,118 @@ function generate_url(bungie_name: string, season: string, mode: string) {
   );
 }
 
-export const ReportPage = (props: ReportPageSeasonProps) => {
-  const [targetUser, setUser] = useState(props.member);
-  const [targetSnapshot, setSnapshot] = useState(props.target_season);
-  const [targetMode, setMode] = useState(props.target_mode);
+export const ReportPage = () => {
   const router = useRouter();
+  const [targetUser, setUser] = useState(router.query.member as string);
+  const [targetSnapshot, setSnapshot] = useState(
+    (router.query.season as string) || 'lifetime'
+  );
+  const [targetMode, setMode] = useState((router.query.modes as string) || '');
 
+  const [roster, setRoster] = useState([] as MemberResponse[]);
+  const [seasons, setSeasons] = useState([] as number[]);
+  const [modes, setModes] = useState([] as DestinyActivityModeGroup[]);
+
+  useEffect(() => {
+    Promise.all([
+      getNetworkRoster(),
+      getDestinySeasons(),
+      getDestinyModeGroups('dashboard'),
+    ]).then(([roster, seasons, modes]) => {
+      setRoster(roster);
+      setSeasons(seasons);
+      setModes(modes);
+    });
+  }, []);
+
+  /*
   useEffect(() => {
     router.push(generate_url(targetUser, targetSnapshot, targetMode));
   }, [targetMode, targetSnapshot, targetUser]);
+  */
 
   return (
     <OffCanvas>
       <Head>
         <title>
-          {props.member +
+          {targetUser +
             ' ' +
-            (props.target_season === 'lifetime'
+            (targetSnapshot === 'lifetime'
               ? 'Lifetime'
-              : 'Season ' + props.target_season) +
+              : 'Season ' + targetSnapshot) +
             ' Report | Level Crush'}
         </title>
       </Head>
       <SiteHeader forceStickyStyle={true} />
       <main>
         <Container className="top-[4.5rem] relative">
-          <LoginGuard admin={true}>
-            <Grid numItemsLg={12} className="gap-6">
-              <Col numColSpan={3}>
-                <Title>Member</Title>
-                <SearchSelect
-                  className="mt-2"
-                  defaultValue={props.member}
-                  onValueChange={(v) => setUser(v)}
-                >
-                  {props.roster.map((member, memberIndex) => (
-                    <SearchSelectItem
-                      key={'member_report_roster_select_item_' + memberIndex}
-                      value={member.display_name}
-                    >
-                      {member.display_name}
-                    </SearchSelectItem>
-                  ))}
-                </SearchSelect>
-              </Col>
-              <Col numColSpanLg={2} numColSpanMd={6}>
-                <Title>Snapshot</Title>
-                <Select
-                  defaultValue={props.target_season}
-                  className="mt-2"
-                  onValueChange={(v) => setSnapshot(v)}
-                >
-                  {props.seasons.map((season) => {
-                    const v = season === 0 ? 'lifetime' : season + '';
-                    const text = season === 0 ? 'Lifetime' : 'Season ' + season;
-                    return (
-                      <SelectItem
-                        value={v}
-                        key={'search_select_overview_season_x' + season}
-                      >
-                        {text}
-                      </SelectItem>
-                    );
-                  })}
-                </Select>
-              </Col>
-              <Col numColSpanLg={2} numColSpanMd={6}>
-                <Title>Modes</Title>
-                <Select
-                  className="mt-2"
-                  defaultValue={props.target_mode}
-                  onValueChange={(v) => setMode(v)}
-                >
-                  {props.modes.map((mode, modeIndex) => (
+          <Grid numItemsLg={12} className="gap-6">
+            <Col numColSpan={3}>
+              <Title>Member</Title>
+              <SearchSelect
+                className="mt-2"
+                defaultValue={targetUser}
+                onValueChange={(v) => setUser(v)}
+              >
+                {roster.map((member, memberIndex) => (
+                  <SearchSelectItem
+                    key={'member_report_roster_select_item_' + memberIndex}
+                    value={member.display_name}
+                  >
+                    {member.display_name}
+                  </SearchSelectItem>
+                ))}
+              </SearchSelect>
+            </Col>
+            <Col numColSpanLg={2} numColSpanMd={6}>
+              <Title>Snapshot</Title>
+              <Select
+                defaultValue={targetSnapshot}
+                className="mt-2"
+                onValueChange={(v) => setSnapshot(v)}
+              >
+                {seasons.map((season) => {
+                  const v = season === 0 ? 'lifetime' : season + '';
+                  const text = season === 0 ? 'Lifetime' : 'Season ' + season;
+                  return (
                     <SelectItem
-                      key={'member_report_mode_select_item_' + modeIndex}
-                      value={mode.value}
+                      value={v}
+                      key={'search_select_overview_season_x' + season}
                     >
-                      {mode.name}
+                      {text}
                     </SelectItem>
-                  ))}
-                </Select>
-              </Col>
-            </Grid>
-            <Divider />
-            <DestinyMemberReportComponent
-              bungie_name={props.member}
-              season={
-                props.target_season === 'lifetime'
-                  ? 'lifetime'
-                  : parseInt(props.target_season)
-              }
-              modes={targetMode === 'all' ? [] : targetMode.split(',')}
-            />
-          </LoginGuard>
+                  );
+                })}
+              </Select>
+            </Col>
+            <Col numColSpanLg={2} numColSpanMd={6}>
+              <Title>Modes</Title>
+              <Select
+                className="mt-2"
+                defaultValue={targetMode}
+                onValueChange={(v) => setMode(v)}
+              >
+                {modes.map((mode, modeIndex) => (
+                  <SelectItem
+                    key={'member_report_mode_select_item_' + modeIndex}
+                    value={mode.value}
+                  >
+                    {mode.name}
+                  </SelectItem>
+                ))}
+              </Select>
+            </Col>
+          </Grid>
+          <Divider />
+          <DestinyMemberReportComponent
+            bungie_name={targetUser}
+            season={
+              targetSnapshot === 'lifetime'
+                ? 'lifetime'
+                : parseInt(targetSnapshot)
+            }
+            modes={targetMode === 'all' ? [] : targetMode.split(',')}
+          />
         </Container>
       </main>
     </OffCanvas>

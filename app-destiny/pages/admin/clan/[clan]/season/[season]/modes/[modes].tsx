@@ -2,7 +2,6 @@ import Head from 'next/head';
 import { SiteHeader } from '@website/components/site_header';
 import Container from '@website/components/elements/container';
 import OffCanvas from '@website/components/offcanvas';
-import LoginGuard from '@website/components/login_guard';
 import {
   Title,
   Grid,
@@ -17,17 +16,16 @@ import DestinyMemberReportComponent from '@website/components/destiny_member_rep
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { DestinyMemberInformation } from '@website/core/api_responses';
 import ENV from '@website/core/env';
 import {
-  ClanInformation,
   DestinyActivityModeGroup,
   getDestinyModeGroups,
   getDestinySeasons,
   getNetworkClans,
   getNetworkRoster,
-} from '@levelcrush/service-destiny';
+} from '@ipc/service-destiny';
 import DestinyClanReportComponent from '@website/components/destiny_clan_report';
+import { ClanInformation, MemberResponse } from '@ipc/bindings';
 
 export interface ReportPageSeasonProps {
   clan: string;
@@ -36,7 +34,7 @@ export interface ReportPageSeasonProps {
   target_mode: string;
   modes: DestinyActivityModeGroup[];
   clans: ClanInformation[];
-  roster: DestinyMemberInformation[];
+  roster: MemberResponse[];
 }
 
 export const revalidate = 600;
@@ -46,10 +44,10 @@ export const getServerSideProps: GetServerSideProps<
 > = async (context) => {
   // fetch our network roster, seasons, destiny game mode groupings
   const [clans, roster, seasons, modes] = await Promise.all([
-    getNetworkClans(ENV.hosts.destiny),
-    getNetworkRoster(ENV.hosts.destiny),
-    getDestinySeasons(ENV.hosts.destiny),
-    getDestinyModeGroups(ENV.hosts.destiny, 'dashboard'),
+    getNetworkClans(),
+    getNetworkRoster(),
+    getDestinySeasons(),
+    getDestinyModeGroups('dashboard'),
   ]);
 
   clans.unshift({
@@ -111,77 +109,75 @@ export const ClanReportPage = (props: ReportPageSeasonProps) => {
       <SiteHeader forceStickyStyle={true} />
       <main>
         <Container className="top-[4.5rem] relative">
-          <LoginGuard admin={true}>
-            <Grid numItemsLg={12} className="gap-6">
-              <Col numColSpan={3}>
-                <Title>Clan</Title>
-                <SearchSelect
-                  className="mt-2"
-                  defaultValue={props.clan}
-                  onValueChange={(v) => setClan(v)}
-                  disabled={true}
-                >
-                  {props.clans.map((clan, clanIndex) => (
-                    <SearchSelectItem
-                      key={'clan_report_roster_select_item_' + clanIndex}
-                      value={clan.slug || ''}
-                    >
-                      {clan.name}
-                    </SearchSelectItem>
-                  ))}
-                </SearchSelect>
-              </Col>
-              <Col numColSpanLg={2} numColSpanMd={6}>
-                <Title>Snapshot</Title>
-                <Select
-                  defaultValue={targetSnapshot}
-                  className="mt-2"
-                  onValueChange={(v) => setSnapshot(v)}
-                >
-                  {props.seasons.map((season) => {
-                    const v = season === 0 ? 'lifetime' : season + '';
-                    const text = season === 0 ? 'Lifetime' : 'Season ' + season;
-                    return (
-                      <SelectItem
-                        value={v}
-                        key={'search_select_overview_season_x' + season}
-                      >
-                        {text}
-                      </SelectItem>
-                    );
-                  })}
-                </Select>
-              </Col>
-              <Col numColSpanLg={2} numColSpanMd={6}>
-                <Title>Modes</Title>
-                <Select
-                  className="mt-2"
-                  defaultValue={targetMode}
-                  onValueChange={(v) => setMode(v)}
-                >
-                  {props.modes.map((mode, modeIndex) => (
+          <Grid numItemsLg={12} className="gap-6">
+            <Col numColSpan={3}>
+              <Title>Clan</Title>
+              <SearchSelect
+                className="mt-2"
+                defaultValue={props.clan}
+                onValueChange={(v) => setClan(v)}
+                disabled={true}
+              >
+                {props.clans.map((clan, clanIndex) => (
+                  <SearchSelectItem
+                    key={'clan_report_roster_select_item_' + clanIndex}
+                    value={clan.slug || ''}
+                  >
+                    {clan.name}
+                  </SearchSelectItem>
+                ))}
+              </SearchSelect>
+            </Col>
+            <Col numColSpanLg={2} numColSpanMd={6}>
+              <Title>Snapshot</Title>
+              <Select
+                defaultValue={targetSnapshot}
+                className="mt-2"
+                onValueChange={(v) => setSnapshot(v)}
+              >
+                {props.seasons.map((season) => {
+                  const v = season === 0 ? 'lifetime' : season + '';
+                  const text = season === 0 ? 'Lifetime' : 'Season ' + season;
+                  return (
                     <SelectItem
-                      key={'member_report_mode_select_item_' + modeIndex}
-                      value={mode.value}
+                      value={v}
+                      key={'search_select_overview_season_x' + season}
                     >
-                      {mode.name}
+                      {text}
                     </SelectItem>
-                  ))}
-                </Select>
-              </Col>
-            </Grid>
-            <Divider />
-            <DestinyClanReportComponent
-              clan={props.clan}
-              roster={props.roster}
-              season={
-                targetSnapshot === 'lifetime'
-                  ? 'lifetime'
-                  : parseInt(targetSnapshot)
-              }
-              modes={targetMode === 'all' ? [] : targetMode.split(',')}
-            />
-          </LoginGuard>
+                  );
+                })}
+              </Select>
+            </Col>
+            <Col numColSpanLg={2} numColSpanMd={6}>
+              <Title>Modes</Title>
+              <Select
+                className="mt-2"
+                defaultValue={targetMode}
+                onValueChange={(v) => setMode(v)}
+              >
+                {props.modes.map((mode, modeIndex) => (
+                  <SelectItem
+                    key={'member_report_mode_select_item_' + modeIndex}
+                    value={mode.value}
+                  >
+                    {mode.name}
+                  </SelectItem>
+                ))}
+              </Select>
+            </Col>
+          </Grid>
+          <Divider />
+          <DestinyClanReportComponent
+            clan={props.clan}
+            roster={props.roster}
+            season={
+              targetSnapshot === 'lifetime'
+                ? 'lifetime'
+                : parseInt(targetSnapshot)
+            }
+            modes={targetMode === 'all' ? [] : targetMode.split(',')}
+          />
         </Container>
       </main>
     </OffCanvas>

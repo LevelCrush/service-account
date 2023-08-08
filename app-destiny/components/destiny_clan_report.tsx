@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { DestinyMemberReport } from '@website/core/api_responses';
 
 import { H3, H5 } from '@website/components/elements/headings';
 import ENV from '@website/core/env';
@@ -25,14 +24,15 @@ import {
 } from '@tremor/react';
 import Hyperlink from '@website/components/elements/hyperlink';
 import {
+  APIResponse,
   MemberReport,
   MemberResponse,
   NetworkActivityClanBreakdown,
   ReportOutput,
-} from '@levelcrush/service-destiny';
+} from '@ipc/bindings';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { APIResponse } from '@levelcrush';
+import { getNetworkBreakdown, getNetworkReport } from '@ipc/service-destiny';
 
 export interface ClanReportProps {
   clan: string;
@@ -52,11 +52,11 @@ interface MemberRosterListProps extends CardProps {
 }
 
 interface MemberListProps extends CardProps {
-  members: DestinyMemberReport[];
+  members: MemberReport[];
   listType: string;
   season: string;
   mode: string;
-  metric: keyof DestinyMemberReport;
+  metric: keyof MemberReport;
 }
 
 function generate_member_url(
@@ -185,19 +185,19 @@ const MemberRosterCard = (props: MemberRosterListProps) => {
   );
 };
 
-type ReportMap = { [member: string]: DestinyMemberReport };
+type ReportMap = { [member: string]: MemberReport };
 
 interface InstanceData {
   instance_id: number;
   occurred_at: number;
 }
 
-function getActivityAmounts(memberReports: DestinyMemberReport[]) {
+function getActivityAmounts(memberReports: MemberReport[]) {
   //
 }
 
-function getZeroActivityMembers(memberReports: DestinyMemberReport[]) {
-  const member_reports = [] as DestinyMemberReport[];
+function getZeroActivityMembers(memberReports: MemberReport[]) {
+  const member_reports = [] as MemberReport[];
   for (const member of memberReports) {
     if (member.activity_attempts === 0) {
       member_reports.push(member);
@@ -216,9 +216,9 @@ function getZeroActivityMembers(memberReports: DestinyMemberReport[]) {
  * @param memberReports
  * @returns
  */
-function getMostActiveMembers(memberReports: DestinyMemberReport[]) {
+function getMostActiveMembers(memberReports: MemberReport[]) {
   const member_activities = {} as { [membership_id: string]: number };
-  const member_reports = {} as { [membership_id: string]: DestinyMemberReport };
+  const member_reports = {} as { [membership_id: string]: MemberReport };
   for (const member of memberReports) {
     member_activities[member.membership_id] = member.activity_attempts;
     member_reports[member.membership_id] = member;
@@ -227,7 +227,7 @@ function getMostActiveMembers(memberReports: DestinyMemberReport[]) {
   const membership_ids = Object.keys(member_activities);
   membership_ids.sort((a, b) => member_activities[b] - member_activities[a]);
 
-  const sorted_members = [] as DestinyMemberReport[];
+  const sorted_members = [] as MemberReport[];
   for (const membership_id of membership_ids) {
     sorted_members.push(member_reports[membership_id]);
   }
@@ -239,10 +239,10 @@ function getMostActiveMembers(memberReports: DestinyMemberReport[]) {
  * @param memberReports
  * @returns
  */
-function getMostClanActiveMembers(memberReports: DestinyMemberReport[]) {
+function getMostClanActiveMembers(memberReports: MemberReport[]) {
   const member_activities = {} as { [membership_id: string]: number };
   const member_reports = {} as {
-    [membership_id: string]: DestinyMemberReport;
+    [membership_id: string]: MemberReport;
   };
   for (const member of memberReports) {
     member_activities[member.membership_id] =
@@ -253,7 +253,7 @@ function getMostClanActiveMembers(memberReports: DestinyMemberReport[]) {
   const membership_ids = Object.keys(member_activities);
   membership_ids.sort((a, b) => member_activities[b] - member_activities[a]);
 
-  const sorted_members = [] as DestinyMemberReport[];
+  const sorted_members = [] as MemberReport[];
   for (const membership_id of membership_ids) {
     sorted_members.push(member_reports[membership_id]);
   }
@@ -265,7 +265,7 @@ function getMostClanActiveMembers(memberReports: DestinyMemberReport[]) {
  * @param memberReports
  * @returns
  */
-function createActivityPeriods(memberReports: DestinyMemberReport[]) {
+function createActivityPeriods(memberReports: MemberReport[]) {
   const clan_keys = [] as string[];
   const member_clan_keys = {} as { [member: string]: string };
   const buckets = {} as {
@@ -594,24 +594,9 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
 
     const clanPath =
       clan === 'network' ? 'network' : 'clan/' + encodeURIComponent(clan);
-    const apiResponse = await fetch(
-      ENV.hosts.destiny +
-        '/' +
-        clanPath +
-        '/report/' +
-        reportType +
-        (modeString.length > 0
-          ? '?modes=' + encodeURIComponent(modeString)
-          : '')
-    );
-    if (apiResponse.ok) {
-      const data = (await apiResponse.json()) as APIResponse<{
-        [membership_id: string]: ReportOutput;
-      }>;
-      return data;
-    } else {
-      return null;
-    }
+
+    const data = getNetworkReport(props.season.toString(), modeString);
+    return data;
   };
 
   const fetchActivityBreakdown = async () => {
@@ -625,26 +610,9 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
 
     const clanPath =
       clan === 'network' ? 'network' : 'clan/' + encodeURIComponent(clan);
-    const apiResponse = await fetch(
-      ENV.hosts.destiny +
-        '/' +
-        clanPath +
-        '/report/activity/' +
-        reportType +
-        (modeString.length > 0
-          ? '?modes=' + encodeURIComponent(modeString)
-          : '')
-    );
 
-    if (apiResponse.ok) {
-      const data = (await apiResponse.json()) as APIResponse<{
-        [group_id: string]: NetworkActivityClanBreakdown;
-      }>;
-      setActivityBreakdown(data.response);
-    } else {
-      setActivityBreakdown(null);
-    }
-
+    const data = await getNetworkBreakdown(props.season.toString(), modeString);
+    setActivityBreakdown(data.response);
     setLoadingBreakdownData(false);
   };
 
@@ -652,7 +620,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
     setLoadingActivityData(true);
     const result = await fetchReport(props.clan);
     const needTimers = [] as string[];
-    const reportsDone = {} as { [member: string]: DestinyMemberReport };
+    const reportsDone = {} as { [member: string]: MemberReport };
     if (result && result.response) {
       for (const member in result.response) {
         const data = result.response[member];
@@ -663,7 +631,7 @@ export const DestinyClanReportComponent = (props: ClanReportProps) => {
             needTimers.push(member);
             break;
           case 'report':
-            reportsDone[member] = data as DestinyMemberReport;
+            reportsDone[member] = data as MemberReport;
             break;
           case 'unknown':
             console.log('Unknown case', data);

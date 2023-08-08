@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
-import {
-  AccountLinkedPlatformResult,
-  AccountLinkedPlatformsResponse,
-  DestinyMemberInformation,
-  DestinyMemberResponse,
-} from '@website/core/api_responses';
+import { MemberResponse, APIResponse } from '../ipc/bindings';
 import ENV from '@website/core/env';
 import { H4 } from '@website/components/elements/headings';
 import Button, { HyperlinkButton } from '@website/components/elements/button';
 import Hyperlink from '@website/components/elements/hyperlink';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord, faTwitch } from '@fortawesome/free-brands-svg-icons';
-import LoginGuard from '@website/components/login_guard';
+import { getMemberInfo } from 'ipc/service-destiny';
 
 export interface DestinyMemberCardProps {
-  data?: DestinyMemberInformation;
-  platforms?: AccountLinkedPlatformResult | null;
+  data?: MemberResponse;
   display_name: string;
   className?: string;
   asHeaders?: boolean;
@@ -27,88 +21,19 @@ type LinkedPlatformMap = {
   [platform: string]: string | null;
 };
 
-function render_platform_icon(platform: string) {
-  switch (platform) {
-    case 'discord':
-      return <FontAwesomeIcon icon={faDiscord} className="mr-2" />;
-    case 'twitch':
-      return <FontAwesomeIcon icon={faTwitch} className="mr-2" />;
-    default:
-      return <></>;
-  }
-}
-
 export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
   const [memberData, setMemberData] = useState(props.data ? props.data : null);
-  const [linkedPlatforms, setLinkedPlatforms] = useState({
-    discord: null,
-    twitch: null,
-  } as LinkedPlatformMap);
-  const [linkedPlatformResult, setLinkedPlatformResult] = useState(
-    null as null | AccountLinkedPlatformResult
-  );
-  const [accountToken, setAccountToken] = useState('');
+
   useEffect(() => {
     if (!props.data && !props.asHeaders) {
-      const bungie_api = ENV.hosts.destiny;
-
       const getMemberResponse = async () => {
-        const api_response = await fetch(
-          bungie_api + '/member/' + encodeURIComponent(props.display_name)
-        );
-
-        const parsed = (await api_response.json()) as DestinyMemberResponse;
-        if (parsed.response) {
-          setMemberData(parsed.response);
-        }
+        const data = await getMemberInfo(props.display_name);
+        setMemberData(data.response);
       };
 
       getMemberResponse().finally(() => {
         console.log('Member search done');
       });
-    }
-  }, []);
-
-  useEffect(() => {
-    ///
-    if (props.platforms === undefined && !props.asHeaders) {
-      const account_api = ENV.hosts.accounts;
-      const getLinkedAccounts = async () => {
-        const api_response = await fetch(
-          account_api +
-            '/search/by/bungie/' +
-            encodeURIComponent(props.display_name)
-        );
-
-        const parsed =
-          (await api_response.json()) as AccountLinkedPlatformsResponse;
-        if (parsed.response) {
-          setLinkedPlatforms({
-            discord: parsed.response.discord || null,
-            twitch: parsed.response.twitch || null,
-          });
-          setAccountToken(parsed.response.account_token);
-          setLinkedPlatformResult(parsed.response);
-        }
-      };
-
-      getLinkedAccounts().finally(() =>
-        console.log(
-          'Fetched account information for bungie name: ',
-          props.display_name
-        )
-      );
-    } else if (
-      props.platforms !== null &&
-      props.platforms !== undefined &&
-      !props.asHeaders
-    ) {
-      setLinkedPlatforms({
-        discord: props.platforms.discord || null,
-        twitch: props.platforms.twitch || null,
-      });
-      setLinkedPlatformResult(props.platforms);
-      setAccountToken(props.platforms.account_token);
     }
   }, []);
 
@@ -121,7 +46,7 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
     timestamp_last_played: 0,
     raid_report: '',
     clan: undefined,
-  } as DestinyMemberInformation;
+  } as MemberResponse;
 
   const memberInfo =
     memberData !== null
@@ -209,75 +134,20 @@ export const DestinyMemberCard = (props: DestinyMemberCardProps) => {
               Linked Platforms
             </H4>
           ) : (
-            Object.keys(linkedPlatforms).map((platform, platformIndex) =>
-              linkedPlatforms[platform] !== null ? (
-                <Button
-                  className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
-                  intention={'normal'}
-                  title={linkedPlatforms[platform] as string}
-                  data-platform={platform}
-                  data-platform-id={linkedPlatforms[platform] as string}
-                  key={
-                    'member_' +
-                    props.display_name +
-                    '_platform_' +
-                    platform +
-                    '_index_' +
-                    platformIndex
-                  }
-                  onClick={(ev) => {
-                    navigator.clipboard.writeText(
-                      platform === 'discord'
-                        ? linkedPlatformResult !== null
-                          ? linkedPlatformResult.username
-                          : (linkedPlatforms[platform] as string)
-                        : (linkedPlatforms[platform] as string)
-                    );
-                    const btn = ev.target as HTMLButtonElement;
-                    const origHtml = btn.innerHTML;
-                    btn.textContent = 'Copied!';
-                    setTimeout(() => {
-                      btn.innerHTML = origHtml;
-                    }, 5000);
-                  }}
-                >
-                  {render_platform_icon(platform)}
-                  {linkedPlatforms[platform] as string}
-                </Button>
-              ) : (
-                <Button
-                  className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
-                  intention={'inactive'}
-                  title={linkedPlatforms[platform] as string}
-                  key={
-                    'member_' +
-                    props.display_name +
-                    '_platform_' +
-                    platform +
-                    '_index_' +
-                    platformIndex
-                  }
-                >
-                  {render_platform_icon(platform)}
-                  {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                </Button>
-              )
-            )
+            <></>
           )}
           {!props.asHeaders ? (
-            <LoginGuard admin={true} hide={true}>
-              <HyperlinkButton
-                className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
-                intention="attention"
-                href={
-                  '/admin/member/' +
-                  encodeURIComponent(memberInfo.display_name) +
-                  '/lifetime/modes/all'
-                }
-              >
-                Overview
-              </HyperlinkButton>
-            </LoginGuard>
+            <HyperlinkButton
+              className="md:flex-1 w-full md:w-auto md:max-w-[8rem] text-sm text-ellipsis overflow-hidden whitespace-nowrap py-3 md:py-2  self-start"
+              intention="attention"
+              href={
+                '/admin/member/' +
+                encodeURIComponent(memberInfo.display_name) +
+                '/lifetime/modes/all'
+              }
+            >
+              Overview
+            </HyperlinkButton>
           ) : (
             <></>
           )}

@@ -41,10 +41,10 @@ pub async fn member_titles(
 
 #[tauri::command]
 pub async fn member_season_report(
-    state: State<'_, LibDestinyState>,
     bungie_name: String,
     season: String,
     report_queries: ReportQueries,
+    state: State<'_, LibDestinyState>,
 ) -> Result<APIResponse<ReportOutput>, ()> {
     let mut state = state.write().await;
     let mut response = APIResponse::new();
