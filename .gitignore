@@ -6,7 +6,6 @@ node_modules/
 .vscode/
 .next/
 dist/
-assets/
 Cargo.lock
 *.sqlite
 *.sqlite*

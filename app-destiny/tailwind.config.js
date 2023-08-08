@@ -2,14 +2,14 @@
  * @type {import('tailwindcss/plugin')}
  */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const plugin = require('tailwindcss/plugin');
+const { nextui } = require('@nextui-org/react');
 
 module.exports = {
   darkMode: 'class',
   content: [
-    './pages/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     transparent: 'transparent',
@@ -146,19 +146,5 @@ module.exports = {
         /fill-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)/,
     },
   ],
-  plugins: [
-    plugin(function ({ addVariant }) {
-      addVariant('offcanvas-opened', '.offcanvas[data-showing="1"] &');
-      addVariant('offcanvas-closed', '.offcanvas[data-showing="0"] &');
-      addVariant('is-member', '.offcanvas[data-is-member="1"] &');
-      addVariant('is-not-member', '.offcanvas[data-is-member="0"] &');
-      addVariant('expanded', '.expanded &');
-      addVariant('expanded-hover', '.expanded:hover &');
-      addVariant('toggle-yes', 'input[type="checkbox"]:checked + &');
-      addVariant('btn-dropdown', 'button.dropdown + &');
-      addVariant('btn-dropdown-showing', 'button.dropdown &');
-      addVariant('sticky', '.navigation-bar.is-sticky &');
-    }),
-    require('@headlessui/tailwindcss'),
-  ],
+  plugins: [nextui()],
 };
