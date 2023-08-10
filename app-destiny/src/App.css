@@ -17,7 +17,9 @@
     scroll-behavior: smooth;
   }
 
-  body {
+  body,
+  div#root,
+  div#root main {
     @apply min-h-screen;
     @apply h-auto;
   }

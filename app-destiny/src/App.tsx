@@ -22,36 +22,39 @@ function App() {
 
   return (
     <HashRouter>
-      <Navbar
-        onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen ? true : false)}
-      >
-        <NavbarContent>
-          <NavbarMenuToggle
-            aria-label={isMenuOpen ? 'Close Menu' : 'Open Menu'}
-          />
-        </NavbarContent>
-        <NavbarMenu>
-          {Routes.map((route, routeIndex) => (
-            <NavbarMenuItem
-              key={`application_menu_route_${routeIndex}_${route.url}`}
-            >
-              <Link to={route.url}>{route.name}</Link>
-            </NavbarMenuItem>
-          ))}
-        </NavbarMenu>
-      </Navbar>
-      <main>
-        <ReactRouterRoutes>
-          {Routes.map((route, routeIndex) => (
-            <Route
-              index={routeIndex === 0}
-              path={route.url}
-              key={`application_route_${routeIndex}_${route.url}`}
-              Component={route.component}
+      <div className="flex flex-col min-h-screen h-auto">
+        <Navbar
+          className="grow-0 shrink-0 basis-auto w-full"
+          onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen ? true : false)}
+        >
+          <NavbarContent>
+            <NavbarMenuToggle
+              aria-label={isMenuOpen ? 'Close Menu' : 'Open Menu'}
             />
-          ))}
-        </ReactRouterRoutes>
-      </main>
+          </NavbarContent>
+          <NavbarMenu>
+            {Routes.map((route, routeIndex) => (
+              <NavbarMenuItem
+                key={`application_menu_route_${routeIndex}_${route.url}`}
+              >
+                <Link to={route.url}>{route.name}</Link>
+              </NavbarMenuItem>
+            ))}
+          </NavbarMenu>
+        </Navbar>
+        <div className="content w-full flex-1 h-auto bg-yellow-500">
+          <ReactRouterRoutes>
+            {Routes.map((route, routeIndex) => (
+              <Route
+                index={routeIndex === 0}
+                path={route.url}
+                key={`application_route_${routeIndex}_${route.url}`}
+                Component={route.component}
+              />
+            ))}
+          </ReactRouterRoutes>
+        </div>
+      </div>
     </HashRouter>
   );
 }
