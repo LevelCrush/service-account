@@ -11,6 +11,7 @@ import Routes from '@config/routes';
 import './App.css';
 import {
   Navbar,
+  NavbarBrand,
   NavbarContent,
   NavbarMenu,
   NavbarMenuItem,
@@ -27,11 +28,19 @@ function App() {
           className="grow-0 shrink-0 basis-auto w-full"
           onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen ? true : false)}
         >
-          <NavbarContent>
+          <NavbarContent justify="start">
             <NavbarMenuToggle
               aria-label={isMenuOpen ? 'Close Menu' : 'Open Menu'}
             />
           </NavbarContent>
+          <NavbarContent justify="center">
+            <NavbarBrand>
+              <h1 className="font-headline text-2xl tracking-widest">
+                Destiny App
+              </h1>
+            </NavbarBrand>
+          </NavbarContent>
+          <NavbarContent justify="end">&nbsp;</NavbarContent>
           <NavbarMenu>
             {Routes.map((route, routeIndex) => (
               <NavbarMenuItem
@@ -42,7 +51,7 @@ function App() {
             ))}
           </NavbarMenu>
         </Navbar>
-        <div className="content w-full flex-1 h-auto bg-yellow-500">
+        <div className="content w-full flex-1 h-auto bg-slate-950">
           <ReactRouterRoutes>
             {Routes.map((route, routeIndex) => (
               <Route
