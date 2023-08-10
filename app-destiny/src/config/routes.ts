@@ -16,6 +16,7 @@ export const Routes = [
     name: 'Home',
     component: HomePage,
   },
+
   {
     url: '/clan',
     name: 'Clan',
