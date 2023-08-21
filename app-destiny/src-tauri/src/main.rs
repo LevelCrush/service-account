@@ -73,67 +73,69 @@ async fn main() {
         loop {
             tracing::info!("Updating leaderboards");
 
-            let modes = if first_start {
-                database::setting::modes(&leaderboard_state.database).await
-            } else {
-                app::settings::modes(&leaderboard_state).await
-            };
+            /*
+                       let modes = if first_start {
+                           database::setting::modes(&leaderboard_state.database).await
+                       } else {
+                           app::settings::modes(&leaderboard_state).await
+                       };
 
-            for group in modes.iter() {
-                if group.leaderboard == 0 {
-                    continue; // skip and move on
-                }
+                       for group in modes.iter() {
+                           if group.leaderboard == 0 {
+                               continue; // skip and move on
+                           }
 
-                tracing::info!("Updating {} leaderboard", group.name);
-                let (mut target_modes, results) = if group.name == "Raid" {
-                    (vec![4], database::leaderboard::raids(&leaderboard_state.database).await)
-                } else {
-                    let group_modes = group
-                        .value
-                        .split(',')
-                        .map(|v| DestinyActivityModeType::from(v) as i64)
-                        .collect::<Vec<i64>>();
-                    (
-                        group_modes.clone(),
-                        if group.name.to_lowercase().contains("pvp") {
-                            database::leaderboard::pvp_based(&group_modes, &leaderboard_state.database).await
-                        } else {
-                            database::leaderboard::generic(&group_modes, &leaderboard_state.database).await
-                        },
-                    )
-                };
+                           tracing::info!("Updating {} leaderboard", group.name);
+                           let (mut target_modes, results) = if group.name == "Raid" {
+                               (vec![4], database::leaderboard::raids(&leaderboard_state.database).await)
+                           } else {
+                               let group_modes = group
+                                   .value
+                                   .split(',')
+                                   .map(|v| DestinyActivityModeType::from(v) as i64)
+                                   .collect::<Vec<i64>>();
+                               (
+                                   group_modes.clone(),
+                                   if group.name.to_lowercase().contains("pvp") {
+                                       database::leaderboard::pvp_based(&group_modes, &leaderboard_state.database).await
+                                   } else {
+                                       database::leaderboard::generic(&group_modes, &leaderboard_state.database).await
+                                   },
+                               )
+                           };
 
-                // sort so they are in a predicatable order
-                target_modes.sort();
+                           // sort so they are in a predicatable order
+                           target_modes.sort();
 
-                let mode_str = target_modes
-                    .into_iter()
-                    .map(|v| v.to_string())
-                    .collect::<Vec<String>>()
-                    .join(",");
+                           let mode_str = target_modes
+                               .into_iter()
+                               .map(|v| v.to_string())
+                               .collect::<Vec<String>>()
+                               .join(",");
 
-                // this is entirely redudant but it makes life easier
-                if mode_str == "4" {
-                    leaderboard_state
-                        .leaderboards
-                        .write("Raid", CacheValue::persistant(results.clone()))
-                        .await;
-                }
+                           // this is entirely redudant but it makes life easier
+                           if mode_str == "4" {
+                               leaderboard_state
+                                   .leaderboards
+                                   .write("Raid", CacheValue::persistant(results.clone()))
+                                   .await;
+                           }
 
-                leaderboard_state
-                    .leaderboards
-                    .write(&mode_str, CacheValue::persistant(results))
-                    .await;
-            }
+                           leaderboard_state
+                               .leaderboards
+                               .write(&mode_str, CacheValue::persistant(results))
+                               .await;
+                       }
 
-            tracing::info!("Updating Title leaderboard");
-            let title_leaderboard = database::leaderboard::titles(&leaderboard_state.database).await;
-            leaderboard_state
-                .leaderboards
-                .write("Titles", CacheValue::persistant(title_leaderboard))
-                .await;
-
+                       tracing::info!("Updating Title leaderboard");
+                       let title_leaderboard = database::leaderboard::titles(&leaderboard_state.database).await;
+                       leaderboard_state
+                           .leaderboards
+                           .write("Titles", CacheValue::persistant(title_leaderboard))
+                           .await;
+            */
             first_start = false;
+
             tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
         }
     });

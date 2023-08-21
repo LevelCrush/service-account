@@ -1,3 +1,4 @@
+import { searchInternalMembers } from '@ipc/service-destiny';
 import {
   Button,
   ButtonProps,
@@ -56,6 +57,12 @@ export const DestinySearchBar = (props: DestinySearchBarProps) => {
           isLoading={isSearching}
           variant={props.variantSearchButton || 'ghost'}
           color={validationState === 'invalid' ? 'danger' : 'primary'}
+          onClick={(ev) => {
+            searchInternalMembers(searchValue, {
+              page: 1,
+              limit: 50,
+            });
+          }}
         >
           {isSearching ? 'Searching...' : 'Search'}
         </Button>

@@ -19,7 +19,7 @@ export const Routes = [
 
   {
     url: '/clan',
-    name: 'Clan',
+    name: 'Clan Network',
     component: ClanPage,
   },
 ] as RouteItem[];

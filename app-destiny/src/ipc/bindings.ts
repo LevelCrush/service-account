@@ -12,6 +12,16 @@ export interface PaginationData {
   term: string;
 }
 
+export interface PaginationQuery {
+  page: number;
+  limit: number;
+}
+
+export interface PaginationResponse<T> {
+  data: T[];
+  pagination: PaginationData;
+}
+
 export interface APIResponse<T> {
   success: boolean;
   response: T | null;

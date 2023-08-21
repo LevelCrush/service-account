@@ -6,6 +6,8 @@ import {
   DestinySeason,
   MemberResponse,
   NetworkActivityClanBreakdown,
+  PaginationQuery,
+  PaginationResponse,
   ReportOutput,
   SettingModeRecord,
 } from '@ipc/bindings';
@@ -201,4 +203,17 @@ export const getClanRoster = async (group_id: string) => {
   })) as APIResponse<ClanResponse>;
   console.log('Done getting clan roster', data);
   return data;
+};
+
+export const searchInternalMembers = async (
+  display_name: string,
+  pagination: PaginationQuery
+) => {
+  console.log('Invoking bungie search');
+  const data = (await invoke('search_bungie_name', {
+    displayName: display_name,
+    pagination: pagination,
+  })) as APIResponse<PaginationResponse<MemberResponse>>;
+
+  console.log('Incoming data for search', data);
 };
