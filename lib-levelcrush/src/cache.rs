@@ -1,10 +1,9 @@
 use std::collections::{hash_map::Entry, HashMap};
 
+use crate::util::unix_timestamp;
 use std::sync::Arc;
 use tokio::sync::RwLockWriteGuard;
 use tokio::{sync::RwLock, sync::RwLockReadGuard};
-
-use crate::util::unix_timestamp;
 
 #[derive(Clone, Debug)]
 pub enum CacheDuration {

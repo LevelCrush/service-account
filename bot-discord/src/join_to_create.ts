@@ -44,13 +44,9 @@ export function JoinToCreate() {
 
     // owner permissions for vc
     const vc_owner_permissions = [
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.DeafenMembers,
         PermissionsBitField.Flags.PrioritySpeaker,
-        PermissionsBitField.Flags.ModerateMembers,
-        PermissionsBitField.Flags.MuteMembers,
-        PermissionsBitField.Flags.ManageRoles,
         PermissionsBitField.Flags.MoveMembers,
+        PermissionsBitField.Flags.ManageChannels,
     ];
 
     // configuration options
@@ -210,12 +206,8 @@ export function JoinToCreate() {
                                 await old_channel.permissionOverwrites.edit(
                                     member,
                                     {
-                                        ManageRoles: true,
                                         ManageChannels: true,
                                         PrioritySpeaker: true,
-                                        DeafenMembers: true,
-                                        MuteMembers: true,
-                                        ModerateMembers: true,
                                         MoveMembers: true,
                                     },
                                     {
