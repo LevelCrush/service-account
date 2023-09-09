@@ -10,7 +10,7 @@ Cargo.lock
 *.sqlite
 *.sqlite*
 app.json
-
+*.cache.json
 # Copied from nextjs project
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.

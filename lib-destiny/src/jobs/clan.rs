@@ -1,12 +1,15 @@
 use crate::app::state::AppState;
 use crate::env::AppVariable;
 use crate::jobs::task;
+use crate::persistant::PersistantCache;
 use crate::{database, env};
 use levelcrush::alias::destiny::InstanceId;
 use levelcrush::anyhow;
 use levelcrush::task_pool::TaskPool;
+use levelcrush::tokio::sync::RwLock;
 use levelcrush::tracing;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use std::time::Duration;
 
 pub async fn info(args: &[String]) -> anyhow::Result<()> {
@@ -106,13 +109,29 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         roster_members.extend(group_roster.iter());
     }
 
+    tracing::warn!("Loading from persistant cache");
+    let instance_cache = PersistantCache::<Vec<i64>>::load("network_crawl_instance_ids.cache.json").await?;
+    if !instance_cache.data.is_empty() {
+        tracing::info!(
+            "Did not finish last instance crawl. Will resume crawling {} total instances",
+            instance_cache.data.len()
+        );
+    }
+
     let workers_allowed = env::get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
     tracing::warn!("Max Workers Per Pool: {workers_allowed}");
+
     let task_pool = TaskPool::new(workers_allowed);
     let instance_task_pool = TaskPool::new(workers_allowed);
+
+    let instance_ids = Arc::new(RwLock::new(instance_cache.data.clone()));
+
+    // shadow the old instance cache and move it into a ARC
+    let instance_cache = Arc::new(RwLock::new(instance_cache));
+
     for (membership_id, membership_platform) in roster_members.into_iter() {
         let state_clone = app_state.clone();
-        let instance_task_pool_clone = instance_task_pool.clone();
+        let instance_id_holder = instance_ids.clone();
         task_pool.queue(Box::new(move || {
             Box::pin(async move {
                 let characters = task::profile(membership_id, membership_platform, &state_clone).await;
@@ -121,15 +140,9 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
                         tracing::info!("Scanning activities for {membership_id} and {character}");
                         let instances = task::activities(membership_id, membership_platform,character,&state_clone).await;
                         if let Ok(instances) = instances {
-                            tracing::info!("Now crawling {} total instances for {membership_id} and {character}", instances.len());
-                            let sub_state_clone = state_clone.clone();
-                            tracing::info!("Queing instance crawls for {membership_id} and {character}");
-                            instance_task_pool_clone.queue(Box::new(move || { Box::pin(async move {
-                                let instance_data_result = task::instance_data(&instances, &sub_state_clone).await;
-                                if let Err(instance_err) = instance_data_result {
-                                    tracing::error!("Error fetching instance data for {membership_id} and character {character}:\n{instance_err}");
-                                }
-                            })})).await;
+                            let mut instance_id_writer = instance_id_holder.write().await;
+                            instance_id_writer.extend(instances);
+                            drop(instance_id_writer);
                         } else if let Err(instances_err) = instances {
                             tracing::error!("Error fetching activities for Member {membership_id} and character {character}:\n{instances_err}");
                         }
@@ -141,10 +154,76 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         })).await;
     }
 
-    while !task_pool.is_empty().await || !instance_task_pool.is_empty().await {
+    while !task_pool.is_empty().await {
         task_pool.step().await;
-        instance_task_pool.step().await;
         levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    // read from our instance id vector and clone the values into a hash set
+    let instance_id_reader = instance_ids.read().await;
+    let unique_instance_ids = instance_id_reader
+        .clone()
+        .into_iter()
+        .collect::<HashSet<i64>>()
+        .into_iter()
+        .collect::<Vec<i64>>();
+
+    drop(instance_id_reader); // drop reade
+
+    // now we are going to save now that we only have unique instance ids
+    tracing::info!("Saving instance ids to persistant cache");
+    let instance_cache_handle = instance_cache.clone();
+    let mut cache_writer = instance_cache_handle.write().await;
+    cache_writer.data_mut().clear();
+    cache_writer.data_mut().extend(unique_instance_ids.clone());
+    let cache_save_result = cache_writer.save().await;
+    if let Err(cache_save_err) = cache_save_result {
+        tracing::error!("Error saving cache: {cache_save_err}");
+    }
+    drop(cache_writer);
+
+    for chunk in unique_instance_ids.chunks(100) {
+        let instances = chunk.to_vec();
+        let instance_cache_handle = instance_cache.clone();
+        for instance_id in instances.into_iter() {
+            let state_clone = app_state.clone();
+            instance_task_pool
+                .queue(Box::new(move || {
+                    Box::pin(async move {
+                        tracing::info!("Getting carnage report for: {}", instance_id);
+                        let response = crate::api::instance::carnage_report(instance_id, &state_clone.bungie).await;
+                        if let Ok(response) = response {
+                            if let Some(response) = response {
+                                crate::app::instance::carnage_report_sync(&response, &state_clone).await;
+                            }
+                        } else if let Err(response_err) = response {
+                            tracing::error!("Error fetching carnage report for {instance_id}:\r\n{response_err}");
+                        }
+                    })
+                }))
+                .await;
+        }
+
+        while !instance_task_pool.is_empty().await {
+            instance_task_pool.step().await;
+            levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+
+        tracing::info!("Updating persistant cache");
+        let mut cache_writer = instance_cache_handle.write().await;
+        for instance_id in chunk {
+            let index_result = cache_writer.data_mut().binary_search(instance_id);
+            if let Ok(index) = index_result {
+                cache_writer.data_mut().remove(index);
+            }
+        }
+
+        tracing::info!("Saving persistant cache");
+        let cache_save_result = cache_writer.save().await;
+        if let Err(cache_save_err) = cache_save_result {
+            tracing::error!("Error saving cache: {cache_save_err}");
+        }
+        drop(cache_writer);
     }
 
     tracing::info!("Done network crawling");
