@@ -182,7 +182,7 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
     }
     drop(cache_writer);
 
-    for chunk in unique_instance_ids.chunks(100) {
+    for chunk in unique_instance_ids.chunks(1000) {
         let instances = chunk.to_vec();
         let instance_cache_handle = instance_cache.clone();
         for instance_id in instances.into_iter() {
@@ -212,8 +212,8 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         tracing::info!("Updating persistant cache");
         let mut cache_writer = instance_cache_handle.write().await;
         for instance_id in chunk {
-            let index_result = cache_writer.data_mut().binary_search(instance_id);
-            if let Ok(index) = index_result {
+            let index_result = cache_writer.data_mut().iter().position(|&r| r == *instance_id);
+            if let Some(index) = index_result {
                 cache_writer.data_mut().remove(index);
             }
         }
