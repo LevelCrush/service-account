@@ -1,5 +1,5 @@
 use crate::app::state::AppState;
-use crate::env::AppVariable;
+use crate::env::{AppVariable, Env};
 use crate::jobs::task;
 use crate::persistant::PersistantCache;
 use crate::{database, env};
@@ -12,10 +12,10 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
-pub async fn info(args: &[String]) -> anyhow::Result<()> {
+pub async fn info(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::info!("Running job: Clan Info");
     tracing::info!("Setting up app state");
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
 
     // parse arguments as group ids
     let group_ids: Vec<i64> = args
@@ -31,10 +31,10 @@ pub async fn info(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn roster(args: &[String]) -> anyhow::Result<()> {
+pub async fn roster(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::info!("Running job: Clan Roster");
     tracing::info!("Setting up app state");
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
 
     // parse arguments as group ids
     let group_ids: Vec<i64> = args
@@ -61,11 +61,11 @@ async fn crawl(group_ids: &[i64], app_state: &AppState) -> anyhow::Result<()> {
 
 /// crawl any clan in the system (or get any clan)
 /// since we don't know if these are network clans or not, just crawl info, roster and profile data to sync profile + character informations
-pub async fn crawl_direct(args: &[String]) -> anyhow::Result<()> {
+pub async fn crawl_direct(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::info!("Syncing direct clan data");
     tracing::info!("Setting up app state");
 
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
     // parse arguments as group ids
     let group_ids: Vec<i64> = args
         .iter()
@@ -76,11 +76,11 @@ pub async fn crawl_direct(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn crawl_non_network() -> anyhow::Result<()> {
+pub async fn crawl_non_network(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Syncing all non network clan data");
     tracing::info!("Setting up app state");
 
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
     let groups = database::clan::get_non_network(&app_state.database).await;
     crawl(&groups, &app_state).await?;
 
@@ -88,11 +88,11 @@ pub async fn crawl_non_network() -> anyhow::Result<()> {
 }
 
 /// an improved version of the crawler that uses the task pool
-pub async fn crawl_network2() -> anyhow::Result<()> {
+pub async fn crawl_network2(env: &Env) -> anyhow::Result<()> {
     tracing::info!("crawling clan network");
     tracing::info!("Setting up app state");
 
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
 
     tracing::info!("Getting in network clans");
     let groups = database::clan::get_network(&app_state.database).await;
@@ -118,7 +118,7 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
         );
     }
 
-    let workers_allowed = env::get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
+    let workers_allowed = env.get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
     tracing::warn!("Max Workers Per Pool: {workers_allowed}");
 
     let task_pool = TaskPool::new(workers_allowed);
@@ -233,11 +233,11 @@ pub async fn crawl_network2() -> anyhow::Result<()> {
 
 /// crawl clans marked with is_network = 1
 /// since we care about network more, we will crawl activities/stats/etc automatically
-pub async fn crawl_network() -> anyhow::Result<()> {
+pub async fn crawl_network(env: &Env) -> anyhow::Result<()> {
     tracing::info!("crawling clan network");
     tracing::info!("Setting up app state");
 
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
     let groups = database::clan::get_network(&app_state.database).await;
 
     let mut roster_members = HashMap::new();
@@ -270,6 +270,38 @@ pub async fn crawl_network() -> anyhow::Result<()> {
     tracing::info!("Now crawling {} total instances", instance_ids.len());
     if !instance_ids.is_empty() {
         task::instance_data(&instance_ids, &app_state).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn make_network(args: &[String], env: &Env) -> anyhow::Result<()> {
+    let app_state = AppState::new(env).await;
+
+    // parse arguments as group ids
+    let group_ids: Vec<i64> = args
+        .iter()
+        .map(|group_id| group_id.parse::<i64>().unwrap_or_default())
+        .collect();
+
+    for group_id in group_ids.into_iter() {
+        task::make_network(group_id, &app_state).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn make_non_network(args: &[String], env: &Env) -> anyhow::Result<()> {
+    let app_state = AppState::new(env).await;
+
+    // parse arguments as group ids
+    let group_ids: Vec<i64> = args
+        .iter()
+        .map(|group_id| group_id.parse::<i64>().unwrap_or_default())
+        .collect();
+
+    for group_id in group_ids.into_iter() {
+        task::make_non_network(group_id, &app_state).await?;
     }
 
     Ok(())

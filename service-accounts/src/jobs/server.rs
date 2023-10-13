@@ -27,8 +27,6 @@ pub async fn run() -> anyhow::Result<()> {
         }
     });
 
-    let server_port = server_port;
-
     tracing::info!("Running server on port {server_port}");
     (_, _) = tokio::join!(
         Server::new(server_port)

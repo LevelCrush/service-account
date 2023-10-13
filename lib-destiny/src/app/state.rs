@@ -6,7 +6,7 @@ use crate::database::member::MemberResult;
 use crate::database::seasons::SeasonRecord;
 use crate::database::setting::SettingModeRecord;
 use crate::database::triumph::TriumphTitleResult;
-use crate::env::AppVariable;
+use crate::env::{AppVariable, Env};
 use crate::{bungie::BungieClient, database::activity_history::ActivityHistoryRecord, env};
 use levelcrush::alias::UnixTimestamp;
 use levelcrush::retry_lock::RetryLock;
@@ -63,25 +63,12 @@ impl AppState {
     /// Construct an app state
     ///
     /// Note: This will create a new database pool as well as a new bungie client
-    pub async fn new() -> AppState {
-        let max_connections = std::env::var("DATABASE_CONNECTIONS_MAX")
-            .unwrap_or_default()
-            .parse::<u32>()
-            .unwrap_or(1);
-
+    pub async fn new(env: &Env) -> AppState {
+        let max_connections = 1;
         let database = database::connect(crate::database::DATABASE_URL, max_connections).await;
-
-        let max_task_workers = std::env::var("TASK_WORKERS")
-            .unwrap_or_default()
-            .parse::<usize>()
-            .unwrap_or(1);
-
-        let priority_task_workers = std::env::var("PRIORITY_TASK_WORKERS")
-            .unwrap_or_default()
-            .parse::<usize>()
-            .unwrap_or(2);
-
-        let bungie_api_key = env::get(AppVariable::BungieAPIKey);
+        let max_task_workers = env.get(AppVariable::CrawlWorkers).parse::<usize>().unwrap_or(1);
+        let priority_task_workers = env.get(AppVariable::PriorityTaskWorkers).parse::<usize>().unwrap_or(2);
+        let bungie_api_key = env.get(AppVariable::BungieAPIKey);
 
         AppState {
             database,

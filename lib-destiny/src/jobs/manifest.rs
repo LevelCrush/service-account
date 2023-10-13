@@ -2,15 +2,16 @@ use crate::api::manifest::DestinyManifest;
 use crate::bungie::BungieClient;
 use crate::env;
 use crate::env::AppVariable;
+use crate::env::Env;
 use crate::sync;
 use levelcrush::anyhow;
 use levelcrush::database;
 use levelcrush::tokio;
 use levelcrush::tracing;
 
-pub async fn run() -> anyhow::Result<()> {
+pub async fn run(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Starting Bungie HTTP client");
-    let api_key = env::get(AppVariable::BungieAPIKey);
+    let api_key = env.get(AppVariable::BungieAPIKey);
     let client = BungieClient::new(api_key);
 
     // connect to our database

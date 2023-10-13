@@ -301,6 +301,24 @@ pub async fn create(clan: ClanRecord, pool: &SqlitePool) -> RecordId {
     }
 }
 
+/// update the clan record in the database to be marked as a network clan
+pub async fn make_network(clan: &ClanRecord, pool: &SqlitePool) -> bool {
+    let query = sqlx::query_file!("queries/clan_make_network.sql", clan.group_id)
+        .execute(pool)
+        .await;
+
+    query.is_ok()
+}
+
+/// update the clan record in the database to be marked as a network clan
+pub async fn make_non_network(clan: &ClanRecord, pool: &SqlitePool) -> bool {
+    let query = sqlx::query_file!("queries/clan_make_non_network.sql", clan.group_id)
+        .execute(pool)
+        .await;
+
+    query.is_ok()
+}
+
 /// update clan record
 pub async fn update(clan: &ClanRecord, pool: &SqlitePool) -> bool {
     let query = sqlx::query_file!(

@@ -1,5 +1,5 @@
 use levelcrush::alias::destiny::{CharacterId, InstanceId, MembershipId, MembershipType};
-use levelcrush::anyhow;
+use levelcrush::anyhow::{self, anyhow};
 use levelcrush::tracing;
 use std::collections::HashMap;
 
@@ -195,4 +195,34 @@ pub async fn instance_data(instance_ids: &[i64], state: &AppState) -> anyhow::Re
 
     // for each member run the profile sync task
     Ok(())
+}
+
+pub async fn make_network(group_id: i64, state: &AppState) -> anyhow::Result<()> {
+    let clan = database::clan::get(group_id, &state.database).await;
+    if let Some(clan) = clan {
+        let did_update = database::clan::make_network(&clan, &state.database).await;
+        if did_update {
+            Ok(())
+        } else {
+            Err(anyhow!("Database error occurred while marking clan as network"))
+        }
+    } else {
+        let err = format!("{group_id} not found");
+        Err(anyhow!(err))
+    }
+}
+
+pub async fn make_non_network(group_id: i64, state: &AppState) -> anyhow::Result<()> {
+    let clan = database::clan::get(group_id, &state.database).await;
+    if let Some(clan) = clan {
+        let did_update = database::clan::make_non_network(&clan, &state.database).await;
+        if did_update {
+            Ok(())
+        } else {
+            Err(anyhow!("Database error occurred while marking clan as network"))
+        }
+    } else {
+        let err = format!("{group_id} not found");
+        Err(anyhow!(err))
+    }
 }

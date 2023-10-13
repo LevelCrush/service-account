@@ -1,14 +1,15 @@
 use crate::app::state::AppState;
 use crate::database;
+use crate::env::Env;
 use crate::jobs::task;
 use levelcrush::anyhow;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
 
-pub async fn history(args: &[String]) -> anyhow::Result<()> {
+pub async fn history(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::info!("Running member character activity");
     tracing::info!("Setting up application state");
-    let state = AppState::new().await;
+    let state = AppState::new(env).await;
 
     for bungie_name in args.iter() {
         let profile_results = task::profile_search(bungie_name, &state).await?;
@@ -31,7 +32,7 @@ pub async fn history(args: &[String]) -> anyhow::Result<()> {
 }
 
 /// crawl the instances that have available based off membership_activities
-pub async fn crawl_instances(args: &[String]) -> anyhow::Result<()> {
+pub async fn crawl_instances(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::info!("Crawling missing instance data");
     tracing::info!("Setting up application state");
 
@@ -46,7 +47,7 @@ pub async fn crawl_instances(args: &[String]) -> anyhow::Result<()> {
         }
     };
 
-    let state = AppState::new().await;
+    let state = AppState::new(env).await;
 
     // our starting record
     tracing::info!("Getting oldest record");
@@ -93,7 +94,7 @@ pub async fn crawl_instances(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn instance_member_profiles(args: &[String]) -> anyhow::Result<()> {
+pub async fn instance_member_profiles(args: &[String], env: &Env) -> anyhow::Result<()> {
     let amount = {
         if !args.is_empty() {
             match args.first() {
@@ -105,7 +106,7 @@ pub async fn instance_member_profiles(args: &[String]) -> anyhow::Result<()> {
         }
     };
 
-    let state = AppState::new().await;
+    let state = AppState::new(env).await;
 
     // our starting record
     tracing::info!("Getting oldest record");

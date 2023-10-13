@@ -5,13 +5,13 @@ use levelcrush::server::Server;
 use levelcrush::{tokio, tracing};
 use lib_destiny::app::state::{AppState, Setting};
 use lib_destiny::bungie::enums::DestinyActivityModeType;
-use lib_destiny::env::AppVariable;
+use lib_destiny::env::{AppVariable, Env};
 use lib_destiny::{app, database, env};
 
-pub async fn run() -> anyhow::Result<()> {
-    let server_port = env::get(AppVariable::ServerPort).parse::<u16>().unwrap_or(3003);
+pub async fn run(env: &Env) -> anyhow::Result<()> {
+    let server_port = env.get(AppVariable::ServerPort).parse::<u16>().unwrap_or(3003);
 
-    let app_state = AppState::new().await;
+    let app_state = AppState::new(env).await;
 
     //println!("Listening Port (ENV): {}", server_port);
     //server::run(server_port).await;

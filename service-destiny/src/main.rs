@@ -6,6 +6,7 @@ use clap::Parser;
 
 // use the tokio install that we are using with our level crush library
 use levelcrush::{tokio, tracing};
+use lib_destiny::env::Env;
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum Job {
@@ -26,6 +27,7 @@ enum Job {
     InstanceProfiles,
     Reset,
     Purge,
+    Setup,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -45,24 +47,27 @@ async fn main() {
     // parse command line arguments
     let args = Args::parse();
 
+    let env = env::load();
+
     let result = match args.job {
-        Job::Server => jobs::server::run().await,
-        Job::SyncManifest => lib_destiny::jobs::manifest::run().await,
-        Job::ClanInfo => lib_destiny::jobs::clan::info(&args.args).await,
-        Job::ClanRoster => lib_destiny::jobs::clan::roster(&args.args).await,
-        Job::ClanCrawl => lib_destiny::jobs::clan::crawl_direct(&args.args).await,
-        Job::ClanNotNetworkCrawl => lib_destiny::jobs::clan::crawl_non_network().await,
-        Job::ClanMakeNetwork => lib_destiny::jobs::clan::make_network(&args.args).await,
-        Job::ClanMakeNonNetwork => lib_destiny::jobs::clan::make_non_network(&args.args).await,
-        Job::MemberProfile => lib_destiny::jobs::member::profile(&args.args).await,
-        Job::MemberActivity => lib_destiny::jobs::activity::history(&args.args).await,
-        Job::MemberCrawl => lib_destiny::jobs::member::crawl_profile(&args.args).await,
-        Job::MemberCrawlDeep => lib_destiny::jobs::member::crawl_profile_deep(&args.args).await,
-        Job::NetworkCrawl => lib_destiny::jobs::clan::crawl_network2().await,
-        Job::InstanceCrawl => lib_destiny::jobs::activity::crawl_instances(&args.args).await,
-        Job::InstanceProfiles => lib_destiny::jobs::activity::instance_member_profiles(&args.args).await,
+        Job::Server => jobs::server::run(&env).await,
+        Job::SyncManifest => lib_destiny::jobs::manifest::run(&env).await,
+        Job::ClanInfo => lib_destiny::jobs::clan::info(&args.args, &env).await,
+        Job::ClanRoster => lib_destiny::jobs::clan::roster(&args.args, &env).await,
+        Job::ClanCrawl => lib_destiny::jobs::clan::crawl_direct(&args.args, &env).await,
+        Job::ClanNotNetworkCrawl => lib_destiny::jobs::clan::crawl_non_network(&env).await,
+        Job::ClanMakeNetwork => lib_destiny::jobs::clan::make_network(&args.args, &env).await,
+        Job::ClanMakeNonNetwork => lib_destiny::jobs::clan::make_non_network(&args.args, &env).await,
+        Job::MemberProfile => lib_destiny::jobs::member::profile(&args.args, &env).await,
+        Job::MemberActivity => lib_destiny::jobs::activity::history(&args.args, &env).await,
+        Job::MemberCrawl => lib_destiny::jobs::member::crawl_profile(&args.args, &env).await,
+        Job::MemberCrawlDeep => lib_destiny::jobs::member::crawl_profile_deep(&args.args, &env).await,
+        Job::NetworkCrawl => lib_destiny::jobs::clan::crawl_network2(&env).await,
+        Job::InstanceCrawl => lib_destiny::jobs::activity::crawl_instances(&args.args, &env).await,
+        Job::InstanceProfiles => lib_destiny::jobs::activity::instance_member_profiles(&args.args, &env).await,
         Job::Reset => lib_destiny::jobs::reset::run().await,
         Job::Purge => lib_destiny::jobs::purge::run().await,
+        Job::Setup => jobs::setup::run(&env).await,
     };
 
     if let Err(err) = result {

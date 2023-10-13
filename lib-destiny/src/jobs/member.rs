@@ -1,12 +1,13 @@
+use crate::env::Env;
 use crate::{app::state::AppState, jobs::task};
 use levelcrush::anyhow;
 use levelcrush::tracing;
 use std::collections::HashSet;
 
 /// always fetch the bungie api and return fresh data when being called as a job
-pub async fn profile(args: &[String]) -> anyhow::Result<()> {
+pub async fn profile(args: &[String], env: &Env) -> anyhow::Result<()> {
     tracing::warn!("Setting up application state");
-    let state = AppState::new().await;
+    let state = AppState::new(env).await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
@@ -16,8 +17,8 @@ pub async fn profile(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn crawl_profile(args: &[String]) -> anyhow::Result<()> {
-    let state = AppState::new().await;
+pub async fn crawl_profile(args: &[String], env: &Env) -> anyhow::Result<()> {
+    let state = AppState::new(env).await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
@@ -32,8 +33,8 @@ pub async fn crawl_profile(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn crawl_profile_deep(args: &[String]) -> anyhow::Result<()> {
-    let state = AppState::new().await;
+pub async fn crawl_profile_deep(args: &[String], env: &Env) -> anyhow::Result<()> {
+    let state = AppState::new(env).await;
 
     for bungie_name in args.iter() {
         // search and sync if we can the profiles by searching for bungie name
