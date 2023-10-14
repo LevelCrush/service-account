@@ -5,6 +5,7 @@ use google_sheets4::{
     hyper::client::HttpConnector, hyper_rustls::HttpsConnector, oauth2::authenticator::Authenticator,
 };
 use levelcrush::{anyhow, project_str, tracing};
+use lib_destiny::env::{AppVariable, Env};
 use std::collections::HashMap;
 
 const GOOGLE_CREDENTIALS: &str = project_str!("google_credentials.json");
@@ -108,9 +109,10 @@ impl MasterWorkbook {
     }
 }
 
-pub async fn test_job() -> anyhow::Result<()> {
+pub async fn test_job(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Constructing workbook connection");
-    let mut workbook = MasterWorkbook::get("1vIfbDLZe7xf30pllymf5xPHABTLmMQezLAnChhzekoQ").await?;
+    let sheet_id = env.get(AppVariable::MasterWorkSheet);
+    let mut workbook = MasterWorkbook::get(&sheet_id).await?;
 
     tracing::info!("Hydrating information");
     workbook.hydrate().await?;

@@ -17,6 +17,7 @@ pub enum AppVariable {
     CrawlWorkers,
     PriorityTaskWorkers,
     Network,
+    MasterWorkSheet,
 }
 
 impl From<AppVariable> for &'static str {
@@ -31,6 +32,7 @@ impl From<AppVariable> for &'static str {
             AppVariable::CrawlWorkers => "CRAWL_WORKERS",
             AppVariable::PriorityTaskWorkers => "PRIORITY_TASK_WORKERS",
             AppVariable::Network => "CLAN_NETWORK",
+            AppVariable::MasterWorkSheet => "MASTER_WORKSHEET",
         }
     }
 }
@@ -50,6 +52,7 @@ pub struct Env {
     bungie_api_key: String,
     workers: i64,
     network: Vec<i64>,
+    master_worksheet: String,
 }
 
 impl Env {
@@ -70,6 +73,7 @@ impl Env {
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>()
                 .join(","),
+            AppVariable::MasterWorkSheet => self.master_worksheet.clone(),
             default => "".to_string(),
         })
     }
@@ -84,6 +88,7 @@ impl Env {
                 AppVariable::CrawlWorkers => vec![format!("{}", self.workers)],
                 AppVariable::PriorityTaskWorkers => vec![format!("{}", self.workers)],
                 AppVariable::Network => self.network.iter().map(|v| v.to_string()).collect::<Vec<String>>(),
+                AppVariable::MasterWorkSheet => vec![self.master_worksheet.clone()],
                 default => vec!["".to_string()],
             }
         }
