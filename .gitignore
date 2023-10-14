@@ -57,3 +57,5 @@ docCache/*.json
 output.log
 
 /public/sitemap*.xml
+
+google_credentials.json
