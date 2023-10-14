@@ -28,6 +28,7 @@ enum Job {
     Reset,
     Purge,
     Setup,
+    SheetsTest,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -68,6 +69,7 @@ async fn main() {
         Job::Reset => lib_destiny::jobs::reset::run().await,
         Job::Purge => lib_destiny::jobs::purge::run().await,
         Job::Setup => jobs::setup::run(&env).await,
+        Job::SheetsTest => jobs::sheets::test_job().await,
     };
 
     if let Err(err) = result {
