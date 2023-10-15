@@ -1,3 +1,4 @@
+use google_sheets4::api::{BatchClearValuesRequest, BatchUpdateValuesRequest, ValueRange};
 use google_sheets4::hyper::Client;
 use google_sheets4::oauth2::{self};
 use google_sheets4::{hyper, hyper_rustls, Sheets};
@@ -7,6 +8,7 @@ use google_sheets4::{
 use levelcrush::{anyhow, project_str, tracing};
 use lib_destiny::app::state::AppState;
 use lib_destiny::env::{AppVariable, Env};
+use serde_json::Value;
 use std::collections::HashMap;
 
 const GOOGLE_CREDENTIALS: &str = project_str!("google_credentials.json");
@@ -85,7 +87,7 @@ impl MasterWorkbook {
         for sheet in sheets.into_iter() {
             if let Some(properties) = sheet.properties {
                 let sheet_title = properties.title.unwrap_or_default();
-                if sheet_title.contains("[Clan]") {
+                if sheet_title.starts_with("[Clan]") {
                     clan_sheet_names.push(sheet_title);
                 }
             }
@@ -107,80 +109,83 @@ impl MasterWorkbook {
         let player_sheet = sheets.first();
         let base_string = String::new();
         if let Some(player_sheet) = player_sheet {
-            let data = player_sheet.data.as_ref().expect("Expecting grid data");
-            for grid_data in data.iter() {
-                let row_data = grid_data.row_data.as_ref().expect("Expecting row data");
-                for row in row_data.iter() {
-                    if let Some(cell_data) = row.values.as_ref() {
-                        let bungie_name_cell = cell_data.get(0);
-                        let discord_name_cell = cell_data.get(1);
-                        let discord_id_cell = cell_data.get(2);
-                        let bungie_membership_cell = cell_data.get(3);
-                        let bungie_membership_platform_cell = cell_data.get(4);
+            if let Some(data) = player_sheet.data.as_ref() {
+                for grid_data in data.iter() {
+                    if let Some(row_data) = grid_data.row_data.as_ref() {
+                        for row in row_data.iter() {
+                            if let Some(cell_data) = row.values.as_ref() {
+                                let bungie_name_cell = cell_data.get(0);
+                                let discord_name_cell = cell_data.get(1);
+                                let discord_id_cell = cell_data.get(2);
+                                let bungie_membership_cell = cell_data.get(3);
+                                let bungie_membership_platform_cell = cell_data.get(4);
 
-                        let bungie_name = if let Some(bungie_name_cell) = bungie_name_cell {
-                            bungie_name_cell
-                                .formatted_value
-                                .as_ref()
-                                .unwrap_or(&base_string)
-                                .clone()
-                        } else {
-                            base_string.clone()
-                        };
+                                let bungie_name = if let Some(bungie_name_cell) = bungie_name_cell {
+                                    bungie_name_cell
+                                        .formatted_value
+                                        .as_ref()
+                                        .unwrap_or(&base_string)
+                                        .clone()
+                                } else {
+                                    base_string.clone()
+                                };
 
-                        let discord_name = if let Some(discord_name_cell) = discord_name_cell {
-                            discord_name_cell
-                                .formatted_value
-                                .as_ref()
-                                .unwrap_or(&base_string)
-                                .clone()
-                        } else {
-                            base_string.clone()
-                        };
+                                let discord_name = if let Some(discord_name_cell) = discord_name_cell {
+                                    discord_name_cell
+                                        .formatted_value
+                                        .as_ref()
+                                        .unwrap_or(&base_string)
+                                        .clone()
+                                } else {
+                                    base_string.clone()
+                                };
 
-                        let discord_id = if let Some(discord_id_cell) = discord_id_cell {
-                            discord_id_cell.formatted_value.as_ref().unwrap_or(&base_string).clone()
-                        } else {
-                            base_string.clone()
-                        };
+                                let discord_id = if let Some(discord_id_cell) = discord_id_cell {
+                                    discord_id_cell.formatted_value.as_ref().unwrap_or(&base_string).clone()
+                                } else {
+                                    base_string.clone()
+                                };
 
-                        let bungie_membership = if let Some(bungie_membership_cell) = bungie_membership_cell {
-                            bungie_membership_cell
-                                .formatted_value
-                                .as_ref()
-                                .unwrap_or(&base_string)
-                                .clone()
-                        } else {
-                            base_string.clone()
-                        };
+                                let bungie_membership = if let Some(bungie_membership_cell) = bungie_membership_cell {
+                                    bungie_membership_cell
+                                        .formatted_value
+                                        .as_ref()
+                                        .unwrap_or(&base_string)
+                                        .clone()
+                                } else {
+                                    base_string.clone()
+                                };
 
-                        let bungie_platform = if let Some(bugnie_platform_cell) = bungie_membership_platform_cell {
-                            bugnie_platform_cell
-                                .formatted_value
-                                .as_ref()
-                                .unwrap_or(&base_string)
-                                .clone()
-                        } else {
-                            base_string.clone()
-                        };
-                        self.player_list
-                            .entry(bungie_membership.clone())
-                            .and_modify(|r| {
-                                *r = WorksheetPlayer {
-                                    bungie_name: bungie_name.clone(),
-                                    discord_name: discord_name.clone(),
-                                    discord_id: discord_id.clone(),
-                                    bungie_membership_id: bungie_membership.clone(),
-                                    bungie_platform: bungie_platform.clone(),
-                                }
-                            })
-                            .or_insert(WorksheetPlayer {
-                                bungie_name: bungie_name.clone(),
-                                discord_name: discord_name.clone(),
-                                discord_id: discord_id.clone(),
-                                bungie_membership_id: bungie_membership.clone(),
-                                bungie_platform: bungie_platform.clone(),
-                            });
+                                let bungie_platform =
+                                    if let Some(bugnie_platform_cell) = bungie_membership_platform_cell {
+                                        bugnie_platform_cell
+                                            .formatted_value
+                                            .as_ref()
+                                            .unwrap_or(&base_string)
+                                            .clone()
+                                    } else {
+                                        base_string.clone()
+                                    };
+                                self.player_list
+                                    .entry(bungie_membership.clone())
+                                    .and_modify(|r| {
+                                        *r = WorksheetPlayer {
+                                            bungie_name: bungie_name.clone(),
+                                            discord_name: discord_name.clone(),
+                                            discord_id: discord_id.clone(),
+                                            bungie_membership_id: bungie_membership.clone(),
+                                            bungie_platform: bungie_platform.clone(),
+                                        }
+                                    })
+                                    .or_insert(WorksheetPlayer {
+                                        bungie_name: bungie_name.clone(),
+                                        discord_name: discord_name.clone(),
+                                        discord_id: discord_id.clone(),
+                                        bungie_membership_id: bungie_membership.clone(),
+                                        bungie_platform: bungie_platform.clone(),
+                                    });
+                            }
+                        }
                     }
                 }
             }
@@ -189,70 +194,72 @@ impl MasterWorkbook {
         // now parse the clan sheets
         let mut clan_sheet_request = self.google.spreadsheets().get(&self.sheet_id);
         for clan_sheet in clan_sheet_names.iter() {
-            let info_range = format!("{clan_sheet}!B1:B3");
-            let roster_range = format!("{clan_sheet}!A6:B");
+            let info_range = format!("'{clan_sheet}'!B1:B3");
+            let roster_range = format!("'{clan_sheet}'!A6:B");
             clan_sheet_request = clan_sheet_request.add_ranges(&info_range).add_ranges(&roster_range);
         }
 
         let (_, clan_spreadsheet) = clan_sheet_request.include_grid_data(true).doit().await?;
         if let Some(clan_sheets) = clan_spreadsheet.sheets {
             for sheet in clan_sheets.iter() {
-                let mut clan_name = None;
-                let mut clan_group_id = None;
-                let mut clan_total_members = None;
-                let mut clan_members = Vec::new();
-                let data = sheet.data.as_ref().expect("Expecting grid data");
-                for grid_data in data.iter() {
-                    let row_data = grid_data.row_data.as_ref().expect("Expecting row data");
-                    for row in row_data.iter() {
-                        // parse the row here
-                        let mut txt_values = Vec::new();
-                        if let Some(cell_data) = row.values.as_ref() {
-                            txt_values.extend(
-                                cell_data
-                                    .iter()
-                                    .map(|v| v.formatted_value.as_ref().unwrap_or(&base_string).clone())
-                                    .collect::<Vec<String>>(),
-                            );
-                        }
+                if let Some(data) = sheet.data.as_ref() {
+                    let mut clan_name = None;
+                    let mut clan_group_id = None;
+                    let mut clan_total_members = None;
+                    let mut clan_members = Vec::new();
+                    for grid_data in data.iter() {
+                        if let Some(row_data) = grid_data.row_data.as_ref() {
+                            for row in row_data.iter() {
+                                // parse the row here
+                                let mut txt_values = Vec::new();
+                                if let Some(cell_data) = row.values.as_ref() {
+                                    txt_values.extend(
+                                        cell_data
+                                            .iter()
+                                            .map(|v| v.formatted_value.as_ref().unwrap_or(&base_string).clone())
+                                            .collect::<Vec<String>>(),
+                                    );
+                                }
 
-                        if clan_name.is_none() {
-                            clan_name = Some(txt_values.first().unwrap_or(&base_string).clone());
-                        } else if clan_group_id.is_none() {
-                            clan_group_id = Some(
-                                txt_values
-                                    .first()
-                                    .unwrap_or(&base_string)
-                                    .clone()
-                                    .parse::<i64>()
-                                    .unwrap_or_default(),
-                            );
-                        } else if clan_total_members.is_none() {
-                            clan_total_members = Some(txt_values.first().unwrap_or(&base_string).clone());
-                        } else {
-                            clan_members.push((
-                                txt_values.first().unwrap_or(&base_string).clone(),
-                                txt_values
-                                    .last()
-                                    .unwrap_or(&base_string)
-                                    .clone()
-                                    .parse::<i64>()
-                                    .unwrap_or(0),
-                            ));
+                                if clan_name.is_none() {
+                                    clan_name = Some(txt_values.first().unwrap_or(&base_string).clone());
+                                } else if clan_group_id.is_none() {
+                                    clan_group_id = Some(
+                                        txt_values
+                                            .first()
+                                            .unwrap_or(&base_string)
+                                            .clone()
+                                            .parse::<i64>()
+                                            .unwrap_or_default(),
+                                    );
+                                } else if clan_total_members.is_none() {
+                                    clan_total_members = Some(txt_values.first().unwrap_or(&base_string).clone());
+                                } else {
+                                    clan_members.push((
+                                        txt_values.first().unwrap_or(&base_string).clone(),
+                                        txt_values
+                                            .last()
+                                            .unwrap_or(&base_string)
+                                            .clone()
+                                            .parse::<i64>()
+                                            .unwrap_or(0),
+                                    ));
+                                }
+                            }
                         }
                     }
-                }
 
-                // track
-                let clan_id = clan_group_id.unwrap_or_default();
-                self.clans.insert(
-                    clan_id,
-                    WorksheetClan {
-                        name: clan_name.unwrap_or_default(),
-                        group_id: clan_id,
-                        members: clan_members,
-                    },
-                );
+                    // track
+                    let clan_id = clan_group_id.unwrap_or_default();
+                    self.clans.insert(
+                        clan_id,
+                        WorksheetClan {
+                            name: clan_name.unwrap_or_default(),
+                            group_id: clan_id,
+                            members: clan_members,
+                        },
+                    );
+                }
             }
         }
 
@@ -321,7 +328,47 @@ impl MasterWorkbook {
 
     /// take the info from the local workbook and save it to the google spreadsheet
     pub async fn save(&self) -> anyhow::Result<()> {
-        //
+        // define player zone ranges
+        let mut clear_request = BatchClearValuesRequest::default();
+        let mut player_zones = Vec::new();
+        for (clan_id, clan_info) in self.clans.iter() {
+            player_zones.push(format!("'[Clan] {}'!A6:B", clan_info.name));
+        }
+        player_zones.push(format!("{SHEET_PLAYER_LIST}!A2:E"));
+        clear_request.ranges = Some(player_zones);
+
+        tracing::info!("Clearing  bulk writable zones");
+        self.google
+            .spreadsheets()
+            .values_batch_clear(clear_request, &self.sheet_id)
+            .doit()
+            .await?;
+
+        let mut write_batch_request = BatchUpdateValuesRequest::default();
+        let mut player_list_values = Vec::new();
+        for (membership_id, player) in self.player_list.iter() {
+            // row.push(vec![Value])
+            player_list_values.push(vec![
+                Value::String(player.bungie_name.clone()),
+                Value::String(player.discord_name.clone()),
+                Value::String(player.discord_id.clone()),
+                Value::String(player.bungie_membership_id.clone()),
+                Value::String(player.bungie_platform.clone()),
+            ]);
+        }
+        let mut player_value_range = ValueRange::default();
+        player_value_range.range = Some(format!("{SHEET_PLAYER_LIST}!A2:E"));
+        player_value_range.values = Some(player_list_values);
+
+        write_batch_request.data = Some(vec![player_value_range]);
+        write_batch_request.value_input_option = Some("USER_ENTERED".to_string());
+
+        tracing::info!("Writing to spreadsheet");
+        self.google
+            .spreadsheets()
+            .values_batch_update(write_batch_request, &self.sheet_id)
+            .doit()
+            .await?;
 
         Ok(())
     }
@@ -338,7 +385,8 @@ pub async fn test_job(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Updating from API");
     workbook.api_sync(env).await?;
 
-    tracing::info!("{:?}", workbook.player_list);
+    tracing::info!("Saving workbook");
+    workbook.save().await?;
 
     Ok(())
 }
