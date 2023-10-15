@@ -360,7 +360,26 @@ impl MasterWorkbook {
         player_value_range.range = Some(format!("{SHEET_PLAYER_LIST}!A2:E"));
         player_value_range.values = Some(player_list_values);
 
-        write_batch_request.data = Some(vec![player_value_range]);
+        let mut data_ranges = Vec::new();
+        for (clan_id, clan) in self.clans.iter() {
+            let mut clan_range = ValueRange::default();
+            clan_range.range = Some(format!("'[Clan] {}'!A6:B", clan.name));
+
+            let mut clan_values = Vec::new();
+
+            for (member_name, member_role) in clan.members.iter() {
+                clan_values.push(vec![
+                    Value::String(member_name.clone()),
+                    Value::String(member_role.to_string()),
+                ]);
+            }
+
+            clan_range.values = Some(clan_values);
+            data_ranges.push(clan_range);
+        }
+        data_ranges.push(player_value_range);
+
+        write_batch_request.data = Some(data_ranges);
         write_batch_request.value_input_option = Some("USER_ENTERED".to_string());
 
         tracing::info!("Writing to spreadsheet");
