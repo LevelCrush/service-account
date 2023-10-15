@@ -18,6 +18,10 @@ pub enum AppVariable {
     PriorityTaskWorkers,
     Network,
     MasterWorkSheet,
+
+    DiscordBotToken,
+    DiscordClientId,
+    DiscordClientSecret,
 }
 
 impl From<AppVariable> for &'static str {
@@ -33,6 +37,9 @@ impl From<AppVariable> for &'static str {
             AppVariable::PriorityTaskWorkers => "PRIORITY_TASK_WORKERS",
             AppVariable::Network => "CLAN_NETWORK",
             AppVariable::MasterWorkSheet => "MASTER_WORKSHEET",
+            AppVariable::DiscordBotToken => "DISCORD_BOT_TOKEN",
+            AppVariable::DiscordClientId => "DISCORD_CLIENT_ID",
+            AppVariable::DiscordClientSecret => "DISCORD_CLIENT_SECRET",
         }
     }
 }
@@ -53,6 +60,9 @@ pub struct Env {
     workers: i64,
     network: Vec<i64>,
     master_worksheet: String,
+    discord_bot_token: String,
+    discord_client_id: String,
+    discord_client_secret: String,
 }
 
 impl Env {
@@ -74,6 +84,9 @@ impl Env {
                 .collect::<Vec<String>>()
                 .join(","),
             AppVariable::MasterWorkSheet => self.master_worksheet.clone(),
+            AppVariable::DiscordBotToken => self.discord_bot_token.clone(),
+            AppVariable::DiscordClientId => self.discord_client_id.clone(),
+            AppVariable::DiscordClientSecret => self.discord_client_secret.clone(),
             default => "".to_string(),
         })
     }
@@ -89,6 +102,9 @@ impl Env {
                 AppVariable::PriorityTaskWorkers => vec![format!("{}", self.workers)],
                 AppVariable::Network => self.network.iter().map(|v| v.to_string()).collect::<Vec<String>>(),
                 AppVariable::MasterWorkSheet => vec![self.master_worksheet.clone()],
+                AppVariable::DiscordBotToken => vec![self.discord_bot_token.clone()],
+                AppVariable::DiscordClientId => vec![self.discord_client_id.clone()],
+                AppVariable::DiscordClientSecret => vec![self.discord_client_secret.clone()],
                 default => vec!["".to_string()],
             }
         }

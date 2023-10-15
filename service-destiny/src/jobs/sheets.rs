@@ -5,11 +5,13 @@ use google_sheets4::{hyper, hyper_rustls, Sheets};
 use google_sheets4::{
     hyper::client::HttpConnector, hyper_rustls::HttpsConnector, oauth2::authenticator::Authenticator,
 };
+use levelcrush::proc_macros::ExternalAPIResponse;
 use levelcrush::{anyhow, project_str, tracing};
 use lib_destiny::app::state::AppState;
 use lib_destiny::env::{AppVariable, Env};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::time::Duration;
 
 const GOOGLE_CREDENTIALS: &str = project_str!("google_credentials.json");
 
@@ -38,6 +40,45 @@ pub struct MasterWorkbook {
     pub player_list: HashMap<String, WorksheetPlayer>,
     pub clans: HashMap<i64, WorksheetClan>,
     pub google: Sheets<HttpsConnector<HttpConnector>>,
+}
+
+#[ExternalAPIResponse]
+pub struct DiscordUserResponse {
+    pub id: Option<String>,
+    pub username: String,
+    pub discriminator: String,
+    pub avatar: Option<String>,
+    pub global_name: Option<String>,
+    pub display_name: Option<String>,
+}
+
+/// queries a discord user directly by their discord id
+pub async fn member_api(discord_id: &str, env: &Env, state: &AppState) -> Option<DiscordUserResponse> {
+    let bot_token = env.get(AppVariable::DiscordBotToken);
+    let bot_auth = format!("Bot {}", bot_token);
+    let discord_user_id = discord_id;
+
+    let endpoint = format!("https://discord.com/api/v10/users/{}", discord_user_id);
+    let request = state
+        .bungie
+        .http_client
+        .get(&endpoint)
+        .header("Authorization", bot_auth)
+        .send()
+        .await;
+
+    if let Ok(request) = request {
+        let json = request.json::<DiscordUserResponse>().await;
+        if let Ok(json) = json {
+            Some(json)
+        } else {
+            let err = json.err().unwrap();
+            tracing::error!("Error occurred while parsing user response:\r\n{}", err);
+            None
+        }
+    } else {
+        None
+    }
 }
 
 impl MasterWorkbook {
@@ -321,6 +362,26 @@ impl MasterWorkbook {
                         .push((member.display_name_global.clone(), member.clan_group_role));
                 }
             });
+        }
+
+        tracing::info!("Updating players discord information");
+        for (player_id, player) in self.player_list.iter_mut() {
+            if player.discord_id.trim().len() > 0 {
+                tracing::info!("Fetching {} linked discord username", player.bungie_name);
+                let member_data = member_api(&player.discord_id, env, &app_state).await;
+                if let Some(member_data) = member_data {
+                    player.discord_name = if member_data.discriminator == "0" {
+                        member_data.username
+                    } else {
+                        format!("{}#{}", member_data.username, member_data.discriminator)
+                    };
+                }
+
+                // sleep so we can avoid being rate limited
+                levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
+            } else {
+                tracing::info!("No known discord for  {}", player.bungie_name);
+            }
         }
 
         Ok(())
