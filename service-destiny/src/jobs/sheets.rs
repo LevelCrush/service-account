@@ -45,8 +45,8 @@ pub struct MasterWorkbook {
 #[ExternalAPIResponse]
 pub struct DiscordUserResponse {
     pub id: Option<String>,
-    pub username: String,
-    pub discriminator: String,
+    pub username: Option<String>,
+    pub discriminator: Option<String>,
     pub avatar: Option<String>,
     pub global_name: Option<String>,
     pub display_name: Option<String>,
@@ -370,15 +370,29 @@ impl MasterWorkbook {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
                 let member_data = member_api(&player.discord_id, env, &app_state).await;
                 if let Some(member_data) = member_data {
-                    player.discord_name = if member_data.discriminator == "0" {
-                        member_data.username
+                    let discriminator = member_data.discriminator.unwrap_or_default();
+
+                    player.discord_name = if discriminator == "0" || discriminator.is_empty() {
+                        member_data.username.unwrap_or(
+                            member_data
+                                .display_name
+                                .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone())),
+                        )
                     } else {
-                        format!("{}#{}", member_data.username, member_data.discriminator)
+                        format!(
+                            "{}#{}",
+                            member_data.username.unwrap_or(
+                                member_data
+                                    .display_name
+                                    .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone()))
+                            ),
+                            discriminator
+                        )
                     };
                 }
 
                 // sleep so we can avoid being rate limited
-                levelcrush::tokio::time::sleep(Duration::from_millis(100)).await;
+                levelcrush::tokio::time::sleep(Duration::from_millis(1000)).await;
             } else {
                 tracing::info!("No known discord for  {}", player.bungie_name);
             }
