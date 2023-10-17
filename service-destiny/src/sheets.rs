@@ -36,13 +36,14 @@ pub struct WorksheetClan {
 
 #[derive(Clone)]
 pub struct MasterWorkbook {
-    pub sheet_id: String,
-    pub player_list: HashMap<String, WorksheetPlayer>,
-    pub clans: HashMap<i64, WorksheetClan>,
-    pub google: Sheets<HttpsConnector<HttpConnector>>,
+    sheet_id: String,
+    player_list: HashMap<String, WorksheetPlayer>,
+    clans: HashMap<i64, WorksheetClan>,
+    google: Sheets<HttpsConnector<HttpConnector>>,
 }
 
 impl MasterWorkbook {
+    /// construct a workbook connection
     pub async fn get(sheet_id: &str) -> anyhow::Result<MasterWorkbook> {
         tracing::info!("Constructing client");
         let client = hyper::Client::builder().build(
@@ -71,6 +72,19 @@ impl MasterWorkbook {
         };
 
         Ok(workbook)
+    }
+
+    /// get players
+    pub fn get_players(&self) -> &HashMap<String, WorksheetPlayer> {
+        &self.player_list
+    }
+
+    pub fn get_clans(&self) -> &HashMap<i64, WorksheetClan> {
+        &self.clans
+    }
+
+    pub fn get_sheet_id(&self) -> &str {
+        &self.sheet_id
     }
 
     /// this will populate our Masterworkbook data structure with data from the spreadsheet
