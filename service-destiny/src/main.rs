@@ -1,6 +1,8 @@
 mod env;
 mod jobs;
 mod routes;
+pub mod sheets;
+pub mod discord;
 
 use clap::Parser;
 
