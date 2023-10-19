@@ -9,7 +9,10 @@ use google_sheets4::{
     hyper::client::HttpConnector, hyper_rustls::HttpsConnector, oauth2::authenticator::Authenticator,
 };
 use levelcrush::{anyhow, tracing};
+use lib_destiny::app::report::member::MemberReport;
 use lib_destiny::app::state::AppState;
+use lib_destiny::database;
+use lib_destiny::database::member::MemberResult;
 use lib_destiny::env::Env;
 use serde_json::Value;
 
@@ -40,6 +43,7 @@ pub struct MasterWorkbook {
     player_list: HashMap<String, WorksheetPlayer>,
     clans: HashMap<i64, WorksheetClan>,
     google: Sheets<HttpsConnector<HttpConnector>>,
+    player_reports: HashMap<String, MemberReport>,
 }
 
 impl MasterWorkbook {
@@ -68,6 +72,7 @@ impl MasterWorkbook {
             sheet_id: sheet_id.to_string(),
             player_list: HashMap::new(),
             clans: HashMap::new(),
+            player_reports: HashMap::new(),
             google,
         };
 
@@ -211,7 +216,7 @@ impl MasterWorkbook {
         let mut clan_sheet_request = self.google.spreadsheets().get(&self.sheet_id);
         for clan_sheet in clan_sheet_names.iter() {
             let info_range = format!("'{clan_sheet}'!B1:B3");
-            let roster_range = format!("'{clan_sheet}'!A6:B");
+            let roster_range = format!("'{clan_sheet}'!A6:G");
             clan_sheet_request = clan_sheet_request.add_ranges(&info_range).add_ranges(&roster_range);
         }
 
@@ -343,35 +348,81 @@ impl MasterWorkbook {
         for (player_id, player) in self.player_list.iter_mut() {
             if player.discord_id.trim().len() > 0 {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
-                let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
-                if let Some(member_data) = member_data {
-                    let discriminator = member_data.discriminator.unwrap_or_default();
+                if false {
+                    let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
+                    if let Some(member_data) = member_data {
+                        let discriminator = member_data.discriminator.unwrap_or_default();
 
-                    player.discord_name = if discriminator == "0" || discriminator.is_empty() {
-                        member_data.username.unwrap_or(
-                            member_data
-                                .display_name
-                                .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone())),
-                        )
-                    } else {
-                        format!(
-                            "{}#{}",
+                        player.discord_name = if discriminator == "0" || discriminator.is_empty() {
                             member_data.username.unwrap_or(
                                 member_data
                                     .display_name
-                                    .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone()))
-                            ),
-                            discriminator
-                        )
-                    };
-                }
+                                    .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone())),
+                            )
+                        } else {
+                            format!(
+                                "{}#{}",
+                                member_data.username.unwrap_or(
+                                    member_data
+                                        .display_name
+                                        .unwrap_or(member_data.global_name.unwrap_or(player.discord_name.clone()))
+                                ),
+                                discriminator
+                            )
+                        };
+                    }
 
-                // sleep so we can avoid being rate limited
-                levelcrush::tokio::time::sleep(Duration::from_millis(1000)).await;
+                    // sleep so we can avoid being rate limited
+                    levelcrush::tokio::time::sleep(Duration::from_millis(1000)).await;
+                }
             } else {
                 tracing::info!("No known discord for  {}", player.bungie_name);
             }
         }
+
+        Ok(())
+    }
+
+    pub async fn generate_reports(&mut self, env: &Env) -> anyhow::Result<()> {
+        tracing::info!("Getting active seasons");
+        let mut app_state = AppState::new(env).await;
+        let active_seasons = database::seasons::get_all_active(&app_state.database).await;
+
+        let recent_season = active_seasons.first().expect("No season found to report on");
+        tracing::info!("{:?}", recent_season);
+        let modes = vec![];
+        let mut final_reports = HashMap::new();
+        'task_loop: loop {
+            for (membership_id, player_data) in self.player_list.iter() {
+                let membership_id = membership_id.clone();
+                if !final_reports.contains_key(&membership_id) {
+                    let (timestamp, report) = lib_destiny::app::report::member::season(
+                        membership_id.as_str(),
+                        &modes,
+                        recent_season.number,
+                        true,
+                        &mut app_state,
+                    )
+                    .await;
+
+                    if let Some(report) = report {
+                        final_reports.entry(membership_id).or_insert(report);
+                    }
+                }
+            }
+            if final_reports.len() == self.player_list.len() {
+                break 'task_loop;
+            } else {
+                app_state.priority_tasks.step().await;
+                levelcrush::tokio::time::sleep(Duration::from_millis(5000)).await;
+            }
+        }
+
+        tracing::info!(
+            "Final Reports Generated: {} out of {}",
+            final_reports.len(),
+            self.player_list.len()
+        );
 
         Ok(())
     }
@@ -382,7 +433,7 @@ impl MasterWorkbook {
         let mut clear_request = BatchClearValuesRequest::default();
         let mut player_zones = Vec::new();
         for (clan_id, clan_info) in self.clans.iter() {
-            player_zones.push(format!("'[Clan] {}'!A6:B", clan_info.name));
+            player_zones.push(format!("'[Clan] {}'!A6:G", clan_info.name));
         }
         player_zones.push(format!("{SHEET_PLAYER_LIST}!A2:E"));
         clear_request.ranges = Some(player_zones);
@@ -416,7 +467,6 @@ impl MasterWorkbook {
             clan_range.range = Some(format!("'[Clan] {}'!A6:B", clan.name));
 
             let mut clan_values = Vec::new();
-
             for (member_name, member_role) in clan.members.iter() {
                 clan_values.push(vec![
                     Value::String(member_name.clone()),

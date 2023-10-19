@@ -392,7 +392,7 @@ pub async fn season<T: Into<String>>(
                         let max_snapshotable_season = std::env::var("REPORT_SEASON_MAX")
                             .unwrap_or_default()
                             .parse::<i64>()
-                            .unwrap_or(20);
+                            .unwrap_or(22);
 
                         let season = database::seasons::get(season, &thread_app_state.database).await;
                         let (season_start, season_end, season_number) = match season {

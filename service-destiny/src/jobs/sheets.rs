@@ -25,9 +25,13 @@ pub async fn sync(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Updating from API");
     workbook.api_sync(env).await?;
 
-    tracing::info!("Saving workbook");
-    workbook.save().await?;
+    tracing::info!("Generating reports");
+    workbook.generate_reports(env).await;
 
+    /*
+        tracing::info!("Saving workbook");
+        workbook.save().await?;
+    */
     Ok(())
 }
 
