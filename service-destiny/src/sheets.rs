@@ -46,6 +46,7 @@ pub struct WorksheetClan {
     pub name: String,
     pub group_id: i64,
     pub members: HashMap<i64, WorksheetClanMember>,
+    pub members_sorted: Vec<i64>,
 }
 
 #[derive(Clone)]
@@ -55,6 +56,7 @@ pub struct MasterWorkbook {
     clans: HashMap<i64, WorksheetClan>,
     google: Sheets<HttpsConnector<HttpConnector>>,
     player_reports: HashMap<String, MemberReport>,
+    player_list_sorted: Vec<String>,
 }
 
 impl MasterWorkbook {
@@ -84,6 +86,7 @@ impl MasterWorkbook {
             player_list: HashMap::new(),
             clans: HashMap::new(),
             player_reports: HashMap::new(),
+            player_list_sorted: Vec::new(),
             google,
         };
 
@@ -313,6 +316,7 @@ impl MasterWorkbook {
                             name: clan_name.unwrap_or_default(),
                             group_id: clan_id,
                             members: clan_members,
+                            members_sorted: Vec::new(),
                         },
                     );
                 }
@@ -398,7 +402,7 @@ impl MasterWorkbook {
         for (player_id, player) in self.player_list.iter_mut() {
             if player.discord_id.trim().len() > 0 {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
-                if false {
+                if true {
                     let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
                     if let Some(member_data) = member_data {
                         let discriminator = member_data.discriminator.unwrap_or_default();
@@ -428,6 +432,28 @@ impl MasterWorkbook {
             } else {
                 tracing::info!("No known discord for  {}", player.bungie_name);
             }
+        }
+
+        // sort members
+        let mut pl = self
+            .player_list
+            .iter()
+            .map(|(membership_id, member_data)| member_data.clone())
+            .collect::<Vec<WorksheetPlayer>>();
+
+        pl.sort_by(|a, b| a.bungie_name.cmp(&b.bungie_name));
+        self.player_list_sorted = pl.into_iter().map(|v| v.bungie_membership_id).collect::<Vec<String>>();
+
+        // sort clan members
+        for (clan_id, clan_data) in self.clans.iter_mut() {
+            let mut cl = clan_data
+                .members
+                .iter()
+                .map(|(membership_id, member)| member.clone())
+                .collect::<Vec<WorksheetClanMember>>();
+
+            cl.sort_by(|a, b| b.role.cmp(&a.role).then_with(|| a.name.cmp(&b.name)));
+            clan_data.members_sorted = cl.into_iter().map(|data| data.bungie_id).collect::<Vec<i64>>();
         }
 
         Ok(())
@@ -500,8 +526,12 @@ impl MasterWorkbook {
         let mut write_batch_request = BatchUpdateValuesRequest::default();
         let mut player_list_values = Vec::new();
 
-        for (membership_id, player) in self.player_list.iter() {
+        for membership_id in self.player_list_sorted.iter() {
             let membership_id = membership_id.clone();
+            let player = self
+                .player_list
+                .get(&membership_id)
+                .expect("Should of been member data here");
 
             // row.push(vec![Value])
             player_list_values.push(vec![
@@ -522,8 +552,9 @@ impl MasterWorkbook {
             clan_range.range = Some(format!("'[Clan] {}'!A6:F", clan.name));
 
             let mut clan_values = Vec::new();
-            for (member_id, member) in clan.members.iter() {
+            for member_id in clan.members_sorted.iter() {
                 let membership_id = member_id.to_string();
+                let member = clan.members.get(member_id).expect("Expected clan member data here");
                 let report = self.player_reports.get(&membership_id);
                 let (last_played, activity_count, frequent_clan_mates) = if let Some(player_report) = report {
                     let last_played_datetime = chrono::DateTime::<chrono::Utc>::from_utc(
