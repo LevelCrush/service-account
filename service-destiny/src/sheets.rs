@@ -8,6 +8,7 @@ use google_sheets4::{hyper, hyper_rustls, Sheets};
 use google_sheets4::{
     hyper::client::HttpConnector, hyper_rustls::HttpsConnector, oauth2::authenticator::Authenticator,
 };
+use levelcrush::chrono;
 use levelcrush::{anyhow, tracing};
 use lib_destiny::app::report::member::MemberReport;
 use lib_destiny::app::state::AppState;
@@ -31,10 +32,20 @@ pub struct WorksheetPlayer {
 }
 
 #[derive(Debug, Clone)]
+pub struct WorksheetClanMember {
+    pub name: String,
+    pub bungie_id: i64,
+    pub role: i64,
+    pub last_online: String,
+    pub seasonal_activities: i64,
+    pub frequent_clan_members: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct WorksheetClan {
     pub name: String,
     pub group_id: i64,
-    pub members: Vec<(String, i64)>,
+    pub members: HashMap<i64, WorksheetClanMember>,
 }
 
 #[derive(Clone)]
@@ -216,7 +227,7 @@ impl MasterWorkbook {
         let mut clan_sheet_request = self.google.spreadsheets().get(&self.sheet_id);
         for clan_sheet in clan_sheet_names.iter() {
             let info_range = format!("'{clan_sheet}'!B1:B3");
-            let roster_range = format!("'{clan_sheet}'!A6:G");
+            let roster_range = format!("'{clan_sheet}'!A6:F");
             clan_sheet_request = clan_sheet_request.add_ranges(&info_range).add_ranges(&roster_range);
         }
 
@@ -227,7 +238,7 @@ impl MasterWorkbook {
                     let mut clan_name = None;
                     let mut clan_group_id = None;
                     let mut clan_total_members = None;
-                    let mut clan_members = Vec::new();
+                    let mut clan_members = HashMap::new();
                     for grid_data in data.iter() {
                         if let Some(row_data) = grid_data.row_data.as_ref() {
                             for row in row_data.iter() {
@@ -256,15 +267,39 @@ impl MasterWorkbook {
                                 } else if clan_total_members.is_none() {
                                     clan_total_members = Some(txt_values.first().unwrap_or(&base_string).clone());
                                 } else {
-                                    clan_members.push((
-                                        txt_values.first().unwrap_or(&base_string).clone(),
-                                        txt_values
-                                            .last()
-                                            .unwrap_or(&base_string)
-                                            .clone()
-                                            .parse::<i64>()
-                                            .unwrap_or(0),
-                                    ));
+                                    let bungie_name = txt_values.first().unwrap_or(&base_string).clone();
+                                    let bungie_id = txt_values
+                                        .get(1)
+                                        .unwrap_or(&base_string)
+                                        .parse::<i64>()
+                                        .unwrap_or_default();
+                                    let role = txt_values
+                                        .get(2)
+                                        .unwrap_or(&base_string)
+                                        .parse::<i64>()
+                                        .unwrap_or_default();
+                                    let last_online = txt_values.get(3).unwrap_or(&base_string).clone();
+                                    let seasonal_activities = txt_values
+                                        .get(4)
+                                        .unwrap_or(&base_string)
+                                        .parse::<i64>()
+                                        .unwrap_or_default();
+                                    let frequent_clan_members = txt_values.get(5).unwrap_or(&base_string).clone();
+
+                                    clan_members.insert(
+                                        bungie_id,
+                                        WorksheetClanMember {
+                                            name: bungie_name,
+                                            bungie_id,
+                                            role,
+                                            last_online,
+                                            seasonal_activities,
+                                            frequent_clan_members: frequent_clan_members
+                                                .split(",")
+                                                .map(|v| v.to_string())
+                                                .collect::<Vec<String>>(),
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -323,6 +358,7 @@ impl MasterWorkbook {
             tracing::info!("Syncing latest {clan_id} roster to workbook");
             self.clans.entry(*clan_id).and_modify(|clan| {
                 clan.members.clear();
+
                 for member in clan_roster.iter() {
                     let membership_id = member.membership_id.to_string();
                     self.player_list
@@ -338,8 +374,22 @@ impl MasterWorkbook {
                             discord_name: String::new(),
                             bungie_platform: member.platform.to_string(),
                         });
-                    clan.members
-                        .push((member.display_name_global.clone(), member.clan_group_role));
+
+                    let last_played_at = chrono::DateTime::<chrono::Utc>::from_utc(
+                        chrono::NaiveDateTime::from_timestamp_opt(member.last_played_at, 0).unwrap(),
+                        chrono::Utc,
+                    );
+                    clan.members.insert(
+                        member.membership_id,
+                        WorksheetClanMember {
+                            name: member.display_name_global.clone(),
+                            bungie_id: member.membership_id,
+                            role: member.clan_group_role,
+                            last_online: format!("{}", last_played_at),
+                            seasonal_activities: 0,
+                            frequent_clan_members: Vec::new(),
+                        },
+                    );
                 }
             });
         }
@@ -406,21 +456,23 @@ impl MasterWorkbook {
                     .await;
 
                     if let Some(report) = report {
-                        final_reports.entry(membership_id).or_insert(report);
+                        tracing::info!("Storing {} into reports", membership_id);
+                        final_reports.insert(membership_id, report);
                     }
                 }
             }
             if final_reports.len() == self.player_list.len() {
+                self.player_reports = final_reports;
                 break 'task_loop;
             } else {
                 app_state.priority_tasks.step().await;
-                levelcrush::tokio::time::sleep(Duration::from_millis(5000)).await;
+                levelcrush::tokio::time::sleep(Duration::from_millis(1000)).await;
             }
         }
 
         tracing::info!(
             "Final Reports Generated: {} out of {}",
-            final_reports.len(),
+            self.player_reports.len(),
             self.player_list.len()
         );
 
@@ -433,7 +485,7 @@ impl MasterWorkbook {
         let mut clear_request = BatchClearValuesRequest::default();
         let mut player_zones = Vec::new();
         for (clan_id, clan_info) in self.clans.iter() {
-            player_zones.push(format!("'[Clan] {}'!A6:G", clan_info.name));
+            player_zones.push(format!("'[Clan] {}'!A6:F", clan_info.name));
         }
         player_zones.push(format!("{SHEET_PLAYER_LIST}!A2:E"));
         clear_request.ranges = Some(player_zones);
@@ -447,7 +499,10 @@ impl MasterWorkbook {
 
         let mut write_batch_request = BatchUpdateValuesRequest::default();
         let mut player_list_values = Vec::new();
+
         for (membership_id, player) in self.player_list.iter() {
+            let membership_id = membership_id.clone();
+
             // row.push(vec![Value])
             player_list_values.push(vec![
                 Value::String(player.bungie_name.clone()),
@@ -464,13 +519,44 @@ impl MasterWorkbook {
         let mut data_ranges = Vec::new();
         for (clan_id, clan) in self.clans.iter() {
             let mut clan_range = ValueRange::default();
-            clan_range.range = Some(format!("'[Clan] {}'!A6:B", clan.name));
+            clan_range.range = Some(format!("'[Clan] {}'!A6:F", clan.name));
 
             let mut clan_values = Vec::new();
-            for (member_name, member_role) in clan.members.iter() {
+            for (member_id, member) in clan.members.iter() {
+                let membership_id = member_id.to_string();
+                let report = self.player_reports.get(&membership_id);
+                let (last_played, activity_count, frequent_clan_mates) = if let Some(player_report) = report {
+                    let last_played_datetime = chrono::DateTime::<chrono::Utc>::from_utc(
+                        chrono::NaiveDateTime::from_timestamp_opt(player_report.last_played_at, 0).unwrap(),
+                        chrono::Utc,
+                    );
+
+                    let seasonal_activities = player_report.activity_attempts;
+
+                    let frequent_clan_members = player_report
+                        .frequent_clan_members
+                        .iter()
+                        .take(3)
+                        .map(|r| r.display_name.clone())
+                        .collect::<Vec<String>>()
+                        .join(", ");
+
+                    (
+                        format!("{}", last_played_datetime),
+                        seasonal_activities,
+                        frequent_clan_members,
+                    )
+                } else {
+                    ("N/A".to_string(), 0, "N/A".to_string())
+                };
+
                 clan_values.push(vec![
-                    Value::String(member_name.clone()),
-                    Value::String(member_role.to_string()),
+                    Value::String(member.name.clone()),
+                    Value::String(member_id.to_string()),
+                    Value::String(member.role.to_string()),
+                    Value::String(last_played),
+                    Value::String(activity_count.to_string()),
+                    Value::String(frequent_clan_mates),
                 ]);
             }
 
