@@ -568,7 +568,7 @@ impl MasterWorkbook {
                         .frequent_clan_members
                         .iter()
                         .take(3)
-                        .map(|r| r.display_name.clone())
+                        .map(|r| format!("{} ({})", r.display_name, r.activities))
                         .collect::<Vec<String>>()
                         .join(", ");
 

@@ -340,7 +340,7 @@ pub async fn activities(
                     let state_clone = state.clone();
                     let platform = member.platform;
                     future_handles.push(tokio::spawn(async move {
-                        jobs::task::activities(membership_id, platform, character, &state_clone)
+                        jobs::task::activities(membership_id, platform, character, false, &state_clone)
                             .await
                             .ok();
                     }));

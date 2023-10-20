@@ -59,3 +59,5 @@ output.log
 /public/sitemap*.xml
 
 google_credentials.json
+
+*.log

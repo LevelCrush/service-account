@@ -24,7 +24,7 @@ pub async fn history(args: &[String], env: &Env) -> anyhow::Result<()> {
 
         // now run our character task
         for character_id in character_ids.iter() {
-            task::activities(membership_id, membership_type, *character_id, &state).await?;
+            task::activities(membership_id, membership_type, *character_id, false, &state).await?;
         }
     }
 

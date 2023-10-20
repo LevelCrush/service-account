@@ -1286,6 +1286,7 @@ pub enum DestinyActivityModeType {
     ZoneControl = 89,
     IronBannerRift = 90,
     IronBannerZoneControl = 91,
+    Relic = 92,
     Unknown = i32::MAX,
 }
 
@@ -1382,6 +1383,7 @@ impl From<&str> for DestinyActivityModeType {
             "ZoneControl" => DestinyActivityModeType::ZoneControl,
             "IronBannerRift" => DestinyActivityModeType::IronBannerRift,
             "IronBannerZoneControl" => DestinyActivityModeType::IronBannerZoneControl,
+            "Relic" => DestinyActivityModeType::Relic,
             "0" => DestinyActivityModeType::None,
             "2" => DestinyActivityModeType::Story,
             "3" => DestinyActivityModeType::Strike,
@@ -1466,6 +1468,7 @@ impl From<&str> for DestinyActivityModeType {
             "89" => DestinyActivityModeType::ZoneControl,
             "90" => DestinyActivityModeType::IronBannerRift,
             "91" => DestinyActivityModeType::IronBannerZoneControl,
+            "92" => DestinyActivityModeType::Relic,
             _ => DestinyActivityModeType::Unknown,
         }
     }
@@ -1558,6 +1561,7 @@ impl From<i64> for DestinyActivityModeType {
             89 => DestinyActivityModeType::ZoneControl,
             90 => DestinyActivityModeType::IronBannerRift,
             91 => DestinyActivityModeType::IronBannerZoneControl,
+            92 => DestinyActivityModeType::Relic,
             _ => DestinyActivityModeType::Unknown,
         }
     }
@@ -1650,6 +1654,7 @@ impl From<DestinyActivityModeType> for &'static str {
             DestinyActivityModeType::ZoneControl => "ZoneControl",
             DestinyActivityModeType::IronBannerRift => "IronBannerRift",
             DestinyActivityModeType::IronBannerZoneControl => "IronBannerZoneControl",
+            DestinyActivityModeType::Relic => "Relic",
             DestinyActivityModeType::Unknown => "Unknown",
         }
     }

@@ -50,6 +50,7 @@ pub async fn crawl_profile_deep(args: &[String], env: &Env) -> anyhow::Result<()
                     profile_results.membership_id,
                     profile_results.membership_type,
                     *character,
+                    true,
                     &state,
                 )
                 .await?;

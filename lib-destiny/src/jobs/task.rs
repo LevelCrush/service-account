@@ -89,10 +89,15 @@ pub async fn activities(
     membership_id: MembershipId,
     membership_type: MembershipType,
     character_id: CharacterId,
+    fresh: bool,
     state: &AppState,
 ) -> anyhow::Result<Vec<InstanceId>> {
     // determine our starting point timestamp wise of when we allow new data in
-    let start_timestamp = database::activity_history::last_activity_timestamp(character_id, &state.database).await;
+    let start_timestamp = if fresh {
+        0
+    } else {
+        database::activity_history::last_activity_timestamp(character_id, &state.database).await
+    };
 
     tracing::info!("Fetching character history: {}", character_id);
     let activity_history = crate::api::activity::character(
