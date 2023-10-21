@@ -33,7 +33,6 @@ enum Job {
     Setup,
     SheetsSync,
     SheetsDiscordSync,
-    DiscordTest,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -77,7 +76,6 @@ async fn main() {
         Job::Setup => jobs::setup::run(&env).await,
         Job::SheetsSync => jobs::sheets::sync(&env).await,
         Job::SheetsDiscordSync => jobs::sheets::discord_sync(&env).await,
-        Job::DiscordTest => jobs::sheets::discord_test(&env).await,
     };
 
     if let Err(err) = result {
