@@ -3,6 +3,7 @@ mod env;
 mod jobs;
 mod routes;
 pub mod sheets;
+pub mod drive;
 
 use clap::Parser;
 

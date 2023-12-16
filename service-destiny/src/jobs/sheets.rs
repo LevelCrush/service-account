@@ -1,28 +1,19 @@
 use std::collections::HashMap;
-use std::process::exit;
 
-use google_sheets4::api::{BatchClearValuesRequest, BatchUpdateValuesRequest, ValueRange};
-use google_sheets4::hyper::Client;
-use google_sheets4::oauth2::{self};
-use google_sheets4::{hyper, hyper_rustls, Sheets};
-use google_sheets4::{
-    hyper::client::HttpConnector, hyper_rustls::HttpsConnector, oauth2::authenticator::Authenticator,
-};
-use levelcrush::{anyhow, project_str, tracing};
-use lib_destiny::env::{AppVariable, Env};
-use rand::distributions::Standard;
 use serenity::async_trait;
-use serenity::client::bridge::gateway::ShardManager;
 use serenity::framework::StandardFramework;
-use serenity::model::prelude::{Guild, GuildId, Ready};
+use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler, GatewayIntents};
+
+use levelcrush::{anyhow, tracing};
+use lib_destiny::env::{AppVariable, Env};
 
 use crate::sheets::{MasterWorkbook, WorksheetPlayer};
 
 pub async fn sync(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Constructing workbook connection");
     let sheet_id = env.get(AppVariable::MasterWorkSheet);
-    let mut workbook = MasterWorkbook::get(&sheet_id).await?;
+    let mut workbook = MasterWorkbook::connect(&sheet_id).await?;
 
     tracing::info!("Loading information");
     workbook.load().await?;
@@ -144,7 +135,7 @@ impl EventHandler for MasterWorkbook {
 pub async fn discord_sync(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Constructing workbook connection");
     let sheet_id = env.get(AppVariable::MasterWorkSheet);
-    let mut workbook = MasterWorkbook::get(&sheet_id).await?;
+    let mut workbook = MasterWorkbook::connect(&sheet_id).await?;
 
     tracing::info!("Loading workbook information");
     workbook.load().await?;
@@ -153,7 +144,6 @@ pub async fn discord_sync(env: &Env) -> anyhow::Result<()> {
     let workbook = workbook;
 
     // construct discord bot to connect to any servers
-
     let discord_bot_token = env.get(AppVariable::DiscordBotToken);
     let discord_intents = GatewayIntents::all();
     let mut discord_client = serenity::Client::builder(&discord_bot_token, discord_intents)
