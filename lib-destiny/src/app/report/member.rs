@@ -1,4 +1,18 @@
-use crate::app::instance;
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+use std::collections::HashSet;
+
+use levelcrush::alias::destiny::InstanceId;
+use levelcrush::alias::destiny::MembershipId;
+use levelcrush::alias::UnixTimestamp;
+use levelcrush::bigdecimal::ToPrimitive;
+use levelcrush::cache::CacheDuration;
+use levelcrush::cache::CacheValue;
+use levelcrush::chrono::{self, Datelike, TimeZone};
+use levelcrush::tokio;
+use levelcrush::tracing;
+use levelcrush::util::unix_timestamp;
+
 use crate::app::responses::{MemberResponse, MemberTitle};
 use crate::app::state::CacheItem;
 use crate::bungie::enums::DestinyActivityModeType;
@@ -10,19 +24,6 @@ use crate::{
     app::{self, state::AppState},
     database,
 };
-use levelcrush::alias::destiny::InstanceId;
-use levelcrush::alias::destiny::MembershipId;
-use levelcrush::alias::UnixTimestamp;
-use levelcrush::bigdecimal::ToPrimitive;
-use levelcrush::cache::CacheDuration;
-use levelcrush::cache::CacheValue;
-use levelcrush::chrono::{self, Datelike, TimeZone, Utc};
-use levelcrush::tokio;
-use levelcrush::tracing;
-use levelcrush::util::unix_timestamp;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
-use std::collections::HashSet;
 
 const CACHE_DURATION_REPORT: CacheDuration = CacheDuration::HalfDay;
 const VERSION_MEMBER_REPORT_CURRENT: i64 = 0;
@@ -389,10 +390,11 @@ pub async fn season<T: Into<String>>(
             target_manager
                 .queue(Box::new(move || {
                     Box::pin(async move {
-                        let max_snapshotable_season = std::env::var("REPORT_SEASON_MAX")
-                            .unwrap_or_default()
-                            .parse::<i64>()
-                            .unwrap_or(22);
+                        let active_seasons = database::seasons::get_all_active(&thread_app_state.database).await;
+                        let recent_season = active_seasons.first().expect("No season found to report on");
+
+                        // whatever season we are in - 1 is the most we can snapshot too, the rest will be to the current timestamp
+                        let max_snapshotable_season = recent_season.number - 1;
 
                         let season = database::seasons::get(season, &thread_app_state.database).await;
                         let (season_start, season_end, season_number) = match season {

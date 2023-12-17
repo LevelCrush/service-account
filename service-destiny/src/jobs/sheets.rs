@@ -18,6 +18,12 @@ pub async fn sync(env: &Env) -> anyhow::Result<()> {
     tracing::info!("Loading information");
     workbook.load().await?;
 
+    tracing::info!(
+        "Last Updated: {} | Season: {}",
+        workbook.get_lastupdated(),
+        workbook.get_season()
+    );
+
     tracing::info!("Updating from API");
     workbook.api_sync(env).await?;
 
@@ -29,8 +35,8 @@ pub async fn sync(env: &Env) -> anyhow::Result<()> {
 
     drop(workbook);
 
-    tracing::info!("Syncing discord");
-    discord_sync(env).await?;
+    // tracing::info!("Syncing discord");
+    // discord_sync(env).await?;
 
     Ok(())
 }

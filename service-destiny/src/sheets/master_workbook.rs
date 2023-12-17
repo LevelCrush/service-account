@@ -11,7 +11,6 @@ use levelcrush::chrono;
 use levelcrush::{anyhow, tracing};
 use lib_destiny::app::report::member::MemberReport;
 use lib_destiny::app::state::AppState;
-use lib_destiny::database;
 use lib_destiny::env::Env;
 
 use crate::discord;
@@ -35,6 +34,8 @@ pub struct WorksheetClanMember {
     pub role: i64,
     pub last_online: String,
     pub seasonal_activities: i64,
+    pub seasonal_activities_with_clan: i64,
+    pub seasonal_activities_with_clan_percent: f64,
     pub frequent_clan_members: Vec<String>,
 }
 
@@ -110,6 +111,14 @@ impl MasterWorkbook {
         &self.sheet_id
     }
 
+    pub fn get_season(&self) -> &str {
+        &self.season
+    }
+
+    pub fn get_lastupdated(&self) -> &str {
+        &self.last_updated
+    }
+
     /// this will populate our Masterworkbook data structure with data from the spreadsheet
     /// this will make 0 api calls to the bungie api
     /// use this function to provide a state that is READ FROM THE SPREADSHEET
@@ -117,6 +126,8 @@ impl MasterWorkbook {
         // clear arrays
         self.clans.clear();
         self.player_list.clear();
+
+        let base_string = String::new();
 
         let (_, workbook) = self.google.spreadsheets().get(&self.sheet_id).doit().await?;
 
@@ -128,6 +139,49 @@ impl MasterWorkbook {
                 let sheet_title = properties.title.unwrap_or_default();
                 if sheet_title.starts_with("[Clan]") {
                     clan_sheet_names.push(sheet_title);
+                }
+            }
+        }
+
+        // info sheet parsing
+        let info_sheet_range = format!("'Info'!B1:B2");
+        let (_, info_range) = self
+            .google
+            .spreadsheets()
+            .get(&self.sheet_id)
+            .add_ranges(&info_sheet_range)
+            .include_grid_data(true)
+            .doit()
+            .await?;
+
+        let sheets = info_range.sheets.unwrap_or_default();
+        let info_sheet = sheets.first();
+        if let Some(info_sheet) = info_sheet {
+            if let Some(data) = info_sheet.data.as_ref() {
+                for grid_data in data.iter() {
+                    if let Some(row_data) = grid_data.row_data.as_ref() {
+                        for row in row_data.iter() {
+                            let mut txt_values = Vec::new();
+                            if let Some(cell_data) = row.values.as_ref() {
+                                txt_values.extend(
+                                    cell_data
+                                        .iter()
+                                        .map(|v| v.formatted_value.as_ref().unwrap_or(&base_string).clone())
+                                        .collect::<Vec<String>>(),
+                                );
+                            }
+
+                            // this works for now, but it is very limited to this particular scenario of usage
+                            // for our info sheet, we are only requesting 2 rows of info
+                            // one row = one value
+                            // so this works to extract since our first is always going to be the "Last updated" field
+                            if (self.last_updated.is_empty()) {
+                                self.last_updated = txt_values.first().unwrap_or(&base_string).clone();
+                            } else {
+                                self.season = txt_values.first().unwrap_or(&base_string).clone();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -146,7 +200,7 @@ impl MasterWorkbook {
 
         let sheets = player_list_range.sheets.unwrap_or_default();
         let player_sheet = sheets.first();
-        let base_string = String::new();
+
         if let Some(player_sheet) = player_sheet {
             if let Some(data) = player_sheet.data.as_ref() {
                 for grid_data in data.iter() {
@@ -291,6 +345,25 @@ impl MasterWorkbook {
                                         .unwrap_or(&base_string)
                                         .parse::<i64>()
                                         .unwrap_or_default();
+
+                                    let seasonal_activities_with_clan = txt_values
+                                        .get(5)
+                                        .unwrap_or(&base_string)
+                                        .parse::<i64>()
+                                        .unwrap_or_default();
+                                    let mut seasonal_activities_with_clan_percent =
+                                        txt_values.get(6).unwrap_or(&base_string).clone();
+
+                                    // removed the % at the end if its visible
+
+                                    if (seasonal_activities_with_clan_percent.ends_with("%")) {
+                                        seasonal_activities_with_clan_percent
+                                            .truncate(seasonal_activities_with_clan_percent.len() - 1);
+                                    }
+
+                                    let seasonal_activities_with_clan_percent =
+                                        seasonal_activities_with_clan_percent.parse::<f64>().unwrap_or_default();
+
                                     let frequent_clan_members = txt_values.get(5).unwrap_or(&base_string).clone();
 
                                     clan_members.insert(
@@ -301,6 +374,8 @@ impl MasterWorkbook {
                                             role,
                                             last_online,
                                             seasonal_activities,
+                                            seasonal_activities_with_clan,
+                                            seasonal_activities_with_clan_percent,
                                             frequent_clan_members: frequent_clan_members
                                                 .split(",")
                                                 .map(|v| v.to_string())
@@ -395,6 +470,8 @@ impl MasterWorkbook {
                             role: member.clan_group_role,
                             last_online: format!("{}", last_played_at),
                             seasonal_activities: 0,
+                            seasonal_activities_with_clan_percent: 0f64,
+                            seasonal_activities_with_clan: 0,
                             frequent_clan_members: Vec::new(),
                         },
                     );
@@ -406,7 +483,7 @@ impl MasterWorkbook {
         for (player_id, player) in self.player_list.iter_mut() {
             if player.discord_id.trim().len() > 0 {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
-                if true {
+                if false {
                     let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
                     if let Some(member_data) = member_data {
                         let discriminator = member_data.discriminator.unwrap_or_default();
@@ -445,7 +522,13 @@ impl MasterWorkbook {
             .map(|(membership_id, member_data)| member_data.clone())
             .collect::<Vec<WorksheetPlayer>>();
 
-        pl.sort_by(|a, b| a.bungie_name.cmp(&b.bungie_name));
+        pl.sort_by(|a, b| {
+            let a_name = a.bungie_name.to_lowercase();
+            let b_name = b.bungie_name.to_lowercase();
+            let a_name = a_name.trim();
+            let b_name = b_name.trim();
+            a_name.cmp(b_name)
+        });
         self.player_list_sorted = pl.into_iter().map(|v| v.bungie_membership_id).collect::<Vec<String>>();
 
         // sort clan members
@@ -456,7 +539,15 @@ impl MasterWorkbook {
                 .map(|(membership_id, member)| member.clone())
                 .collect::<Vec<WorksheetClanMember>>();
 
-            cl.sort_by(|a, b| b.role.cmp(&a.role).then_with(|| a.name.cmp(&b.name)));
+            cl.sort_by(|a, b| {
+                b.role.cmp(&a.role).then_with(|| {
+                    let a_name = a.name.to_lowercase();
+                    let b_name = b.name.to_lowercase();
+                    let a_name = a_name.trim();
+                    let b_name = b_name.trim();
+                    a_name.cmp(b_name)
+                })
+            });
             clan_data.members_sorted = cl.into_iter().map(|data| data.bungie_id).collect::<Vec<i64>>();
         }
 
@@ -466,24 +557,54 @@ impl MasterWorkbook {
     pub async fn generate_reports(&mut self, env: &Env) -> anyhow::Result<()> {
         tracing::info!("Getting active seasons");
         let mut app_state = AppState::new(env).await;
-        let active_seasons = database::seasons::get_all_active(&app_state.database).await;
 
-        let recent_season = active_seasons.first().expect("No season found to report on");
-        tracing::info!("{:?}", recent_season);
+        let target_season = self.season.to_lowercase();
+        let workbook_season = target_season.trim();
+        let target_season = if workbook_season.is_empty() || workbook_season == "lifetime" {
+            0
+        } else {
+            self.season.parse::<i64>().unwrap_or_default()
+        };
+
+        tracing::info!("Running reports for season: {target_season}");
+
+        // update the updated timestamp
+        let current_timestamp = format!("{} UTC", chrono::Utc::now().format("%c"));
+        tracing::info!("Updating 'last updated' field to: {}", current_timestamp);
+        self.last_updated = current_timestamp;
+
+        // update season if neccessary
+        if target_season == 0 {
+            self.season = "Lifetime".to_string();
+        }
+
         let modes = vec![];
         let mut final_reports = HashMap::new();
         'task_loop: loop {
             for (membership_id, player_data) in self.player_list.iter() {
                 let membership_id = membership_id.clone();
                 if !final_reports.contains_key(&membership_id) {
-                    let (timestamp, report) = lib_destiny::app::report::member::season(
-                        membership_id.as_str(),
-                        &modes,
-                        recent_season.number,
-                        true,
-                        &mut app_state,
-                    )
-                    .await;
+                    let (timestamp, report) = match (target_season) {
+                        0 => {
+                            lib_destiny::app::report::member::lifetime(
+                                membership_id.as_str(),
+                                &modes,
+                                true,
+                                &mut app_state,
+                            )
+                            .await
+                        }
+                        default => {
+                            lib_destiny::app::report::member::season(
+                                membership_id.as_str(),
+                                &modes,
+                                target_season,
+                                true,
+                                &mut app_state,
+                            )
+                            .await
+                        }
+                    };
 
                     if let Some(report) = report {
                         tracing::info!("Storing {} into reports", membership_id);
@@ -528,8 +649,10 @@ impl MasterWorkbook {
             .await?;
 
         let mut write_batch_request = BatchUpdateValuesRequest::default();
-        let mut player_list_values = Vec::new();
+        let mut data_ranges = Vec::new();
 
+        // extract player range values
+        let mut player_list_values = Vec::new();
         for membership_id in self.player_list_sorted.iter() {
             let membership_id = membership_id.clone();
             let player = self
@@ -546,44 +669,61 @@ impl MasterWorkbook {
                 Value::String(player.bungie_platform.clone()),
             ]);
         }
+
+        // construct player range
         let mut player_value_range = ValueRange::default();
         player_value_range.range = Some(format!("{SHEET_PLAYER_LIST}!A2:E"));
         player_value_range.values = Some(player_list_values);
+        data_ranges.push(player_value_range);
 
-        let mut data_ranges = Vec::new();
+        // start building the clan ranges
         for (clan_id, clan) in self.clans.iter() {
             let mut clan_range = ValueRange::default();
-            clan_range.range = Some(format!("'[Clan] {}'!A6:F", clan.name));
+            clan_range.range = Some(format!("'[Clan] {}'!A6:H", clan.name));
 
             let mut clan_values = Vec::new();
             for member_id in clan.members_sorted.iter() {
                 let membership_id = member_id.to_string();
                 let member = clan.members.get(member_id).expect("Expected clan member data here");
                 let report = self.player_reports.get(&membership_id);
-                let (last_played, activity_count, frequent_clan_mates) = if let Some(player_report) = report {
-                    let last_played_datetime = chrono::DateTime::<chrono::Utc>::from_utc(
-                        chrono::NaiveDateTime::from_timestamp_opt(player_report.last_played_at, 0).unwrap(),
-                        chrono::Utc,
-                    );
+                let (last_played, activity_count, activity_count_clan, activity_percent_with_clan, frequent_clan_mates) =
+                    if let Some(player_report) = report {
+                        let last_played_datetime = chrono::DateTime::<chrono::Utc>::from_utc(
+                            chrono::NaiveDateTime::from_timestamp_opt(player_report.last_played_at, 0).unwrap(),
+                            chrono::Utc,
+                        );
 
-                    let seasonal_activities = player_report.activity_attempts;
+                        let seasonal_activities = player_report.activity_attempts;
 
-                    let frequent_clan_members = player_report
-                        .frequent_clan_members
-                        .iter()
-                        .take(3)
-                        .map(|r| format!("{} ({})", r.display_name, r.activities))
-                        .collect::<Vec<String>>()
-                        .join(", ");
+                        let seasonal_activities_with_clan = player_report.activity_attempts_with_clan;
+                        let seasonal_activities_with_clan_percent =
+                            ((seasonal_activities_with_clan as f64 / seasonal_activities as f64) * 100.00f64);
 
-                    (
-                        format!("{}", last_played_datetime),
-                        seasonal_activities,
-                        frequent_clan_members,
-                    )
-                } else {
-                    ("N/A".to_string(), 0, "N/A".to_string())
-                };
+                        // guard against NaN, in case of 0 / 0 for example
+                        let seasonal_activities_with_clan_percent = if seasonal_activities_with_clan_percent.is_nan() {
+                            0f64
+                        } else {
+                            seasonal_activities_with_clan_percent
+                        };
+
+                        let frequent_clan_members = player_report
+                            .frequent_clan_members
+                            .iter()
+                            .take(3)
+                            .map(|r| format!("{} ({})", r.display_name, r.activities))
+                            .collect::<Vec<String>>()
+                            .join(", ");
+
+                        (
+                            format!("{}", last_played_datetime),
+                            seasonal_activities,
+                            seasonal_activities_with_clan,
+                            seasonal_activities_with_clan_percent,
+                            frequent_clan_members,
+                        )
+                    } else {
+                        ("N/A".to_string(), 0, 0, 0f64, "N/A".to_string())
+                    };
 
                 clan_values.push(vec![
                     Value::String(member.name.clone()),
@@ -591,6 +731,8 @@ impl MasterWorkbook {
                     Value::String(member.role.to_string()),
                     Value::String(last_played),
                     Value::String(activity_count.to_string()),
+                    Value::String(activity_count_clan.to_string()),
+                    Value::String(format!("{}%", activity_percent_with_clan)),
                     Value::String(frequent_clan_mates),
                 ]);
             }
@@ -598,7 +740,15 @@ impl MasterWorkbook {
             clan_range.values = Some(clan_values);
             data_ranges.push(clan_range);
         }
-        data_ranges.push(player_value_range);
+
+        // update Info sheet
+        let mut info_range = ValueRange::default();
+        info_range.range = Some("'Info'!B1:B2".to_string());
+        info_range.values = Some(vec![
+            vec![Value::String(self.last_updated.clone())],
+            vec![Value::String(self.season.to_string())],
+        ]);
+        data_ranges.push(info_range);
 
         write_batch_request.data = Some(data_ranges);
         write_batch_request.value_input_option = Some("USER_ENTERED".to_string());
