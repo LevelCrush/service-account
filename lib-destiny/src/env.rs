@@ -22,6 +22,8 @@ pub enum AppVariable {
     DiscordBotToken,
     DiscordClientId,
     DiscordClientSecret,
+    GoogleDriveReportsDestinyMasterSheet,
+    GoogleDriveReportDestinyFolder,
 }
 
 impl From<AppVariable> for &'static str {
@@ -40,6 +42,8 @@ impl From<AppVariable> for &'static str {
             AppVariable::DiscordBotToken => "DISCORD_BOT_TOKEN",
             AppVariable::DiscordClientId => "DISCORD_CLIENT_ID",
             AppVariable::DiscordClientSecret => "DISCORD_CLIENT_SECRET",
+            AppVariable::GoogleDriveReportsDestinyMasterSheet => "GOOGLEDRIVE_REPORTS_DESTINY_MASTER",
+            AppVariable::GoogleDriveReportDestinyFolder => "GOOGLEDRIVE_REPORTS_DESTINY_FOLDER",
         }
     }
 }
@@ -59,10 +63,14 @@ pub struct Env {
     bungie_api_key: String,
     workers: i64,
     network: Vec<i64>,
-    master_worksheet: String,
     discord_bot_token: String,
     discord_client_id: String,
     discord_client_secret: String,
+    #[serde(rename = "googledrive.reports.destiny.master_sheet")]
+    googledrive_reports_destiny_mastersheet: String,
+
+    #[serde(rename = "googledrive.reports.destiny.folder")]
+    googledrive_reports_destiny_folder: String,
 }
 
 impl Env {
@@ -83,10 +91,13 @@ impl Env {
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>()
                 .join(","),
-            AppVariable::MasterWorkSheet => self.master_worksheet.clone(),
+            AppVariable::MasterWorkSheet => self.googledrive_reports_destiny_mastersheet.clone(),
             AppVariable::DiscordBotToken => self.discord_bot_token.clone(),
             AppVariable::DiscordClientId => self.discord_client_id.clone(),
             AppVariable::DiscordClientSecret => self.discord_client_secret.clone(),
+            AppVariable::GoogleDriveReportDestinyFolder => self.googledrive_reports_destiny_folder.clone(),
+            AppVariable::GoogleDriveReportsDestinyMasterSheet => self.googledrive_reports_destiny_mastersheet.clone(),
+
             default => "".to_string(),
         })
     }
@@ -101,10 +112,14 @@ impl Env {
                 AppVariable::CrawlWorkers => vec![format!("{}", self.workers)],
                 AppVariable::PriorityTaskWorkers => vec![format!("{}", self.workers)],
                 AppVariable::Network => self.network.iter().map(|v| v.to_string()).collect::<Vec<String>>(),
-                AppVariable::MasterWorkSheet => vec![self.master_worksheet.clone()],
+                AppVariable::MasterWorkSheet => vec![self.googledrive_reports_destiny_mastersheet.clone()],
                 AppVariable::DiscordBotToken => vec![self.discord_bot_token.clone()],
                 AppVariable::DiscordClientId => vec![self.discord_client_id.clone()],
                 AppVariable::DiscordClientSecret => vec![self.discord_client_secret.clone()],
+                AppVariable::GoogleDriveReportDestinyFolder => vec![self.googledrive_reports_destiny_folder.clone()],
+                AppVariable::GoogleDriveReportsDestinyMasterSheet => {
+                    vec![self.googledrive_reports_destiny_mastersheet.clone()]
+                }
                 default => vec!["".to_string()],
             }
         }

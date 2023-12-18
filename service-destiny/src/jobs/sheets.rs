@@ -35,8 +35,8 @@ pub async fn sync(env: &Env) -> anyhow::Result<()> {
 
     drop(workbook);
 
-    // tracing::info!("Syncing discord");
-    // discord_sync(env).await?;
+    tracing::info!("Syncing discord");
+    discord_sync(env).await?;
 
     Ok(())
 }

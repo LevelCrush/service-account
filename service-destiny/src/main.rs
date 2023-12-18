@@ -1,15 +1,14 @@
-pub mod discord;
-mod env;
-mod jobs;
-mod routes;
-pub mod sheets;
-pub mod drive;
-
 use clap::Parser;
 
 // use the tokio install that we are using with our level crush library
 use levelcrush::{tokio, tracing};
-use lib_destiny::env::Env;
+
+pub mod discord;
+pub mod drive;
+mod env;
+mod jobs;
+mod routes;
+pub mod sheets;
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum Job {
@@ -34,6 +33,7 @@ enum Job {
     Setup,
     SheetsSync,
     SheetsDiscordSync,
+    ReportGenerate,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -77,6 +77,7 @@ async fn main() {
         Job::Setup => jobs::setup::run(&env).await,
         Job::SheetsSync => jobs::sheets::sync(&env).await,
         Job::SheetsDiscordSync => jobs::sheets::discord_sync(&env).await,
+        Job::ReportGenerate => jobs::reports::generate(&args.args, &env).await,
     };
 
     if let Err(err) = result {
