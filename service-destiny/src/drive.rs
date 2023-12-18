@@ -450,15 +450,42 @@ impl DriveDestinyReports {
 
 #[cfg(test)]
 mod test {
-    use levelcrush::anyhow;
+    use super::*;
+    use crate::env;
+    use crate::sheets::MasterWorkbook;
     use levelcrush::tokio;
     use lib_destiny::env::AppVariable;
-
-    use crate::env;
-
-    use super::*;
+    use tracing_test::traced_test;
 
     #[tokio::test]
+    #[traced_test]
+    pub async fn testWorkbookChange() -> anyhow::Result<()> {
+        let env = env::load();
+
+        let mut workbook = MasterWorkbook::connect("1eWoRFkKwo8-ZWv1fz5J1jP5FQwfmcRPOhr8l152A-l4").await?;
+        workbook.load().await?;
+
+        let target_clan = 5108335i64;
+        workbook.clans.remove(&target_clan);
+        workbook.season = "23".to_string();
+
+        tracing::info!("Sync");
+        workbook.api_sync(&env).await?;
+
+        tracing::info!("Generating reports");
+        workbook.generate_reports(&env).await?;
+
+        tracing::info!("Saving");
+        workbook.save().await?;
+
+        drop(workbook);
+
+        // remov eclan
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[traced_test]
     pub async fn testDiveSearch() -> anyhow::Result<()> {
         let env = env::load();
 

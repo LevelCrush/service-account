@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use google_sheets4::api::{BatchClearValuesRequest, BatchUpdateValuesRequest, ValueRange};
+use google_sheets4::api::{
+    BatchClearValuesRequest, BatchUpdateSpreadsheetRequest, BatchUpdateValuesRequest, DeleteSheetRequest,
+    DuplicateSheetRequest, Request, ValueRange,
+};
 use google_sheets4::oauth2::{self};
 use google_sheets4::{hyper, hyper_rustls, Sheets};
 use google_sheets4::{hyper::client::HttpConnector, hyper_rustls::HttpsConnector};
@@ -50,10 +53,10 @@ pub struct WorksheetClan {
 #[derive(Clone)]
 pub struct MasterWorkbook {
     sheet_id: String,
-    season: String,
-    last_updated: String,
+    pub season: String,
+    pub last_updated: String,
     player_list: HashMap<String, WorksheetPlayer>,
-    clans: HashMap<i64, WorksheetClan>,
+    pub clans: HashMap<i64, WorksheetClan>,
     google: Sheets<HttpsConnector<HttpConnector>>,
     player_reports: HashMap<String, MemberReport>,
     player_list_sorted: Vec<String>,
@@ -483,7 +486,7 @@ impl MasterWorkbook {
         for (player_id, player) in self.player_list.iter_mut() {
             if player.discord_id.trim().len() > 0 {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
-                if true {
+                if false {
                     let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
                     if let Some(member_data) = member_data {
                         let discriminator = member_data.discriminator.unwrap_or_default();
@@ -632,6 +635,106 @@ impl MasterWorkbook {
 
     /// take the info from the local workbook and save it to the google spreadsheet
     pub async fn save(&self) -> anyhow::Result<()> {
+        // first get all clan sheets
+        let mut template_sheet_id = 0;
+        let mut template_sheet_index = 0;
+        let mut clan_sheets = HashMap::new();
+        let (_, workbook) = self.google.spreadsheets().get(&self.sheet_id).doit().await?;
+        if let Some(sheets) = workbook.sheets {
+            for sheet in sheets.into_iter() {
+                if let Some(properties) = &sheet.properties {
+                    let properties = properties.clone();
+                    let sheet_name = properties.title.unwrap_or_default();
+                    let sheet_id = properties.sheet_id.unwrap_or_default();
+                    let index = properties.index.unwrap_or_default();
+                    if sheet_name.starts_with("[Clan]") {
+                        clan_sheets.insert(sheet_id, sheet_name);
+                    } else if sheet_name.starts_with("[Template]") {
+                        template_sheet_id = sheet_id;
+                        template_sheet_index = index;
+                    }
+                }
+            }
+        }
+
+        // determine which clans we are not keeping
+        let mut clans_to_remove = HashMap::new();
+        let mut clans_to_add = HashMap::new();
+
+        // determine which ones to remove
+        for (sheet_id, sheet_name) in clan_sheets.iter() {
+            let group_id = {
+                let mut ret_group_id = None;
+                'clan_sheet_check: for (group_id, clan) in self.clans.iter() {
+                    let formatted_name = format!("[Clan] {}", clan.name);
+                    if sheet_name.as_str() == formatted_name.as_str() {
+                        ret_group_id = Some(group_id);
+                        break 'clan_sheet_check;
+                    }
+                }
+                ret_group_id
+            };
+
+            if group_id.is_none() {
+                clans_to_remove.insert(*sheet_id, sheet_name.clone());
+            }
+        }
+
+        // determine which ones to add
+        for (group_id, clan) in self.clans.iter() {
+            let formatted_name = format!("[Clan] {}", clan.name);
+            let sheet_id = {
+                let mut ret_sheet_id = None;
+                'clan_sheet_check: for (sheet_id, sheet_name) in clan_sheets.iter() {
+                    if sheet_name.as_str() == formatted_name.as_str() {
+                        ret_sheet_id = Some(sheet_id);
+                        break 'clan_sheet_check;
+                    }
+                }
+                ret_sheet_id
+            };
+
+            if sheet_id.is_none() {
+                clans_to_add.insert(*group_id, formatted_name);
+            }
+        }
+
+        // setup batch request
+        let mut batch = BatchUpdateSpreadsheetRequest::default();
+
+        // delete request
+        let mut all_requests = Vec::new();
+        for (sheet_id, name) in clans_to_remove.into_iter() {
+            let mut req = Request::default();
+            let mut del_req = DeleteSheetRequest::default();
+            del_req.sheet_id = Some(sheet_id);
+            req.delete_sheet = Some(del_req);
+
+            all_requests.push(req);
+        }
+
+        // we are going to construct a duplicate sheet request from our template
+        for (group_id, name) in clans_to_add.iter() {
+            let mut req = Request::default();
+            let mut dup_req = DuplicateSheetRequest::default();
+            dup_req.source_sheet_id = Some(template_sheet_id);
+            dup_req.insert_sheet_index = Some(template_sheet_index - 1);
+            dup_req.new_sheet_name = Some(format!("[Clan] {}", name));
+            req.duplicate_sheet = Some(dup_req);
+
+            all_requests.push(req);
+        }
+
+        if !all_requests.is_empty() {
+            batch.requests = Some(all_requests);
+            tracing::info!("Adding and Deleting Clan Sheets");
+            self.google
+                .spreadsheets()
+                .batch_update(batch, &self.sheet_id)
+                .doit()
+                .await?;
+        }
+
         // define player zone ranges
         let mut clear_request = BatchClearValuesRequest::default();
         let mut player_zones = Vec::new();
@@ -678,6 +781,15 @@ impl MasterWorkbook {
 
         // start building the clan ranges
         for (clan_id, clan) in self.clans.iter() {
+            // clan info range
+            let mut clan_info_range = ValueRange::default();
+            clan_info_range.range = Some(format!("'[Clan] {}'!B1:B2", clan.name));
+            clan_info_range.values = Some(vec![
+                vec![Value::String(clan.name.clone())],
+                vec![Value::String(clan.group_id.to_string())],
+            ]);
+
+            // player roster range
             let mut clan_range = ValueRange::default();
             clan_range.range = Some(format!("'[Clan] {}'!A6:H", clan.name));
 
@@ -738,6 +850,7 @@ impl MasterWorkbook {
             }
 
             clan_range.values = Some(clan_values);
+            data_ranges.push(clan_info_range);
             data_ranges.push(clan_range);
         }
 
