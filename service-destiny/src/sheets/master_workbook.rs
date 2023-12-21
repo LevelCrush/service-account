@@ -10,8 +10,8 @@ use google_sheets4::{hyper, hyper_rustls, Sheets};
 use google_sheets4::{hyper::client::HttpConnector, hyper_rustls::HttpsConnector};
 use serde_json::Value;
 
-use levelcrush::chrono;
 use levelcrush::{anyhow, tracing};
+use levelcrush::{chrono, tokio};
 use lib_destiny::app::report::member::MemberReport;
 use lib_destiny::app::state::AppState;
 use lib_destiny::env::Env;
@@ -65,7 +65,7 @@ pub struct MasterWorkbook {
 impl MasterWorkbook {
     /// construct a workbook connection
     pub async fn connect(sheet_id: &str) -> anyhow::Result<MasterWorkbook> {
-        tracing::info!("Constructing client");
+        tracing::info!("Constructing client | Google Sheets");
         let client = hyper::Client::builder().build(
             hyper_rustls::HttpsConnectorBuilder::new()
                 .with_native_roots()
@@ -75,15 +75,19 @@ impl MasterWorkbook {
                 .build(),
         );
 
-        tracing::info!("Constructing service key");
+        tracing::info!("Constructing service key | Google Sheets");
         let secret = oauth2::read_service_account_key("google_credentials.json").await?;
 
-        tracing::info!("Building authenticating");
+        tracing::info!("Building authenticator | Google Sheets");
         let auth = oauth2::ServiceAccountAuthenticator::with_client(secret, client.clone())
             .build()
             .await?;
 
+        tracing::info!("Constructing Sheets with client and auth");
         let google = Sheets::new(client, auth);
+
+        tracing::info!("Done Constructing sheets interface");
+
         Ok(MasterWorkbook::new(sheet_id, google))
     }
 
@@ -126,6 +130,7 @@ impl MasterWorkbook {
     /// this will make 0 api calls to the bungie api
     /// use this function to provide a state that is READ FROM THE SPREADSHEET
     pub async fn load(&mut self) -> anyhow::Result<()> {
+        tracing::info!("Loading sheet information for: {}", self.sheet_id);
         // clear arrays
         self.clans.clear();
         self.player_list.clear();
@@ -178,7 +183,7 @@ impl MasterWorkbook {
                             // for our info sheet, we are only requesting 2 rows of info
                             // one row = one value
                             // so this works to extract since our first is always going to be the "Last updated" field
-                            if (self.last_updated.is_empty()) {
+                            if self.last_updated.is_empty() {
                                 self.last_updated = txt_values.first().unwrap_or(&base_string).clone();
                             } else {
                                 self.season = txt_values.first().unwrap_or(&base_string).clone();
@@ -578,6 +583,7 @@ impl MasterWorkbook {
 
         // update season if neccessary
         if target_season == 0 {
+            tracing::warn!("Modifing season: {} to ({}){}", self.season, target_season, "Lifetime");
             self.season = "Lifetime".to_string();
         }
 
@@ -634,7 +640,44 @@ impl MasterWorkbook {
     }
 
     /// take the info from the local workbook and save it to the google spreadsheet
-    pub async fn save(&self) -> anyhow::Result<()> {
+    pub async fn save(&mut self) -> anyhow::Result<()> {
+        // make sure our player list are sorted
+        // sort members
+        let mut pl = self
+            .player_list
+            .iter()
+            .map(|(membership_id, member_data)| member_data.clone())
+            .collect::<Vec<WorksheetPlayer>>();
+
+        pl.sort_by(|a, b| {
+            let a_name = a.bungie_name.to_lowercase();
+            let b_name = b.bungie_name.to_lowercase();
+            let a_name = a_name.trim();
+            let b_name = b_name.trim();
+            a_name.cmp(b_name)
+        });
+        self.player_list_sorted = pl.into_iter().map(|v| v.bungie_membership_id).collect::<Vec<String>>();
+
+        // sort clan members
+        for (clan_id, clan_data) in self.clans.iter_mut() {
+            let mut cl = clan_data
+                .members
+                .iter()
+                .map(|(membership_id, member)| member.clone())
+                .collect::<Vec<WorksheetClanMember>>();
+
+            cl.sort_by(|a, b| {
+                b.role.cmp(&a.role).then_with(|| {
+                    let a_name = a.name.to_lowercase();
+                    let b_name = b.name.to_lowercase();
+                    let a_name = a_name.trim();
+                    let b_name = b_name.trim();
+                    a_name.cmp(b_name)
+                })
+            });
+            clan_data.members_sorted = cl.into_iter().map(|data| data.bungie_id).collect::<Vec<i64>>();
+        }
+
         // first get all clan sheets
         let mut template_sheet_id = 0;
         let mut template_sheet_index = 0;
@@ -699,21 +742,19 @@ impl MasterWorkbook {
             }
         }
 
-        // setup batch request
-        let mut batch = BatchUpdateSpreadsheetRequest::default();
-
         // delete request
-        let mut all_requests = Vec::new();
+        let mut delete_reqs = Vec::new();
         for (sheet_id, name) in clans_to_remove.into_iter() {
             let mut req = Request::default();
             let mut del_req = DeleteSheetRequest::default();
             del_req.sheet_id = Some(sheet_id);
             req.delete_sheet = Some(del_req);
 
-            all_requests.push(req);
+            delete_reqs.push(req);
         }
 
         // we are going to construct a duplicate sheet request from our template
+        let mut dup_requests = Vec::new();
         for (group_id, name) in clans_to_add.iter() {
             let mut req = Request::default();
             let mut dup_req = DuplicateSheetRequest::default();
@@ -722,24 +763,47 @@ impl MasterWorkbook {
             dup_req.new_sheet_name = Some(format!("[Clan] {}", name));
             req.duplicate_sheet = Some(dup_req);
 
-            all_requests.push(req);
+            dup_requests.push(req);
         }
 
-        if !all_requests.is_empty() {
-            batch.requests = Some(all_requests);
-            tracing::info!("Adding and Deleting Clan Sheets");
-            self.google
-                .spreadsheets()
-                .batch_update(batch, &self.sheet_id)
-                .doit()
-                .await?;
+        if !delete_reqs.is_empty() {
+            // setup batch request
+            let mut batch = BatchUpdateSpreadsheetRequest::default();
+            batch.requests = Some(delete_reqs);
+
+            tracing::info!("Deleting Clan Sheets from {}", self.sheet_id);
+            let google = self.google.clone();
+            let local_id = self.sheet_id.clone();
+            let _ = tokio::spawn(async move {
+                google.spreadsheets().batch_update(batch, &local_id).doit().await;
+            })
+            .await;
+
+            tracing::info!("Done deleting clan sheets");
+        }
+
+        if !dup_requests.is_empty() {
+            // setup batch request
+            let mut batch = BatchUpdateSpreadsheetRequest::default();
+            batch.requests = Some(dup_requests);
+
+            tracing::info!("Duplicating Sheets from {}", self.sheet_id);
+            let google = self.google.clone();
+            let local_id = self.sheet_id.clone();
+            let _ = tokio::spawn(async move {
+                google.spreadsheets().batch_update(batch, &local_id).doit().await;
+            })
+            .await;
+
+            tracing::info!("Done duplicating clan sheets");
         }
 
         // define player zone ranges
+        tracing::info!("Defining clear zones");
         let mut clear_request = BatchClearValuesRequest::default();
         let mut player_zones = Vec::new();
         for (clan_id, clan_info) in self.clans.iter() {
-            player_zones.push(format!("'[Clan] {}'!A6:F", clan_info.name));
+            player_zones.push(format!("'[Clan] {}'!A6:H", clan_info.name));
         }
         player_zones.push(format!("{SHEET_PLAYER_LIST}!A2:E"));
         clear_request.ranges = Some(player_zones);

@@ -10,6 +10,8 @@ use google_drive3::{
     oauth2, DriveHub,
 };
 
+use crate::sheets::MasterWorkbook;
+use levelcrush::anyhow::anyhow;
 use levelcrush::tracing::instrument::WithSubscriber;
 use levelcrush::{anyhow, tracing};
 
@@ -118,6 +120,7 @@ fn extract_workbooks(parsed: &DriveFileList) -> HashMap<String, String> {
         // LifeTimeFooBar - Overview - ASDaojd = ASDaojd
         let worksheet_type = name_bits.last();
         if let Some(worksheet_type) = worksheet_type {
+            let worksheet_Type = worksheet_type.to_lowercase();
             let worksheet_type = worksheet_type.trim();
             sheets.insert(worksheet_type.to_string(), google_id.clone());
         }
@@ -129,7 +132,7 @@ impl DriveDestinyReports {
     /// Establishes a connection via  google drive api and handles authentication
     pub async fn get(drive_id: &str) -> anyhow::Result<DriveDestinyReports> {
         // construct hyper client
-        tracing::info!("Constructing client");
+        tracing::info!("Constructing client | Google Drive");
         let hyper_client = hyper::Client::builder().build(
             hyper_rustls::HttpsConnectorBuilder::new()
                 .with_native_roots()
@@ -139,10 +142,10 @@ impl DriveDestinyReports {
                 .build(),
         );
 
-        tracing::info!("Constructing service key");
+        tracing::info!("Constructing service key | Google Drive");
         let secret = oauth2::read_service_account_key("google_credentials.json").await?;
 
-        tracing::info!("Building authenticating");
+        tracing::info!("Building authenticator | Google Drive");
         let auth = oauth2::ServiceAccountAuthenticator::with_client(secret, hyper_client.clone())
             .build()
             .await?;
@@ -174,6 +177,24 @@ impl DriveDestinyReports {
                 for (clan_file_id, clan) in drive_season.clans.iter() {
                     if clan.group_id == group_id {
                         return Some(clan_file_id.clone());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_season_clan_overview(&self, season: i32, group_id: i64) -> Option<String> {
+        'drive_check: for (_, drive_season) in self.seasons.iter() {
+            for (_, drive_clan) in drive_season.clans.iter() {
+                if drive_clan.group_id == group_id {
+                    if drive_clan.google_workbooks.contains_key("overview") {
+                        return match drive_clan.google_workbooks.get("overview") {
+                            Some(data) => Some(data.clone()),
+                            None => None,
+                        };
+                    } else {
+                        break 'drive_check;
                     }
                 }
             }
@@ -259,6 +280,60 @@ impl DriveDestinyReports {
         bungie_name: &str,
     ) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    pub async fn api_copy_overview(&mut self, season: i32, group_id: i64, clan_name: String) -> anyhow::Result<String> {
+        // check what we have loaded in the drive and see if its possible for us to return an already existing result
+        // if not, we will continue processing past this block
+        tracing::warn!(
+            " Attempting to copy from lifetime to Season {} | {} - Overview",
+            season,
+            clan_name
+        );
+
+        let folder_id = self.get_season_clan(season, group_id).unwrap_or_default();
+        let worksheet = self.google_workbooks.get("overview").cloned();
+        if let Some(worksheet) = worksheet {
+            let new_name = format!("Season {} | {} - Overview", season, clan_name);
+            let mut req = google_drive3::api::File::default();
+            req.parents = Some(vec![folder_id]);
+            req.name = Some(new_name.clone());
+            let (_, data) = self.hub.files().copy(req, &worksheet).doit().await?;
+
+            if let Some(workbook_google_id) = data.id {
+                tracing::info!("Loading workbook to modify: {} ({})", new_name, workbook_google_id);
+                let mut workbook = MasterWorkbook::connect(&workbook_google_id).await?;
+                workbook.load().await?;
+
+                tracing::info!("Trimming clans");
+                let mut clan_keys = Vec::new();
+                for (sheet_group_id, clan) in workbook.clans.iter() {
+                    if group_id != *sheet_group_id {
+                        clan_keys.push(*sheet_group_id);
+                    }
+                }
+
+                // trim down to just the clan we want to demonstrate
+                for group_id in clan_keys.into_iter() {
+                    workbook.clans.remove(&group_id);
+                }
+
+                tracing::info!("Setting correct season from: {} to {}", workbook.season, season);
+                workbook.season = season.to_string();
+
+                tracing::warn!("Saving workbook: {}", new_name);
+                workbook.save().await?;
+
+                tracing::info!("Done saving workbook: {}", new_name);
+                drop(workbook);
+
+                Ok(workbook_google_id)
+            } else {
+                Err(anyhow!("Failed to copy workbook"))
+            }
+        } else {
+            Err(anyhow!("No workbook to copy"))
+        }
     }
 
     /// This will actually load in the information from the google drive
@@ -462,18 +537,22 @@ mod test {
     pub async fn testWorkbookChange() -> anyhow::Result<()> {
         let env = env::load();
 
-        let mut workbook = MasterWorkbook::connect("1eWoRFkKwo8-ZWv1fz5J1jP5FQwfmcRPOhr8l152A-l4").await?;
+        let mut workbook = MasterWorkbook::connect("1EMXGtaFyVnLSPHhUbA4VEd4A5xBGKW21StmGwR1PQx0").await?;
         workbook.load().await?;
 
         let target_clan = 5108335i64;
         workbook.clans.remove(&target_clan);
+
+        let target_clan = 4250497i64;
+        workbook.clans.remove(&target_clan);
         workbook.season = "23".to_string();
 
+        /*
         tracing::info!("Sync");
         workbook.api_sync(&env).await?;
 
         tracing::info!("Generating reports");
-        workbook.generate_reports(&env).await?;
+        workbook.generate_reports(&env).await?; */
 
         tracing::info!("Saving");
         workbook.save().await?;
