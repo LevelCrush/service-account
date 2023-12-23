@@ -124,6 +124,19 @@ pub async fn generate(args: &[String], env: &Env) -> anyhow::Result<()> {
                 tracing::info!("Throttling 10s to avoid resource limitations");
                 tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
             }
+
+            // loop through players and update worksheets
+            for (player_drive_id, drive_player) in drive_clan.players.iter() {
+                if let Some(workbook_id) = drive_player.google_workbooks.get("overview") {
+                    let formatted_name = format!(
+                        "Season {} | {} Overview | {} Overview",
+                        drive_season.number, drive_clan.name, drive_player.bungie_name
+                    );
+                    tracing::warn!("Updating {}({})", formatted_name, workbook_id);
+                    
+                    
+                }
+            }
         }
     }
 
