@@ -3,6 +3,7 @@ use lib_destiny::app::state::AppState;
 use lib_destiny::env::{AppVariable, Env};
 
 use crate::drive::DriveDestinyReports;
+use crate::jobs::sheets::discord_sync;
 use crate::sheets::MasterWorkbook;
 
 pub async fn generate(args: &[String], env: &Env) -> anyhow::Result<()> {
@@ -133,12 +134,13 @@ pub async fn generate(args: &[String], env: &Env) -> anyhow::Result<()> {
                         drive_season.number, drive_clan.name, drive_player.bungie_name
                     );
                     tracing::warn!("Updating {}({})", formatted_name, workbook_id);
-                    
-                    
                 }
             }
         }
     }
+
+    tracing::info!("Syncing discord");
+    discord_sync(env).await?;
 
     tracing::info!("Done!");
 

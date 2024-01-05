@@ -491,7 +491,7 @@ impl MasterWorkbook {
         for (player_id, player) in self.player_list.iter_mut() {
             if player.discord_id.trim().len() > 0 {
                 tracing::info!("Fetching {} linked discord username", player.bungie_name);
-                if false {
+                if true {
                     let member_data = discord::member_api(&player.discord_id, env, &app_state).await;
                     if let Some(member_data) = member_data {
                         let discriminator = member_data.discriminator.unwrap_or_default();
