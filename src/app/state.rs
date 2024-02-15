@@ -1,7 +1,11 @@
 use crate::{
-    database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView, sync::discord::MemberSyncResult,
+    database::account::AccountLinkedPlatformsResult, routes::profile::ProfileView,
+    sync::discord::MemberSyncResult,
 };
-use levelcrush::{alias::UnixTimestamp, cache::MemoryCache, database, retry_lock::RetryLock, tracing, uuid::Uuid};
+use levelcrush::{
+    alias::UnixTimestamp, cache::MemoryCache, database, reqwest, retry_lock::RetryLock, tracing,
+    uuid::Uuid,
+};
 use sqlx::SqlitePool;
 #[derive(Clone, Debug)]
 pub struct AppState {

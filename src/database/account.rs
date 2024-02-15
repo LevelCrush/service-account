@@ -1,4 +1,9 @@
-use levelcrush::{database, macros::DatabaseRecord, macros::DatabaseResult, project_str, util::unix_timestamp};
+use levelcrush::{
+    database,
+    macros::{DatabaseRecord, DatabaseResult},
+    md5, project_str,
+    util::unix_timestamp,
+};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 
@@ -20,13 +25,22 @@ pub struct Account {
     pub last_login_at: i64,
 }
 
-pub async fn get<T: Into<String>, TS: Into<String>>(token: T, token_secret: TS, pool: &SqlitePool) -> Option<Account> {
+pub async fn get<T: Into<String>, TS: Into<String>>(
+    token: T,
+    token_secret: TS,
+    pool: &SqlitePool,
+) -> Option<Account> {
     let token = token.into();
     let token_secret = token_secret.into();
 
-    let query_result = sqlx::query_file_as!(Account, "queries/account_get_by_token.sql", token, token_secret)
-        .fetch_optional(pool)
-        .await;
+    let query_result = sqlx::query_file_as!(
+        Account,
+        "queries/account_get_by_token.sql",
+        token,
+        token_secret
+    )
+    .fetch_optional(pool)
+    .await;
 
     if let Ok(query_result) = query_result {
         query_result
@@ -51,17 +65,19 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     let token_secret = format!("{:x}", md5::compute(token_secret_seed.into()));
     let timestamp = unix_timestamp();
 
-    let query_result = sqlx::query_file!("queries/account_insert.sql", token, token_secret, timestamp)
-        .execute(pool)
-        .await;
+    let query_result =
+        sqlx::query_file!("queries/account_insert.sql", token, token_secret, timestamp)
+            .execute(pool)
+            .await;
 
     // if we were able to insert a new user fetch it based off the last inserted id from our query result
     let mut user = None;
     if let Ok(query_result) = query_result {
         let last_inserted_id = query_result.last_insert_rowid();
-        let account_result = sqlx::query_file_as!(Account, "queries/account_get_by_id.sql", last_inserted_id)
-            .fetch_optional(pool)
-            .await;
+        let account_result =
+            sqlx::query_file_as!(Account, "queries/account_get_by_id.sql", last_inserted_id)
+                .fetch_optional(pool)
+                .await;
 
         if let Ok(account_result) = account_result {
             user = account_result;
@@ -75,7 +91,10 @@ pub async fn create<TokenSeed: Into<String>, TokenSecretSeed: Into<String>>(
     user
 }
 
-pub async fn all_data(account: &Account, pool: &SqlitePool) -> HashMap<String, HashMap<String, String>> {
+pub async fn all_data(
+    account: &Account,
+    pool: &SqlitePool,
+) -> HashMap<String, HashMap<String, String>> {
     let query_results = sqlx::query_file!("queries/account_platform_all_data.sql", account.id)
         .fetch_all(pool)
         .await;
@@ -91,15 +110,20 @@ pub async fn all_data(account: &Account, pool: &SqlitePool) -> HashMap<String, H
                 results.insert(index.clone(), HashMap::new());
             }
 
-            results.entry(index).and_modify(|item: &mut HashMap<String, String>| {
-                item.insert(record.key, record.value);
-            });
+            results
+                .entry(index)
+                .and_modify(|item: &mut HashMap<String, String>| {
+                    item.insert(record.key, record.value);
+                });
         }
     }
     results
 }
 
-pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &SqlitePool) -> Vec<AccountLinkedPlatformsResult> {
+pub async fn by_bungie_bulk(
+    bungie_ids: &[String],
+    pool: &SqlitePool,
+) -> Vec<AccountLinkedPlatformsResult> {
     let prepared_pos = vec!["?"; bungie_ids.len()].join(",");
     let statement = project_str!("queries/account_search_by_bungie_bulk.sql", prepared_pos);
     let mut query_builder = sqlx::query_as::<_, AccountLinkedPlatformsResult>(statement.as_str());
@@ -116,7 +140,10 @@ pub async fn by_bungie_bulk(bungie_ids: &[String], pool: &SqlitePool) -> Vec<Acc
     }
 }
 
-pub async fn by_bungie(bungie_id: String, pool: &SqlitePool) -> Option<AccountLinkedPlatformsResult> {
+pub async fn by_bungie(
+    bungie_id: String,
+    pool: &SqlitePool,
+) -> Option<AccountLinkedPlatformsResult> {
     let query = sqlx::query_file_as!(
         AccountLinkedPlatformsResult,
         "queries/account_search_by_bungie.sql",
@@ -133,7 +160,10 @@ pub async fn by_bungie(bungie_id: String, pool: &SqlitePool) -> Option<AccountLi
     }
 }
 
-pub async fn by_discord(discord_handle: String, pool: &SqlitePool) -> Option<AccountLinkedPlatformsResult> {
+pub async fn by_discord(
+    discord_handle: String,
+    pool: &SqlitePool,
+) -> Option<AccountLinkedPlatformsResult> {
     let query = sqlx::query_file_as!(
         AccountLinkedPlatformsResult,
         "queries/account_search_by_discord.sql",

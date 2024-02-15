@@ -15,7 +15,9 @@ use levelcrush::{
     },
     axum_sessions::extractors::WritableSession,
     cache::{CacheDuration, CacheValue},
+    md5,
     server::APIResponse,
+    urlencoding,
     util::{slugify, unix_timestamp},
 };
 
@@ -43,7 +45,9 @@ async fn link_generate(
     Json(payload): Json<LinkGeneratePayload>,
 ) -> Json<APIResponse<LinkGeneratedResponse>> {
     let key_header = match headers.get("Account-Key") {
-        Some(header_value) => header_value.to_str().expect("Unable to convert header value to str"),
+        Some(header_value) => header_value
+            .to_str()
+            .expect("Unable to convert header value to str"),
         _ => "",
     };
 
@@ -73,7 +77,11 @@ async fn link_generate(
             .link_gens
             .write(
                 hash.clone(),
-                CacheValue::with_duration(member, CacheDuration::FiveMinutes, CacheDuration::FiveMinutes),
+                CacheValue::with_duration(
+                    member,
+                    CacheDuration::FiveMinutes,
+                    CacheDuration::FiveMinutes,
+                ),
             )
             .await;
 
@@ -122,7 +130,10 @@ async fn link_platform(
     }
 }
 
-async fn link_done(Query(query): Query<LinkQuery>, State(mut state): State<AppState>) -> &'static str {
+async fn link_done(
+    Query(query): Query<LinkQuery>,
+    State(mut state): State<AppState>,
+) -> &'static str {
     if let Some(code) = query.code {
         state.link_gens.delete(&code).await;
     }

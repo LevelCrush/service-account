@@ -5,12 +5,12 @@ use axum::extract::State;
 use axum::Router;
 use axum::{routing::get, routing::post, Json};
 use axum_sessions::extractors::ReadableSession;
-use levelcrush::axum_sessions;
 use levelcrush::cache::{CacheDuration, CacheValue};
 use levelcrush::server::APIResponse;
 use levelcrush::util::unix_timestamp;
 use levelcrush::uuid::Uuid;
 use levelcrush::{axum, tracing};
+use levelcrush::{axum_sessions, md5};
 use std::collections::HashMap;
 
 pub const CACHE_KEY_PROFILE: &str = "profile||";
@@ -53,30 +53,49 @@ pub async fn challenge_view(
 
 fn generate_challenge(display_name: &str, admin: i64) -> String {
     let uuid = Uuid::new_v4().to_string();
-    let challenge_digest = md5::compute(format!("{}{}{}{}", unix_timestamp(), display_name, admin, uuid));
+    let challenge_digest = md5::compute(format!(
+        "{}{}{}{}",
+        unix_timestamp(),
+        display_name,
+        admin,
+        uuid
+    ));
     format!("{:x}", challenge_digest)
 }
 
 /// output a json view of the data related to the currently logged in session
-pub async fn json_view(State(mut state): State<AppState>, session: ReadableSession) -> Json<APIResponse<ProfileView>> {
+pub async fn json_view(
+    State(mut state): State<AppState>,
+    session: ReadableSession,
+) -> Json<APIResponse<ProfileView>> {
     let mut response = APIResponse::new();
     let session_id = session.id();
     let cache_key = format!("{}{}", CACHE_KEY_PROFILE, session_id);
 
     // load session and fetch any relevant information
-    let account_token = app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
-    let account_token_secret = app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
+    let account_token =
+        app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
+    let account_token_secret =
+        app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
 
     let mut profile_view = None;
     let mut account = None;
-    let display_name = app::session::read::<String>(SessionKey::DisplayName, &session).unwrap_or_default();
+    let display_name =
+        app::session::read::<String>(SessionKey::DisplayName, &session).unwrap_or_default();
     if !account_token.is_empty() && !account_token_secret.is_empty() {
-        tracing::info!("Checking if profile is being fetched already for: {}", display_name);
+        tracing::info!(
+            "Checking if profile is being fetched already for: {}",
+            display_name
+        );
 
         // this will cover any request that come in **after** the first one
         let retries = state.guard.wait_until_release(&cache_key).await;
         if retries > 0 {
-            tracing::info!("Took {} attempts to release guard for {}", retries, display_name);
+            tracing::info!(
+                "Took {} attempts to release guard for {}",
+                retries,
+                display_name
+            );
         }
         profile_view = state.profiles.access(&cache_key).await
     }
@@ -85,7 +104,8 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
         tracing::info!("Returning from cache: {}", display_name);
     }
 
-    let mut fetch_profile = profile_view.is_none() && !account_token.is_empty() && !account_token_secret.is_empty();
+    let mut fetch_profile =
+        profile_view.is_none() && !account_token.is_empty() && !account_token_secret.is_empty();
 
     if fetch_profile {
         tracing::info!("Locking  profile request for {}", display_name);
@@ -103,7 +123,12 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
 
     if fetch_profile {
         tracing::info!("Fetching info from db!: {}", account_token);
-        account = database::account::get(account_token.as_str(), account_token_secret, &state.database).await;
+        account = database::account::get(
+            account_token.as_str(),
+            account_token_secret,
+            &state.database,
+        )
+        .await;
     }
 
     if fetch_profile {
@@ -140,7 +165,11 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
                 .challenges
                 .write(
                     challenge_hash,
-                    CacheValue::with_duration(data.clone(), CacheDuration::TenMinutes, CacheDuration::TenMinutes),
+                    CacheValue::with_duration(
+                        data.clone(),
+                        CacheDuration::TenMinutes,
+                        CacheDuration::TenMinutes,
+                    ),
                 )
                 .await;
 
@@ -150,7 +179,11 @@ pub async fn json_view(State(mut state): State<AppState>, session: ReadableSessi
                 .profiles
                 .write(
                     cache_key.clone(),
-                    CacheValue::with_duration(data.clone(), CacheDuration::Minute, CacheDuration::FiveMinutes),
+                    CacheValue::with_duration(
+                        data.clone(),
+                        CacheDuration::Minute,
+                        CacheDuration::FiveMinutes,
+                    ),
                 )
                 .await;
 

@@ -3,7 +3,7 @@ use clap::Parser;
 use database::platform::AccountPlatformType;
 use env::AppVariable;
 use jobs::server;
-use levelcrush::{server::Server, tokio, tracing};
+use levelcrush::{clap, server::Server, tokio, tracing};
 use std::time::Duration;
 
 mod app;

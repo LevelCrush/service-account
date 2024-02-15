@@ -11,9 +11,9 @@ use axum::extract::Query;
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::Router;
-use levelcrush::axum;
 use levelcrush::axum_sessions::extractors::WritableSession;
 use levelcrush::tracing;
+use levelcrush::{axum, urlencoding};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -39,7 +39,10 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>) -> Redirect {
     Redirect::temporary(path.as_str())
 }
 
-pub async fn logout(Query(login_fields): Query<OAuthLoginQueries>, mut session: WritableSession) -> Redirect {
+pub async fn logout(
+    Query(login_fields): Query<OAuthLoginQueries>,
+    mut session: WritableSession,
+) -> Redirect {
     let final_fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_redirect = login_fields.redirect.unwrap_or(final_fallback_url);
 

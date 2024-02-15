@@ -9,7 +9,9 @@ use std::time::Duration;
 
 pub async fn run() -> anyhow::Result<()> {
     tracing::info!("Setting up http server for account service");
-    let server_port = env::get(AppVariable::ServerPort).parse::<u16>().unwrap_or(3000);
+    let server_port = env::get(AppVariable::ServerPort)
+        .parse::<u16>()
+        .unwrap_or(3000);
 
     tracing::info!("Establishing applicatiopn state for account service");
     let app_state = AppState::new().await;
@@ -28,6 +30,7 @@ pub async fn run() -> anyhow::Result<()> {
     });
 
     tracing::info!("Running server on port {server_port}");
+
     (_, _) = tokio::join!(
         Server::new(server_port)
             .enable_cors()

@@ -4,7 +4,9 @@ use crate::database::platform::{AccountPlatformType, NewAccountPlatform};
 use crate::database::platform_data::NewAccountPlatformData;
 use crate::env::AppVariable;
 use crate::routes::guards;
-use crate::routes::platform::{OAuthLoginQueries, OAuthLoginValidationQueries, OAuthLoginValidationRequest};
+use crate::routes::platform::{
+    OAuthLoginQueries, OAuthLoginValidationQueries, OAuthLoginValidationRequest,
+};
 use crate::routes::profile::CACHE_KEY_PROFILE;
 use crate::{app, database, env};
 use axum::extract::{Query, State};
@@ -12,10 +14,10 @@ use axum::response::Redirect;
 use axum::routing::get;
 use axum::Router;
 use axum_sessions::extractors::{ReadableSession, WritableSession};
-use levelcrush::axum;
 use levelcrush::axum_sessions;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
+use levelcrush::{axum, md5, urlencoding};
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
 pub struct TwitchValidationResponse {
@@ -65,18 +67,29 @@ pub async fn unlink(
     let final_redirect = query_fields.redirect.unwrap_or(final_fallback_url);
 
     // get account tied to session
-    let session_account_token = app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
-    let session_account_secret = app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
+    let session_account_token =
+        app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
+    let session_account_secret =
+        app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
 
     // look up account in the database
-    let account = database::account::get(session_account_token, session_account_secret, &state.database).await;
+    let account = database::account::get(
+        session_account_token,
+        session_account_secret,
+        &state.database,
+    )
+    .await;
 
     // find the account platform tied to this account.
     let mut account_platform = None;
     if account.is_some() {
         let account = account.unwrap();
-        account_platform =
-            database::platform::from_account(&account, AccountPlatformType::Twitch, &state.database).await;
+        account_platform = database::platform::from_account(
+            &account,
+            AccountPlatformType::Twitch,
+            &state.database,
+        )
+        .await;
     }
 
     // if we found it , we can go ahead and perform all of our unlink operations on it
@@ -89,7 +102,8 @@ pub async fn unlink(
     tracing::info!("Busting cache on profile at {}", cache_key);
     state.profiles.delete(&cache_key).await;
 
-    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let discord_username =
+        app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
     let search_cache_key = format!("search_discord||{}", discord_username);
     tracing::info!("Busting search key: {}", search_cache_key);
     state.searches.delete(&search_cache_key).await;
@@ -98,7 +112,10 @@ pub async fn unlink(
     Redirect::temporary(final_redirect.as_str())
 }
 
-pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: WritableSession) -> Redirect {
+pub async fn login(
+    Query(login_fields): Query<OAuthLoginQueries>,
+    mut session: WritableSession,
+) -> Redirect {
     let query_fields = login_fields;
 
     // make sure we know where to return our user to after they are done logging in
@@ -126,7 +143,11 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: W
     app::session::write(SessionKey::PlatformTwitchState, twitch_state, &mut session);
 
     // store original url that this route was called from
-    app::session::write(SessionKey::PlatformTwitchCallerUrl, final_redirect, &mut session);
+    app::session::write(
+        SessionKey::PlatformTwitchCallerUrl,
+        final_redirect,
+        &mut session,
+    );
 
     // Now redirect
     Redirect::temporary(authorize_url.as_str())
@@ -146,11 +167,13 @@ pub async fn validate(
     let fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_fallback_url = fallback_url;
     let final_redirect =
-        app::session::read::<String>(SessionKey::PlatformTwitchCallerUrl, &session).unwrap_or(final_fallback_url);
+        app::session::read::<String>(SessionKey::PlatformTwitchCallerUrl, &session)
+            .unwrap_or(final_fallback_url);
 
     let mut do_process = true;
     let validation_state = query_fields.state.unwrap_or_default();
-    let session_state = app::session::read::<String>(SessionKey::PlatformTwitchState, &session).unwrap_or_default();
+    let session_state =
+        app::session::read::<String>(SessionKey::PlatformTwitchState, &session).unwrap_or_default();
 
     let oauth_code = query_fields.code.unwrap_or_default();
     let oauth_error = query_fields.error.unwrap_or_default();
@@ -158,7 +181,10 @@ pub async fn validate(
     // make sure we don't have an error and we have a code that we can check
     if !oauth_error.is_empty() {
         do_process = false;
-        tracing::warn!("There was an error found in the oauth request {}", oauth_error);
+        tracing::warn!(
+            "There was an error found in the oauth request {}",
+            oauth_error
+        );
     }
 
     if oauth_code.is_empty() {
@@ -259,7 +285,10 @@ pub async fn validate(
     let twitch_user = if twitch_user.is_some() {
         let twitch_user_response = twitch_user.unwrap_or_default();
         let twitch_default_user_data = TwitchUserData::default();
-        let twitch_user_data = twitch_user_response.data.get(0).unwrap_or(&twitch_default_user_data);
+        let twitch_user_data = twitch_user_response
+            .data
+            .get(0)
+            .unwrap_or(&twitch_default_user_data);
         twitch_user_data.clone()
     } else {
         TwitchUserData::default()
@@ -269,12 +298,18 @@ pub async fn validate(
     // no point in querying the database if we have no way to link it
     let mut account = None;
     if do_process {
-        let session_account_token = app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
+        let session_account_token =
+            app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
         let session_account_secret =
             app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
 
         // look up account in the database
-        account = database::account::get(session_account_token, session_account_secret, &state.database).await;
+        account = database::account::get(
+            session_account_token,
+            session_account_secret,
+            &state.database,
+        )
+        .await;
     }
 
     // allow processing if we have a linked account from our session information
@@ -286,8 +321,12 @@ pub async fn validate(
     let mut account_platform = None;
     if do_process {
         tracing::info!("Matching Twitch Account");
-        account_platform =
-            database::platform::read(AccountPlatformType::Twitch, twitch_user.id.clone(), &state.database).await;
+        account_platform = database::platform::read(
+            AccountPlatformType::Twitch,
+            twitch_user.id.clone(),
+            &state.database,
+        )
+        .await;
     }
 
     // we can process this block so long as we have a valid account to work with
@@ -311,15 +350,16 @@ pub async fn validate(
         account_platform_record.account = account.id;
 
         // update the platform data
-        account_platform = database::platform::update(&mut account_platform_record, &state.database).await;
+        account_platform =
+            database::platform::update(&mut account_platform_record, &state.database).await;
     }
 
     // if we have linked our account submit it to the metadata section of our database to update
     do_process = account_platform.is_some();
     if do_process {
         // insert/update from our discord user response to update things like display name/etc
-        let account_platform =
-            account_platform.expect("No account platform was found. even though it should of been there");
+        let account_platform = account_platform
+            .expect("No account platform was found. even though it should of been there");
 
         let data = vec![
             NewAccountPlatformData {
@@ -356,7 +396,8 @@ pub async fn validate(
     tracing::info!("Busting cache key: {}", cache_key);
     state.profiles.delete(&cache_key).await;
 
-    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let discord_username =
+        app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
     let search_cache_key = format!("search_discord||{}", discord_username);
     tracing::info!("Busting search key: {}", search_cache_key);
     state.searches.delete(&search_cache_key).await;

@@ -12,11 +12,11 @@ use axum::response::Redirect;
 use axum::routing::get;
 use axum::Router;
 use axum_sessions::extractors::{ReadableSession, WritableSession};
-use levelcrush::axum;
-use levelcrush::axum_sessions;
-use levelcrush::tokio;
 use levelcrush::tracing;
 use levelcrush::util::unix_timestamp;
+use levelcrush::{axum, reqwest};
+use levelcrush::{axum_sessions, urlencoding};
+use levelcrush::{md5, tokio};
 use reqwest::header::HeaderMap;
 use tokio::join;
 
@@ -150,18 +150,29 @@ pub async fn unlink(
     let final_redirect = query_fields.redirect.unwrap_or(final_fallback_url);
 
     // get account tied to session
-    let session_account_token = app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
-    let session_account_secret = app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
+    let session_account_token =
+        app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
+    let session_account_secret =
+        app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
 
     // look up account in the database
-    let account = database::account::get(session_account_token, session_account_secret, &state.database).await;
+    let account = database::account::get(
+        session_account_token,
+        session_account_secret,
+        &state.database,
+    )
+    .await;
 
     // find the account platform tied to this account.
     let mut account_platform = None;
     if account.is_some() {
         let account = account.unwrap();
-        account_platform =
-            database::platform::from_account(&account, AccountPlatformType::Bungie, &state.database).await;
+        account_platform = database::platform::from_account(
+            &account,
+            AccountPlatformType::Bungie,
+            &state.database,
+        )
+        .await;
     }
 
     // if we found it , we can go ahead and perform all of our unlink operations on it
@@ -174,7 +185,8 @@ pub async fn unlink(
     tracing::info!("Busting cache on profile at {}", cache_key);
     state.profiles.delete(&cache_key).await;
 
-    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let discord_username =
+        app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
     let search_cache_key = format!("search_discord||{}", discord_username);
     tracing::info!("Busting search key: {}", search_cache_key);
     state.searches.delete(&search_cache_key).await;
@@ -183,7 +195,10 @@ pub async fn unlink(
     Redirect::temporary(final_redirect.as_str())
 }
 
-pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: WritableSession) -> Redirect {
+pub async fn login(
+    Query(login_fields): Query<OAuthLoginQueries>,
+    mut session: WritableSession,
+) -> Redirect {
     let query_fields = login_fields;
 
     // make sure we know where to return our user to after they are done logging in
@@ -205,7 +220,11 @@ pub async fn login(Query(login_fields): Query<OAuthLoginQueries>, mut session: W
     app::session::write(SessionKey::PlatformBungieState, bungie_state, &mut session);
 
     // store original url that this route was called from
-    app::session::write(SessionKey::PlatformBungieCallerUrl, final_redirect, &mut session);
+    app::session::write(
+        SessionKey::PlatformBungieCallerUrl,
+        final_redirect,
+        &mut session,
+    );
 
     // Now redirect
     Redirect::temporary(authorize_url.as_str())
@@ -223,11 +242,13 @@ pub async fn validate(
     let cache_key = format!("{}{}", CACHE_KEY_PROFILE, session_id);
     let final_fallback_url = env::get(AppVariable::ServerFallbackUrl);
     let final_redirect =
-        app::session::read::<String>(SessionKey::PlatformBungieCallerUrl, &session).unwrap_or(final_fallback_url);
+        app::session::read::<String>(SessionKey::PlatformBungieCallerUrl, &session)
+            .unwrap_or(final_fallback_url);
 
     let mut do_process = true;
     let validation_state = query_fields.state.unwrap_or_default();
-    let session_state = app::session::read::<String>(SessionKey::PlatformBungieState, &session).unwrap_or_default();
+    let session_state =
+        app::session::read::<String>(SessionKey::PlatformBungieState, &session).unwrap_or_default();
 
     let oauth_code = query_fields.code.unwrap_or_default();
     let oauth_error = query_fields.error.unwrap_or_default();
@@ -235,7 +256,10 @@ pub async fn validate(
     // make sure we don't have an error and we have a code that we can check
     if !oauth_error.is_empty() {
         do_process = false;
-        tracing::warn!("There was an error found in the oauth request {}", oauth_error);
+        tracing::warn!(
+            "There was an error found in the oauth request {}",
+            oauth_error
+        );
     }
 
     if oauth_code.is_empty() {
@@ -337,7 +361,8 @@ pub async fn validate(
             .header("Accept", "application/json")
             .send();
 
-        let (user_response, membership_response) = join!(user_request_future, membership_request_future);
+        let (user_response, membership_response) =
+            join!(user_request_future, membership_request_future);
 
         if user_response.is_ok() {
             user_data = Some(
@@ -374,12 +399,18 @@ pub async fn validate(
     // fetch account from session
     let mut account = None;
     if do_process {
-        let session_account_token = app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
+        let session_account_token =
+            app::session::read::<String>(SessionKey::Account, &session).unwrap_or_default();
         let session_account_secret =
             app::session::read::<String>(SessionKey::AccountSecret, &session).unwrap_or_default();
 
         // look up account in the database
-        account = database::account::get(session_account_token, session_account_secret, &state.database).await;
+        account = database::account::get(
+            session_account_token,
+            session_account_secret,
+            &state.database,
+        )
+        .await;
     }
 
     // we do indeed have an account tied to our session so we can continue on
@@ -419,13 +450,14 @@ pub async fn validate(
         account_platform_record.account = account.id;
 
         // update the platform data
-        account_platform = database::platform::update(&mut account_platform_record, &state.database).await;
+        account_platform =
+            database::platform::update(&mut account_platform_record, &state.database).await;
     }
 
     do_process = account_platform.is_some();
     if do_process {
-        let account_platform =
-            account_platform.expect("No account platform was found. even though there should be something here");
+        let account_platform = account_platform
+            .expect("No account platform was found. even though there should be something here");
         let mut data = vec![
             NewAccountPlatformData {
                 key: "bungie_id".to_string(),
@@ -451,7 +483,8 @@ pub async fn validate(
         // now loop through memberships and add some information about them as well into our metadata
         for membership in membership_data.memberships.iter() {
             // perform a check to see if this is the primary membership , this will only ever trigger once
-            let is_primary_membership = membership_data.primary_membership_id == membership.membership_id;
+            let is_primary_membership =
+                membership_data.primary_membership_id == membership.membership_id;
             if is_primary_membership {
                 primary_platform_type = membership.membership_type;
                 primary_platform_name = get_membership_name(primary_platform_type);
@@ -499,7 +532,8 @@ pub async fn validate(
     tracing::info!("Busting cache key: {}", cache_key);
     state.profiles.delete(&cache_key).await;
 
-    let discord_username = app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
+    let discord_username =
+        app::session::read::<String>(SessionKey::Username, &session).unwrap_or_default();
     let search_cache_key = format!("search_discord||{}", discord_username);
     tracing::info!("Busting search key: {}", search_cache_key);
     state.searches.delete(&search_cache_key).await;

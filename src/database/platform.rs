@@ -1,8 +1,8 @@
 use crate::database::account::Account;
 use levelcrush::alias::RecordId;
-use levelcrush::database;
 use levelcrush::macros::DatabaseRecord;
 use levelcrush::util::unix_timestamp;
+use levelcrush::{database, md5};
 use sqlx::SqlitePool;
 
 pub enum AccountPlatformType {
@@ -43,7 +43,10 @@ pub struct NewAccountPlatform {
 }
 
 /// Inserts a new accounts_platform record based on provided information.
-pub async fn create(new_platform: NewAccountPlatform, pool: &SqlitePool) -> Option<AccountPlatform> {
+pub async fn create(
+    new_platform: NewAccountPlatform,
+    pool: &SqlitePool,
+) -> Option<AccountPlatform> {
     let token_seed = format!(
         "{}||{}||{}",
         new_platform.platform,
@@ -163,7 +166,10 @@ pub async fn read(
 }
 
 /// Update the provied account platform record and returns a new updated account platform record
-pub async fn update(account_platform: &mut AccountPlatform, pool: &SqlitePool) -> Option<AccountPlatform> {
+pub async fn update(
+    account_platform: &mut AccountPlatform,
+    pool: &SqlitePool,
+) -> Option<AccountPlatform> {
     // force the platform record to have an updated timestamp of modification
     account_platform.updated_at = unix_timestamp();
 
@@ -197,10 +203,13 @@ pub async fn update(account_platform: &mut AccountPlatform, pool: &SqlitePool) -
 /// This is a permanent operation
 pub async fn unlink(account_platform: &AccountPlatform, pool: &SqlitePool) {
     // remove the account platform data first
-    sqlx::query_file!("queries/account_platform_data_unlink.sql", account_platform.id)
-        .execute(pool)
-        .await
-        .ok();
+    sqlx::query_file!(
+        "queries/account_platform_data_unlink.sql",
+        account_platform.id
+    )
+    .execute(pool)
+    .await
+    .ok();
 
     // remove the account platform now
     sqlx::query_file!("queries/account_platform_unlink.sql", account_platform.id)
@@ -209,7 +218,11 @@ pub async fn unlink(account_platform: &AccountPlatform, pool: &SqlitePool) {
         .ok();
 }
 
-pub async fn need_update(platform: AccountPlatformType, limit: i64, pool: &SqlitePool) -> Vec<String> {
+pub async fn need_update(
+    platform: AccountPlatformType,
+    limit: i64,
+    pool: &SqlitePool,
+) -> Vec<String> {
     let platform = platform.to_string();
     let query = sqlx::query_file!("queries/account_platform_need_update.sql", platform, limit)
         .fetch_all(pool)
