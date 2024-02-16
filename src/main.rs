@@ -1,17 +1,7 @@
-use app::state::AppState;
-use clap::Parser;
-use database::platform::AccountPlatformType;
-use env::AppVariable;
-use jobs::server;
-use levelcrush::{clap, server::Server, tokio, tracing};
-use std::time::Duration;
+use lib_account::*;
 
-mod app;
-mod database;
-mod env;
-pub mod jobs;
-mod routes;
-mod sync;
+use clap::Parser;
+use levelcrush::{clap, tokio, tracing};
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum Job {
@@ -40,7 +30,7 @@ async fn main() {
 
     tracing::info!("Running job");
     let result = match args.job {
-        Job::Server => server::run().await,
+        Job::Server => jobs::server::run().await,
         Job::DiscordUpdate => jobs::discord::run(&args.args).await,
         Job::Purge => jobs::purge::run().await,
         Job::Reset => jobs::reset::run().await,
