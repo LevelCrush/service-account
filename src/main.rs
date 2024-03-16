@@ -7,8 +7,12 @@ use levelcrush::{clap, tokio, tracing};
 enum Job {
     Server,
     DiscordUpdate,
-    Purge,
-    Reset,
+    MigrateUp,
+    MigrateUpAll,
+    MigrateDown,
+    MigrateDownAll,
+    MigrateFresh,
+    MigrateRefresh,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -30,10 +34,28 @@ async fn main() {
 
     tracing::info!("Running job");
     let result = match args.job {
-        Job::Server => jobs::server::run().await,
+        Job::Server => jobs::server::run(10, 10).await,
         Job::DiscordUpdate => jobs::discord::run(&args.args).await,
-        Job::Purge => jobs::purge::run().await,
-        Job::Reset => jobs::reset::run().await,
+        Job::MigrateUp => {
+            let amount = args
+                .args
+                .first()
+                .map_or(1, |v| v.parse::<u32>().unwrap_or(1));
+
+            lib_account::jobs::migrate::up(amount).await
+        }
+        Job::MigrateDown => {
+            let amount = args
+                .args
+                .first()
+                .map_or(1, |v| v.parse::<u32>().unwrap_or(1));
+
+            lib_account::jobs::migrate::down(amount).await
+        }
+        Job::MigrateUpAll => lib_account::jobs::migrate::up_all().await,
+        Job::MigrateDownAll => lib_account::jobs::migrate::down_all().await,
+        Job::MigrateFresh => lib_account::jobs::migrate::fresh().await,
+        Job::MigrateRefresh => lib_account::jobs::migrate::refresh().await,
     };
 
     if let Err(err) = result {
