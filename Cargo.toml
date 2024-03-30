@@ -5,7 +5,7 @@ edition = "2021"
 
 
 [dependencies]
-lib-account = { git = "https://code.levelcrush.com/LevelCrush/lib-account.git", rev="e438c2375e" }
+lib-account = { git = "https://github.com/LevelCrush/lib-account.git",  tag="2.0.0" }
 serde = { version = "1.0.171", features = ["derive"] }
 serde_json = { version = "1.0.103" }
 serde_urlencoded = { version = "0.7.1" }
